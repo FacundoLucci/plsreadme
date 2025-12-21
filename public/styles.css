@@ -153,6 +153,22 @@ body {
   animation: logoSpin 0.5s ease;
 }
 
+.logo-text {
+  position: relative;
+}
+
+.logo-text::before {
+  content: "Outframer";
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--color-accent);
+  filter: blur(12px);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: -1;
+}
+
 @keyframes logoSpin {
   0% {
     transform: rotate(0deg);
@@ -442,69 +458,96 @@ body {
 
 /* Frustration Cards */
 .frustration-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--space-lg);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-xl);
   max-width: 900px;
   margin: 0 auto var(--space-2xl);
 }
 
 .frustration-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 16px;
+  flex: 0 1 280px;
+  max-width: 320px;
+  background: #fefce8;
+  border: none;
+  border-radius: 4px;
   padding: var(--space-xl);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
   text-align: left;
   position: relative;
-  overflow: hidden;
-  transition: transform var(--transition-fast),
-    border-color var(--transition-fast);
+  overflow: visible;
+  transition: transform var(--transition-fast);
   opacity: 0;
-  animation: fadeInUp 0.5s ease forwards;
+  animation: tiltFadeIn 0.5s ease forwards;
+  box-shadow: 2px 3px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1);
+  --tilt: 0deg;
 }
 
 .frustration-card:nth-child(1) {
   animation-delay: 0.1s;
+  --tilt: -2.5deg;
+  background: #fefce8; /* Yellow */
 }
 .frustration-card:nth-child(2) {
   animation-delay: 0.2s;
+  --tilt: 1.8deg;
+  background: #fce7f3; /* Pink */
 }
 .frustration-card:nth-child(3) {
   animation-delay: 0.3s;
+  --tilt: -1.5deg;
+  background: #e0f2fe; /* Light blue */
+  flex: 0 1 320px;
 }
 
+/* Tape effect at top of sticky note */
 .frustration-card::before {
-  content: '"';
+  content: "";
   position: absolute;
-  top: -10px;
-  left: 16px;
-  font-size: 5rem;
-  font-weight: 700;
-  color: var(--color-border);
-  line-height: 1;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   pointer-events: none;
 }
 
 .frustration-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(239, 68, 68, 0.3);
+  transform: rotate(var(--tilt)) translateY(-4px) scale(1.02);
+}
+
+@keyframes tiltFadeIn {
+  from {
+    opacity: 0;
+    transform: rotate(0deg) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(var(--tilt));
+  }
 }
 
 .frustration-quote {
-  font-size: 1.125rem;
+  font-size: 1.35rem;
   font-style: italic;
-  color: var(--color-text);
-  line-height: 1.5;
+  font-weight: 600;
+  color: #1c1917;
+  line-height: 1.4;
   position: relative;
   z-index: 1;
+  font-family: var(--font-sans);
 }
 
 .frustration-context {
   font-size: 0.875rem;
-  color: var(--color-text-subtle);
+  color: #78716c;
+  font-style: normal;
 }
 
 /* Problem Agitation */
@@ -1190,16 +1233,27 @@ body {
 
   /* Problem Section Mobile */
   .frustration-cards {
-    grid-template-columns: 1fr;
-    gap: var(--space-md);
+    gap: var(--space-xl);
   }
 
   .frustration-card {
     padding: var(--space-lg);
+    flex: 0 1 100%;
+    max-width: 320px;
+  }
+
+  .frustration-card:nth-child(1) {
+    --tilt: -1.5deg;
+  }
+  .frustration-card:nth-child(2) {
+    --tilt: 2deg;
+  }
+  .frustration-card:nth-child(3) {
+    --tilt: -1deg;
   }
 
   .frustration-quote {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 
   .before-after {
