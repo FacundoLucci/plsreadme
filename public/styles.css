@@ -274,7 +274,15 @@ body {
   gap: var(--space-sm);
 }
 
-.form-input {
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.form-input,
+.form-textarea {
   flex: 1;
   padding: var(--space-md) var(--space-lg);
   font-family: var(--font-sans);
@@ -288,11 +296,19 @@ body {
     box-shadow var(--transition-fast);
 }
 
-.form-input::placeholder {
+.form-textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
   color: var(--color-text-subtle);
 }
 
-.form-input:focus {
+.form-input:focus,
+.form-textarea:focus {
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px var(--color-accent-glow);
   animation: inputFocus 0.3s ease;
@@ -1069,7 +1085,6 @@ body {
   z-index: 1;
   padding: var(--space-xl) var(--space-lg);
   text-align: center;
-  border-top: 1px solid var(--color-border);
   color: var(--color-text-subtle);
   font-size: 0.875rem;
   opacity: 0;
@@ -1412,9 +1427,9 @@ body {
   height: 100%;
   background: linear-gradient(
     45deg,
-    transparent 0%,
+    transparent 10%,
     rgb(0, 128, 255) 50%,
-    transparent 100%
+    transparent 90%
   );
   animation: shimmer 3s ease-in-out infinite;
   z-index: 0;

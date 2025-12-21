@@ -7,6 +7,7 @@ CREATE TABLE waitlist_signups (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE,
   created_at TEXT NOT NULL,
+  requested_features TEXT,
   source TEXT,
   utm_source TEXT,
   utm_medium TEXT,

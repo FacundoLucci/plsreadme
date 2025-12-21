@@ -251,7 +251,7 @@
         <h2>Join the waitlist</h2>
         <p>Enter your email to request beta access.</p>
         <form id="modal-waitlist-form" class="waitlist-form">
-          <div class="form-row">
+          <div class="form-column">
             <input
               type="email"
               name="email"
@@ -261,6 +261,14 @@
               aria-label="Email address"
               class="form-input"
             />
+            <textarea
+              name="requested_features"
+              id="modal-features"
+              placeholder="What feature would you most like to see? (optional)"
+              aria-label="Feature request"
+              class="form-textarea"
+              rows="3"
+            ></textarea>
             <input
               type="text"
               name="honeypot"

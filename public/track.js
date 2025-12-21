@@ -140,6 +140,7 @@
     const closeModalButton = waitlistModal.querySelector('.close-button');
     const modalWaitlistForm = document.getElementById('modal-waitlist-form');
     const modalEmailInput = document.getElementById('modal-email');
+    const modalFeaturesInput = document.getElementById('modal-features');
     const modalFormMessage = document.getElementById('modal-form-message');
     const honeypotInput = document.getElementById('honeypot');
 
@@ -167,6 +168,9 @@
         if (modalEmailInput) {
           modalEmailInput.value = '';
         }
+        if (modalFeaturesInput) {
+          modalFeaturesInput.value = '';
+        }
       });
     }
 
@@ -181,6 +185,9 @@
         if (modalEmailInput) {
           modalEmailInput.value = '';
         }
+        if (modalFeaturesInput) {
+          modalFeaturesInput.value = '';
+        }
       }
     });
 
@@ -190,6 +197,7 @@
         e.preventDefault();
         
         const email = modalEmailInput ? modalEmailInput.value.trim() : '';
+        const requestedFeatures = modalFeaturesInput ? modalFeaturesInput.value.trim() : '';
         const honeypot = honeypotInput ? honeypotInput.value : '';
         const button = modalWaitlistForm.querySelector('button[type="submit"]');
 
@@ -207,6 +215,7 @@
 
         const formData = {
           email: email,
+          requested_features: requestedFeatures,
           honeypot: honeypot,
           utm_source: getUTM('utm_source'),
           utm_medium: getUTM('utm_medium'),
