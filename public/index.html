@@ -1,244 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Markdown Preview & Review Links | Outframer</title>
-  <meta name="description" content="Turn AI-generated documents and Markdown (.md) files into clean, shareable links with comments. Join the Outframer waitlist.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
-</head>
-<body>
-  <div class="page">
-    <!-- Subtle background pattern -->
-    <div class="bg-pattern"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Markdown Preview & Review Links | Outframer</title>
+    <meta
+      name="description"
+      content="Turn AI-generated documents and Markdown (.md) files into clean, shareable links with comments. Join the Outframer waitlist."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <!-- Subtle background pattern -->
+      <div class="bg-pattern"></div>
 
-    <!-- Header -->
-    <header class="header">
-      <a href="/" class="logo">
-        <i class="hgi-stroke hgi-file-01 logo-mark"></i>
-        <span class="logo-text">Outframer</span>
-      </a>
-      <button id="open-waitlist-modal-header" class="cta-button header-cta" data-cta="header">
-        Request beta access
-      </button>
-    </header>
+      <!-- Header -->
+      <header class="header">
+        <a href="/" class="logo">
+          <i class="hgi-stroke hgi-file-01 logo-mark"></i>
+          <span class="logo-text">Outframer</span>
+        </a>
+        <button
+          id="open-waitlist-modal-header"
+          class="cta-button header-cta"
+          data-cta="header"
+        >
+          <span class="cta-text">Request beta access</span>
+        </button>
+      </header>
 
-    <!-- Hero Section -->
-    <section class="hero">
-      <h1 class="hero-title">
-        Turn AI-generated documents into<br>
-        <span class="hero-accent">clean, reviewable links.</span>
-      </h1>
-      
-      <p class="hero-subtitle">
-        From ChatGPT outputs to Markdown <code>.md</code> files — Outframer makes it easy to share and get clear feedback.
-      </p>
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1 class="hero-title">
+          <span class="hero-mono">Turn AI-generated documents into</span><br />
+          <span class="hero-accent">clean, reviewable links.</span>
+        </h1>
 
-      <!-- Social Proof -->
-      <div id="social-proof" class="social-proof" style="display:none;">
-        Join <strong id="waitlist-count"></strong> builders already on the waitlist.
-      </div>
-    </section>
+        <p class="hero-subtitle">
+          Paste in ChatGPT output, drop a <code>.md</code> file, whatever. Get a
+          link anyone can view and comment on.
+        </p>
 
-    <!-- Problem Section -->
-    <section class="section problem-section">
-      <p class="problem-eyebrow">Sound familiar?</p>
-      
-      <div class="frustration-cards">
-        <div class="frustration-card">
-          <span class="frustration-quote">"Wait, all the bullet points got mangled..."</span>
-          <span class="frustration-context">— You, pasting into Google Docs</span>
+        <!-- Social Proof -->
+        <div id="social-proof" class="social-proof" style="display: none">
+          Join <strong id="waitlist-count"></strong> builders already on the
+          waitlist.
         </div>
-        <div class="frustration-card">
-          <span class="frustration-quote">"Can you just resend it as a PDF?"</span>
-          <span class="frustration-context">— Your client, confused by the .md file</span>
-        </div>
-        <div class="frustration-card">
-          <span class="frustration-quote">"I left some comments... somewhere"</span>
-          <span class="frustration-context">— Your reviewer, via Slack + email + text</span>
-        </div>
-      </div>
+      </section>
 
-      <div class="problem-agitation">
-        <p>You spend <strong>more time formatting and chasing feedback</strong> than actually using the AI output.</p>
-      </div>
+      <!-- Problem Section -->
+      <section class="section problem-section">
+        <p class="problem-eyebrow">Sound familiar?</p>
 
-      <div class="before-after">
-        <div class="before-state">
-          <span class="state-label">Without Outframer</span>
-          <div class="chaos-visual">
-            <span class="chaos-item chaos-1">Copy</span>
-            <span class="chaos-item chaos-2">Paste</span>
-            <span class="chaos-item chaos-3">Fix</span>
-            <span class="chaos-item chaos-4">Email</span>
-            <span class="chaos-item chaos-5">Wait</span>
-            <span class="chaos-item chaos-6">Chase</span>
-            <span class="chaos-item chaos-7">Repeat</span>
+        <div class="frustration-cards">
+          <div class="frustration-card">
+            <span class="frustration-quote"
+              >"Wait, all the bullet points got mangled..."</span
+            >
+            <span class="frustration-context"
+              >— You, pasting into Google Docs</span
+            >
+          </div>
+          <div class="frustration-card">
+            <span class="frustration-quote"
+              >"Can you just resend it as a PDF?"</span
+            >
+            <span class="frustration-context"
+              >— Your client, confused by the .md file</span
+            >
+          </div>
+          <div class="frustration-card">
+            <span class="frustration-quote"
+              >"I left some comments... somewhere"</span
+            >
+            <span class="frustration-context"
+              >— Your reviewer, via Slack + email + text</span
+            >
           </div>
         </div>
-        <div class="vs-divider">
-          <i class="hgi-stroke hgi-arrow-right-01"></i>
-        </div>
-        <div class="after-state">
-          <span class="state-label">With Outframer</span>
-          <div class="clean-visual">
-            <i class="hgi-stroke hgi-link-01"></i>
-            <span>One link. Done.</span>
-          </div>
-        </div>
-      </div>
-    </section>
 
-    <!-- How It Works Section -->
-    <section class="section section-alt">
-      <h2 class="section-title">How it works</h2>
-      
-      <div class="how-it-works">
-        <!-- Step 1: Markdown File -->
-        <div class="workflow-step">
-          <div class="step-visual">
-            <div class="step-image-wrapper">
-              <img src="/markdown-editor.png" alt="Markdown file editor" class="step-image">
-              <div class="step-overlay"></div>
+        <div class="problem-agitation">
+          <p>
+            You spend
+            <strong>more time formatting and chasing feedback</strong> than
+            actually using the AI output.
+          </p>
+        </div>
+
+        <div class="before-after">
+          <div class="before-state">
+            <span class="state-label">Without Outframer</span>
+            <div class="chaos-visual">
+              <span class="chaos-item chaos-1">Copy</span>
+              <span class="chaos-item chaos-2">Paste</span>
+              <span class="chaos-item chaos-3">Fix</span>
+              <span class="chaos-item chaos-4">Email</span>
+              <span class="chaos-item chaos-5">Wait</span>
+              <span class="chaos-item chaos-6">Chase</span>
+              <span class="chaos-item chaos-7">Repeat</span>
             </div>
           </div>
-          <div class="step-content">
-            <h3 class="step-title">Start with your markdown</h3>
-            <p class="step-description">From ChatGPT outputs to existing <code>.md</code> files — your content is ready to share.</p>
+          <div class="vs-divider">
+            <i class="hgi-stroke hgi-arrow-right-01"></i>
           </div>
-        </div>
-
-        <div class="workflow-connector">
-          <div class="connector-line"></div>
-          <i class="hgi-stroke hgi-arrow-down-01 connector-icon"></i>
-        </div>
-
-        <!-- Step 2: Paste/Upload -->
-        <div class="workflow-step">
-          <div class="step-visual">
-            <div class="step-icon-wrapper">
-              <i class="hgi-stroke hgi-upload-01 step-icon-large"></i>
-              <div class="step-icon-glow"></div>
+          <div class="after-state">
+            <span class="state-label">With Outframer</span>
+            <div class="clean-visual">
+              <i class="hgi-stroke hgi-link-01"></i>
+              <span>One link. Done.</span>
             </div>
           </div>
-          <div class="step-content">
-            <h3 class="step-title">Paste or upload</h3>
-            <p class="step-description">Drop your markdown content or upload a file. No formatting to fix, no accounts needed.</p>
-          </div>
         </div>
+      </section>
 
-        <div class="workflow-connector">
-          <div class="connector-line"></div>
-          <i class="hgi-stroke hgi-arrow-down-01 connector-icon"></i>
-        </div>
+      <!-- How It Works Section -->
+      <section class="section section-alt">
+        <h2 class="section-title">How it works</h2>
 
-        <!-- Step 3: Beautiful Preview with Comments -->
-        <div class="workflow-step">
-          <div class="step-visual">
-            <div class="step-image-wrapper">
-              <img src="/preview-with-comments.png" alt="Beautiful markdown preview with comments" class="step-image">
-              <div class="step-overlay"></div>
+        <div class="how-it-works">
+          <!-- Step 1: Markdown File -->
+          <div class="workflow-step">
+            <div class="step-visual">
+              <div class="step-image-wrapper">
+                <img
+                  src="/markdown-editor.png"
+                  alt="Markdown file editor"
+                  class="step-image"
+                />
+                <div class="step-overlay"></div>
+              </div>
+            </div>
+            <div class="step-content">
+              <h3 class="step-title">Start with your markdown</h3>
+              <p class="step-description">
+                From ChatGPT outputs to existing <code>.md</code> files — your
+                content is ready to share.
+              </p>
             </div>
           </div>
-          <div class="step-content">
-            <h3 class="step-title">Share & collect feedback</h3>
-            <p class="step-description">Get one clean link with a beautiful preview. Reviewers can comment directly on sections — no accounts required.</p>
+
+          <div class="workflow-connector">
+            <div class="connector-line"></div>
+            <i class="hgi-stroke hgi-arrow-down-01 connector-icon"></i>
+          </div>
+
+          <!-- Step 2: Paste/Upload -->
+          <div class="workflow-step">
+            <div class="step-visual">
+              <div class="step-icon-wrapper">
+                <i class="hgi-stroke hgi-upload-01 step-icon-large"></i>
+                <div class="step-icon-glow"></div>
+              </div>
+            </div>
+            <div class="step-content">
+              <h3 class="step-title">Paste or upload</h3>
+              <p class="step-description">
+                Drop your markdown content or upload a file. No formatting to
+                fix, no accounts needed.
+              </p>
+            </div>
+          </div>
+
+          <div class="workflow-connector">
+            <div class="connector-line"></div>
+            <i class="hgi-stroke hgi-arrow-down-01 connector-icon"></i>
+          </div>
+
+          <!-- Step 3: Beautiful Preview with Comments -->
+          <div class="workflow-step">
+            <div class="step-visual">
+              <div class="step-image-wrapper">
+                <img
+                  src="/preview-with-comments.png"
+                  alt="Beautiful markdown preview with comments"
+                  class="step-image"
+                />
+                <div class="step-overlay"></div>
+              </div>
+            </div>
+            <div class="step-content">
+              <h3 class="step-title">Share & collect feedback</h3>
+              <p class="step-description">
+                Get one clean link with a beautiful preview. Reviewers can
+                comment directly on sections — no accounts required.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Features Section -->
-    <section class="section">
-      <h2 class="section-title">
-        Designed for AI-generated Markdown
-      </h2>
-      
-      <div class="features">
-        <div class="feature">
-          <i class="hgi-stroke hgi-layout-01"></i>
-          <p class="feature-text">Clean, readable layout</p>
-        </div>
-        <div class="feature">
-          <i class="hgi-stroke hgi-comment-01"></i>
-          <p class="feature-text">Comments attached to sections</p>
-        </div>
-        <div class="feature">
-          <i class="hgi-stroke hgi-user-lock-01"></i>
-          <p class="feature-text">No accounts for reviewers</p>
-        </div>
-        <div class="feature">
-          <i class="hgi-stroke hgi-code"></i>
-          <p class="feature-text">Markdown formatting preserved</p>
-        </div>
-      </div>
-    </section>
+      <!-- Features Section -->
+      <section class="section">
+        <h2 class="section-title">Designed for AI-generated Markdown</h2>
 
-    <!-- Bottom CTA Section -->
-    <section class="section section-cta-bottom">
-      <h2 class="section-title">Ready to streamline your feedback?</h2>
-      
-      <button id="open-waitlist-modal-bottom" class="cta-button bottom-cta-button" data-cta="bottom">
-        Request beta access
-      </button>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <p>&copy; 2025 Outframer</p>
-    </footer>
-  </div>
-
-  <!-- Waitlist Modal -->
-  <div id="waitlist-modal" class="modal">
-    <div class="modal-content">
-      <span class="close-button">&times;</span>
-      <h2>Join the waitlist</h2>
-      <p>Enter your email to request beta access.</p>
-      <form id="modal-waitlist-form" class="waitlist-form">
-        <div class="form-row">
-          <input
-            type="email"
-            name="email"
-            id="modal-email"
-            placeholder="you@company.com"
-            required
-            aria-label="Email address"
-            class="form-input"
-          >
-          <input type="text" name="honeypot" id="honeypot" class="honeypot-field" aria-hidden="true" tabindex="-1" style="position:absolute;left:-9999px;">
-          <button type="submit" class="form-button">
-            <span class="button-text">Join now</span>
-            <span class="button-loader"></span>
-          </button>
+        <div class="features">
+          <div class="feature">
+            <i class="hgi-stroke hgi-layout-01"></i>
+            <p class="feature-text">Clean, readable layout</p>
+          </div>
+          <div class="feature">
+            <i class="hgi-stroke hgi-comment-01"></i>
+            <p class="feature-text">Comments attached to sections</p>
+          </div>
+          <div class="feature">
+            <i class="hgi-stroke hgi-user-lock-01"></i>
+            <p class="feature-text">No accounts for reviewers</p>
+          </div>
+          <div class="feature">
+            <i class="hgi-stroke hgi-code"></i>
+            <p class="feature-text">Markdown formatting preserved</p>
+          </div>
         </div>
-        <p class="form-message" id="modal-form-message"></p>
-      </form>
+      </section>
+
+      <!-- Bottom CTA Section -->
+      <section class="section section-cta-bottom">
+        <h2 class="section-title">Ready to streamline your feedback?</h2>
+
+        <button
+          id="open-waitlist-modal-bottom"
+          class="cta-button bottom-cta-button"
+          data-cta="bottom"
+        >
+          <span class="cta-text">Request beta access</span>
+        </button>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p>&copy; 2025 Outframer</p>
+      </footer>
     </div>
-  </div>
 
-  <script src="/track.js"></script>
-  <script>
-    // Fetch and display waitlist count
-    async function loadCount() {
-      try {
-        const res = await fetch('/api/waitlist/count');
-        const data = await res.json();
-        if (data.count) {
-          document.getElementById('waitlist-count').textContent = data.count;
-          document.getElementById('social-proof').style.display = 'block';
+    <!-- Waitlist Modal -->
+    <div id="waitlist-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Join the waitlist</h2>
+        <p>Enter your email to request beta access.</p>
+        <form id="modal-waitlist-form" class="waitlist-form">
+          <div class="form-row">
+            <input
+              type="email"
+              name="email"
+              id="modal-email"
+              placeholder="you@company.com"
+              required
+              aria-label="Email address"
+              class="form-input"
+            />
+            <input
+              type="text"
+              name="honeypot"
+              id="honeypot"
+              class="honeypot-field"
+              aria-hidden="true"
+              tabindex="-1"
+              style="position: absolute; left: -9999px"
+            />
+            <button type="submit" class="form-button">
+              <span class="button-text">Join now</span>
+              <span class="button-loader"></span>
+            </button>
+          </div>
+          <p class="form-message" id="modal-form-message"></p>
+        </form>
+      </div>
+    </div>
+
+    <script src="/track.js"></script>
+    <script>
+      // Fetch and display waitlist count
+      async function loadCount() {
+        try {
+          const res = await fetch("/api/waitlist/count");
+          const data = await res.json();
+          if (data.count) {
+            document.getElementById("waitlist-count").textContent = data.count;
+            document.getElementById("social-proof").style.display = "block";
+          }
+        } catch (e) {
+          // Silently fail
         }
-      } catch (e) {
-        // Silently fail
       }
-    }
-    loadCount();
-  </script>
-</body>
+      loadCount();
+    </script>
+  </body>
 </html>
-
