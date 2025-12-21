@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --port 8788",
     "deploy": "wrangler deploy",
     "db:create": "wrangler d1 create outframer-waitlist",
     "db:migrate": "wrangler d1 execute outframer-waitlist --file=./db/schema.sql",
@@ -18,3 +18,4 @@
     "wrangler": "^4.56.0"
   }
 }
+
