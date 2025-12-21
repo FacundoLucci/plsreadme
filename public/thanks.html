@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're on the list | Outframer</title>
+  <meta name="description" content="Thanks for joining the Outframer waitlist.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
+</head>
+<body>
+  <div class="page page-thanks">
+    <div class="bg-pattern"></div>
+
+    <header class="header">
+      <a href="/" class="logo">
+        <i class="hgi-stroke hgi-file-01 logo-mark"></i>
+        <span class="logo-text">Outframer</span>
+      </a>
+    </header>
+
+    <main class="thanks-content">
+      <i class="hgi-stroke hgi-checkmark-circle-02 thanks-icon"></i>
+      <h1 class="thanks-title">You're on the list.</h1>
+      <p class="thanks-subtitle">We'll reach out when early access is ready.</p>
+
+      <!-- Optional Survey -->
+      <div class="survey" id="survey">
+        <p class="survey-question">One quick question — where do your documents usually come from?</p>
+        
+        <div class="survey-options">
+          <button class="survey-option" data-value="chatgpt-claude">
+            <i class="hgi-stroke hgi-artificial-intelligence-02"></i>
+            <span>ChatGPT / Claude / Cursor</span>
+          </button>
+          <button class="survey-option" data-value="markdown">
+            <i class="hgi-stroke hgi-code"></i>
+            <span>Markdown (.md)</span>
+          </button>
+          <button class="survey-option" data-value="google-docs">
+            <i class="hgi-stroke hgi-file-01"></i>
+            <span>Google Docs</span>
+          </button>
+          <button class="survey-option" data-value="other">
+            <i class="hgi-stroke hgi-box-01"></i>
+            <span>Other</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="survey-thanks" id="survey-thanks" style="display:none;">
+        <p>Thanks for the feedback!</p>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>&copy; 2025 Outframer</p>
+    </footer>
+  </div>
+
+  <script src="/track.js"></script>
+  <script>
+    // Track page view
+    track('page_view');
+
+    // Handle survey responses
+    document.querySelectorAll('.survey-option').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const value = btn.dataset.value;
+        
+        // Visual feedback
+        document.querySelectorAll('.survey-option').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+
+        // Track answer
+        track('origin_answer', { cta_location: value });
+
+        // Submit async (don't block UX)
+        try {
+          // We could POST this to an endpoint, but for now just track via analytics
+          // The origin_answer event with cta_location captures the answer
+        } catch (e) {
+          // Silent fail
+        }
+
+        // Show thanks after short delay
+        setTimeout(() => {
+          document.getElementById('survey').style.display = 'none';
+          document.getElementById('survey-thanks').style.display = 'block';
+        }, 500);
+      });
+    });
+  </script>
+</body>
+</html>
+

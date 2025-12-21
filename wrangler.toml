@@ -1,0 +1,19 @@
+name = "outframer"
+main = "worker/index.ts"
+compatibility_date = "2025-01-01"
+account_id = "78aa716d1c2ddac7dab1162d38998f53"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = [ "/api/*", "/t" ]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "outframer-waitlist"
+database_id = "b977c6e1-b40e-4fd1-bbe1-f38a881593c3"
+
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "outframer_events"
+
