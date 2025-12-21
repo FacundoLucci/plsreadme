@@ -107,19 +107,6 @@ body {
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
-  opacity: 0;
-  animation: slideDown 0.5s ease forwards;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .logo {
@@ -130,52 +117,21 @@ body {
   color: var(--color-text);
   font-weight: 600;
   font-size: 1.125rem;
-  transition: opacity var(--transition-fast), transform var(--transition-fast);
   padding: var(--space-sm) var(--space-md);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.logo:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background: rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
 }
 
 .logo-mark {
   font-size: 1.5rem;
   color: var(--color-accent);
-  transition: transform var(--transition-fast);
-}
-
-.logo:hover .logo-mark {
-  animation: logoSpin 0.5s ease;
 }
 
 .logo-text {
   position: relative;
-}
-
-.logo-text::before {
-  content: "Outframer";
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: var(--color-accent);
-  filter: blur(12px);
-  opacity: 0.6;
-  pointer-events: none;
-  z-index: -1;
-}
-
-@keyframes logoSpin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
 }
 
 /* Hero Section */
