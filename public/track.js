@@ -243,9 +243,10 @@
             track('waitlist_success', { email: email });
             window.location.href = '/thanks.html';
           } else {
-            track('waitlist_error', { email: email, error: result.message });
+            const message = result.message || result.error || 'Something went wrong. Please try again.';
+            track('waitlist_error', { email: email, error: message });
             if (modalFormMessage) {
-              modalFormMessage.textContent = result.message || 'Something went wrong. Please try again.';
+              modalFormMessage.textContent = message;
               modalFormMessage.className = 'form-message error';
             }
             if (button) {
