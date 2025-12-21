@@ -21,23 +21,35 @@ function isValidEmail(email: string): boolean {
 // Send Discord notification
 async function sendDiscordNotification(webhookUrl: string, email: string, requestedFeatures: string | null, utmSource: string | null): Promise<void> {
   try {
+    const truncate = (value: string, max: number) => (value.length > max ? `${value.slice(0, max - 1)}…` : value);
+    const safeRequestedFeatures = requestedFeatures ? truncate(requestedFeatures, 1000) : null; // Discord embed field value max is 1024
+    const safeSource = utmSource ? truncate(utmSource, 128) : null;
+
     const embed = {
       title: '🎉 New Beta Signup!',
       color: 0x6366f1, // Indigo
       fields: [
         { name: 'Email', value: email, inline: false },
-        { name: 'Requested Features', value: requestedFeatures || '_Not specified_', inline: false },
-        { name: 'Source', value: utmSource || '_Direct_', inline: true },
+        { name: 'Requested Features', value: safeRequestedFeatures || '_Not specified_', inline: false },
+        { name: 'Source', value: safeSource || '_Direct_', inline: true },
         { name: 'Time', value: new Date().toISOString(), inline: true },
       ],
       timestamp: new Date().toISOString(),
     };
 
-    await fetch(webhookUrl, {
+    const res = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ embeds: [embed] }),
     });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error('Discord notification failed:', {
+        status: res.status,
+        statusText: res.statusText,
+        body: text.slice(0, 500),
+      });
+    }
   } catch (error) {
     console.error('Discord notification failed:', error);
     // Don't throw - notifications are non-critical
@@ -47,7 +59,7 @@ async function sendDiscordNotification(webhookUrl: string, email: string, reques
 // Send email notification via Resend
 async function sendEmailNotification(apiKey: string, toEmail: string, email: string, requestedFeatures: string | null, utmSource: string | null): Promise<void> {
   try {
-    await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
@@ -66,6 +78,14 @@ async function sendEmailNotification(apiKey: string, toEmail: string, email: str
         `,
       }),
     });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error('Email notification failed:', {
+        status: res.status,
+        statusText: res.statusText,
+        body: text.slice(0, 500),
+      });
+    }
   } catch (error) {
     console.error('Email notification failed:', error);
     // Don't throw - notifications are non-critical
@@ -152,9 +172,13 @@ waitlistRoutes.post('/', async (c) => {
         );
       }
 
-      // Fire and forget - don't wait for notifications
+      // Fire-and-forget, but keep the Worker alive long enough to finish.
+      // Without waitUntil(), the runtime may terminate before webhook fetch completes.
       if (notificationPromises.length > 0) {
-        Promise.all(notificationPromises).catch(err => console.error('Notification error:', err));
+        const all = Promise.all(notificationPromises).catch((err) => console.error('Notification error:', err));
+        if (c.executionCtx && typeof c.executionCtx.waitUntil === 'function') {
+          c.executionCtx.waitUntil(all);
+        }
       }
 
       return c.json({ success: true });
