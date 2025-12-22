@@ -21,13 +21,61 @@
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>"
     />
     <style>
+      :root {
+        /* Light mode (default) */
+        --app-bg: #fafafa;
+        --app-surface: #fff;
+        --app-border: #e5e5e5;
+        --app-border-light: #d4d4d4;
+        --app-text: #1a1a1a;
+        --app-text-muted: #666;
+        --app-text-subtle: #999;
+        --app-accent: #1a1a1a;
+        --app-accent-hover: #333;
+        --app-success-bg: #f0f9ff;
+        --app-success-border: #bae6fd;
+        --app-success-text: #0c4a6e;
+        --app-success-accent: #075985;
+        --app-error-bg: #fef2f2;
+        --app-error-border: #fecaca;
+        --app-error-text: #991b1b;
+        --app-file-bg: #f5f5f5;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --app-bg: #0a0a0b;
+          --app-surface: #18181b;
+          --app-border: #27272a;
+          --app-border-light: #3f3f46;
+          --app-text: #fafafa;
+          --app-text-muted: #a1a1aa;
+          --app-text-subtle: #71717a;
+          --app-accent: #2563eb;
+          --app-accent-hover: #3b82f6;
+          --app-success-bg: rgba(37, 99, 235, 0.1);
+          --app-success-border: rgba(37, 99, 235, 0.3);
+          --app-success-text: #60a5fa;
+          --app-success-accent: #3b82f6;
+          --app-error-bg: rgba(239, 68, 68, 0.1);
+          --app-error-border: rgba(239, 68, 68, 0.3);
+          --app-error-text: #fca5a5;
+          --app-file-bg: #27272a;
+        }
+      }
+
+      body {
+        background: var(--app-bg);
+        color: var(--app-text);
+      }
+
       .app-container {
         min-height: 100vh;
-        background: var(--bg-primary, #fafafa);
+        background: var(--app-bg);
       }
       .app-header {
-        background: #fff;
-        border-bottom: 1px solid #e5e5e5;
+        background: var(--app-surface);
+        border-bottom: 1px solid var(--app-border);
         padding: 1rem 2rem;
       }
       .app-header-content {
@@ -42,7 +90,7 @@
         align-items: center;
         gap: 0.5rem;
         text-decoration: none;
-        color: inherit;
+        color: var(--app-text);
         font-weight: 600;
       }
       .app-main {
@@ -54,16 +102,16 @@
         font-size: 2.5rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
-        color: #1a1a1a;
+        color: var(--app-text);
       }
       .app-subtitle {
         font-size: 1.125rem;
-        color: #666;
+        color: var(--app-text-muted);
         margin-bottom: 2rem;
       }
       .upload-section {
-        background: #fff;
-        border: 1px solid #e5e5e5;
+        background: var(--app-surface);
+        border: 1px solid var(--app-border);
         border-radius: 8px;
         padding: 2rem;
         margin-bottom: 2rem;
@@ -72,7 +120,7 @@
         display: flex;
         gap: 1rem;
         margin-bottom: 1.5rem;
-        border-bottom: 1px solid #e5e5e5;
+        border-bottom: 1px solid var(--app-border);
       }
       .tab {
         padding: 0.75rem 1rem;
@@ -82,12 +130,12 @@
         cursor: pointer;
         font-family: inherit;
         font-size: 1rem;
-        color: #666;
+        color: var(--app-text-muted);
         transition: all 0.2s;
       }
       .tab.active {
-        color: #1a1a1a;
-        border-bottom-color: #1a1a1a;
+        color: var(--app-text);
+        border-bottom-color: var(--app-accent);
       }
       .tab-content {
         display: none;
@@ -99,20 +147,25 @@
         width: 100%;
         min-height: 300px;
         padding: 1rem;
-        border: 1px solid #d4d4d4;
+        border: 1px solid var(--app-border-light);
         border-radius: 6px;
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.875rem;
         line-height: 1.6;
         resize: vertical;
         transition: border-color 0.2s;
+        background: var(--app-surface);
+        color: var(--app-text);
+      }
+      .markdown-textarea::placeholder {
+        color: var(--app-text-subtle);
       }
       .markdown-textarea:focus {
         outline: none;
-        border-color: #1a1a1a;
+        border-color: var(--app-accent);
       }
       .file-upload-zone {
-        border: 2px dashed #d4d4d4;
+        border: 2px dashed var(--app-border-light);
         border-radius: 6px;
         padding: 3rem 2rem;
         text-align: center;
@@ -121,22 +174,22 @@
       }
       .file-upload-zone:hover,
       .file-upload-zone.drag-over {
-        border-color: #1a1a1a;
-        background: #fafafa;
+        border-color: var(--app-accent);
+        background: var(--app-file-bg);
       }
       .file-upload-icon {
         font-size: 3rem;
-        color: #d4d4d4;
+        color: var(--app-border-light);
         margin-bottom: 1rem;
       }
       .file-upload-text {
         font-size: 1rem;
-        color: #666;
+        color: var(--app-text-muted);
         margin-bottom: 0.5rem;
       }
       .file-upload-hint {
         font-size: 0.875rem;
-        color: #999;
+        color: var(--app-text-subtle);
       }
       .file-input {
         display: none;
@@ -144,11 +197,12 @@
       .file-selected {
         margin-top: 1rem;
         padding: 1rem;
-        background: #f5f5f5;
+        background: var(--app-file-bg);
         border-radius: 6px;
         display: flex;
         align-items: center;
         justify-content: space-between;
+        color: var(--app-text);
       }
       .file-info {
         display: flex;
@@ -159,13 +213,16 @@
         background: none;
         border: none;
         cursor: pointer;
-        color: #999;
+        color: var(--app-text-subtle);
         font-size: 1.25rem;
+      }
+      .remove-file:hover {
+        color: var(--app-text);
       }
       .create-button {
         width: 100%;
         padding: 1rem 2rem;
-        background: #1a1a1a;
+        background: var(--app-accent);
         color: #fff;
         border: none;
         border-radius: 6px;
@@ -177,15 +234,15 @@
         margin-top: 1.5rem;
       }
       .create-button:hover:not(:disabled) {
-        background: #333;
+        background: var(--app-accent-hover);
       }
       .create-button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
       .result-section {
-        background: #f0f9ff;
-        border: 1px solid #bae6fd;
+        background: var(--app-success-bg);
+        border: 1px solid var(--app-success-border);
         border-radius: 8px;
         padding: 2rem;
         display: none;
@@ -197,7 +254,7 @@
         font-size: 1.25rem;
         font-weight: 600;
         margin-bottom: 1rem;
-        color: #0c4a6e;
+        color: var(--app-success-text);
       }
       .result-link {
         display: flex;
@@ -207,15 +264,16 @@
       .result-input {
         flex: 1;
         padding: 0.75rem 1rem;
-        border: 1px solid #bae6fd;
+        border: 1px solid var(--app-success-border);
         border-radius: 6px;
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.875rem;
-        background: #fff;
+        background: var(--app-surface);
+        color: var(--app-text);
       }
       .copy-button {
         padding: 0.75rem 1.5rem;
-        background: #0c4a6e;
+        background: var(--app-success-text);
         color: #fff;
         border: none;
         border-radius: 6px;
@@ -226,7 +284,7 @@
         white-space: nowrap;
       }
       .copy-button:hover {
-        background: #075985;
+        background: var(--app-success-accent);
       }
       .result-actions {
         display: flex;
@@ -235,24 +293,24 @@
       }
       .result-action {
         padding: 0.5rem 1rem;
-        background: #fff;
-        border: 1px solid #bae6fd;
+        background: var(--app-surface);
+        border: 1px solid var(--app-success-border);
         border-radius: 6px;
-        color: #0c4a6e;
+        color: var(--app-success-text);
         text-decoration: none;
         font-weight: 500;
         transition: all 0.2s;
       }
       .result-action:hover {
-        background: #f0f9ff;
+        background: var(--app-success-bg);
       }
       .error-section {
-        background: #fef2f2;
-        border: 1px solid #fecaca;
+        background: var(--app-error-bg);
+        border: 1px solid var(--app-error-border);
         border-radius: 8px;
         padding: 1.5rem;
         display: none;
-        color: #991b1b;
+        color: var(--app-error-text);
       }
       .error-section.show {
         display: block;
