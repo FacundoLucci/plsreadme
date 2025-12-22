@@ -155,7 +155,7 @@
         padding: 1rem;
         border: 1px solid var(--app-border-light);
         border-radius: 6px;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: "JetBrains Mono", monospace;
         font-size: 0.875rem;
         line-height: 1.6;
         resize: vertical;
@@ -272,7 +272,7 @@
         padding: 0.75rem 1rem;
         border: 1px solid var(--app-success-border);
         border-radius: 6px;
-        font-family: 'JetBrains Mono', monospace;
+        font-family: "JetBrains Mono", monospace;
         font-size: 0.875rem;
         background: var(--app-surface);
         color: var(--app-text);
@@ -332,7 +332,9 @@
         animation: spin 0.6s linear infinite;
       }
       @keyframes spin {
-        to { transform: rotate(360deg); }
+        to {
+          transform: rotate(360deg);
+        }
       }
       @media (max-width: 768px) {
         .app-main {
@@ -361,8 +363,8 @@
       <main class="app-main">
         <h1 class="app-title">Create a shareable link</h1>
         <p class="app-subtitle">
-          Paste your markdown or upload a .md file to get a beautiful,
-          shareable link
+          Paste your markdown or upload a .md file to get a beautiful, shareable
+          link
         </p>
 
         <div class="error-section" id="error-section"></div>
@@ -425,28 +427,14 @@
             <i class="hgi-stroke hgi-checkmark-circle-01"></i> Link created!
           </div>
           <div class="result-link">
-            <input
-              type="text"
-              class="result-input"
-              id="result-url"
-              readonly
-            />
+            <input type="text" class="result-input" id="result-url" readonly />
             <button class="copy-button" id="copy-result">Copy</button>
           </div>
           <div class="result-actions">
-            <a
-              href="#"
-              target="_blank"
-              class="result-action"
-              id="view-link"
-            >
+            <a href="#" target="_blank" class="result-action" id="view-link">
               <i class="hgi-stroke hgi-view"></i> View document
             </a>
-            <a
-              href="#"
-              class="result-action"
-              id="create-another"
-            >
+            <a href="#" class="result-action" id="create-another">
               <i class="hgi-stroke hgi-add-01"></i> Create another
             </a>
           </div>
@@ -457,4 +445,3 @@
     <script src="/app.js"></script>
   </body>
 </html>
-
