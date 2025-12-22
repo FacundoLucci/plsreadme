@@ -27,3 +27,19 @@ CREATE INDEX idx_waitlist_email ON waitlist_signups(email);
 CREATE INDEX idx_waitlist_created ON waitlist_signups(created_at);
 CREATE INDEX idx_waitlist_source ON waitlist_signups(utm_source, utm_medium, utm_campaign);
 
+-- Documents table for markdown storage
+DROP TABLE IF EXISTS docs;
+
+CREATE TABLE docs (
+  id TEXT PRIMARY KEY,
+  r2_key TEXT NOT NULL,
+  content_type TEXT NOT NULL DEFAULT 'text/markdown',
+  bytes INTEGER NOT NULL,
+  created_at TEXT NOT NULL,
+  sha256 TEXT,
+  title TEXT
+);
+
+CREATE INDEX idx_docs_created_at ON docs(created_at);
+CREATE INDEX idx_docs_sha256 ON docs(sha256);
+

@@ -32,13 +32,9 @@
           <i class="hgi-stroke hgi-file-01 logo-mark"></i>
           <span class="logo-text">Outframer</span>
         </a>
-        <button
-          id="open-waitlist-modal-header"
-          class="cta-button header-cta"
-          data-cta="header"
-        >
-          <span class="cta-text">Get beta access</span>
-        </button>
+        <a href="/app.html" class="cta-button header-cta">
+          <span class="cta-text">Go to app!</span>
+        </a>
       </header>
 
       <!-- Hero Section -->
@@ -57,6 +53,70 @@
         <div id="social-proof" class="social-proof" style="display: none">
           Join <strong id="waitlist-count"></strong> builders already on the
           waitlist.
+        </div>
+      </section>
+
+      <!-- Inline Generator Section -->
+      <section class="section inline-generator-section">
+        <h2 class="inline-generator-title">Try it now — no account needed</h2>
+
+        <div class="inline-generator">
+          <div
+            class="inline-error"
+            id="inline-error"
+            style="display: none"
+          ></div>
+
+          <textarea
+            id="inline-markdown-input"
+            class="inline-textarea"
+            placeholder="# Paste your markdown here&#10;&#10;Try it with ChatGPT output, documentation, notes — anything in markdown format."
+            rows="8"
+          ></textarea>
+
+          <button class="inline-create-button" id="inline-create-button">
+            <span id="inline-button-text">Create Link</span>
+          </button>
+
+          <div class="inline-full-experience">
+            <a href="/app.html" class="inline-full-link">
+              Or go to full experience →
+            </a>
+          </div>
+
+          <div class="inline-result" id="inline-result" style="display: none">
+            <div class="inline-result-title">
+              <i class="hgi-stroke hgi-checkmark-circle-01"></i> Link created!
+            </div>
+            <div class="inline-result-link-wrapper">
+              <input
+                type="text"
+                class="inline-result-input"
+                id="inline-result-url"
+                readonly
+              />
+              <button class="inline-copy-button" id="inline-copy-button">
+                Copy
+              </button>
+            </div>
+            <div class="inline-result-actions">
+              <a
+                href="#"
+                target="_blank"
+                class="inline-result-action"
+                id="inline-view-link"
+              >
+                <i class="hgi-stroke hgi-view"></i> View document
+              </a>
+              <a
+                href="#"
+                class="inline-result-action"
+                id="inline-create-another"
+              >
+                <i class="hgi-stroke hgi-add-01"></i> Create another
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -203,38 +263,75 @@
 
       <!-- Features Section -->
       <section class="section">
-        <h2 class="section-title">Designed for AI-generated Markdown</h2>
+        <h2 class="section-title">Free now. Premium features coming soon.</h2>
+        <p class="section-subtitle">
+          The free tool creates beautiful shareable links. Join the beta for
+          advanced collaboration and team features.
+        </p>
 
-        <div class="features">
-          <div class="feature">
-            <i class="hgi-stroke hgi-layout-01"></i>
-            <p class="feature-text">Clean, readable layout</p>
+        <div class="premium-features-grid">
+          <!-- Comments & Collaboration -->
+          <div class="premium-feature-card">
+            <div class="premium-feature-icon">
+              <i class="hgi-stroke hgi-comment-01"></i>
+            </div>
+            <h3 class="premium-feature-title">Comments & Collaboration</h3>
+            <ul class="premium-feature-list">
+              <li>Inline comments on any section</li>
+              <li>Threaded discussions</li>
+              <li>@mentions and notifications</li>
+              <li>Resolve and track feedback</li>
+            </ul>
+            <span class="premium-badge">Premium</span>
           </div>
-          <div class="feature">
-            <i class="hgi-stroke hgi-comment-01"></i>
-            <p class="feature-text">Comments attached to sections</p>
+
+          <!-- Document Management -->
+          <div class="premium-feature-card">
+            <div class="premium-feature-icon">
+              <i class="hgi-stroke hgi-folder-01"></i>
+            </div>
+            <h3 class="premium-feature-title">Document Management</h3>
+            <ul class="premium-feature-list">
+              <li>Edit and update published docs</li>
+              <li>Version history</li>
+              <li>Analytics and view tracking</li>
+              <li>Custom short URLs</li>
+            </ul>
+            <span class="premium-badge">Premium</span>
           </div>
-          <div class="feature">
-            <i class="hgi-stroke hgi-user-lock-01"></i>
-            <p class="feature-text">No accounts for reviewers</p>
-          </div>
-          <div class="feature">
-            <i class="hgi-stroke hgi-code"></i>
-            <p class="feature-text">Markdown formatting preserved</p>
+
+          <!-- Teams & Business -->
+          <div class="premium-feature-card">
+            <div class="premium-feature-icon">
+              <i class="hgi-stroke hgi-user-group-01"></i>
+            </div>
+            <h3 class="premium-feature-title">Teams & Business</h3>
+            <ul class="premium-feature-list">
+              <li>Team workspaces</li>
+              <li>Custom branding and domains</li>
+              <li>White-label experience</li>
+              <li>Access controls and permissions</li>
+              <li>SSO integration</li>
+            </ul>
+            <span class="premium-badge">Premium</span>
           </div>
         </div>
       </section>
 
       <!-- Bottom CTA Section -->
       <section class="section section-cta-bottom">
-        <h2 class="section-title">Ready to streamline your feedback?</h2>
+        <h2 class="section-title">Join the premium beta</h2>
+        <p class="cta-subtitle">
+          Get early access to collaboration, document management, and team
+          features.
+        </p>
 
         <button
           id="open-waitlist-modal-bottom"
           class="cta-button bottom-cta-button"
           data-cta="bottom"
         >
-          <span class="cta-text">Request beta access</span>
+          <span class="cta-text">Request early access</span>
         </button>
       </section>
 
@@ -248,8 +345,11 @@
     <div id="waitlist-modal" class="modal">
       <div class="modal-content">
         <span class="close-button">&times;</span>
-        <h2>Get beta access</h2>
-        <p>Be among the first to try Outframer.</p>
+        <h2>Join the premium beta</h2>
+        <p>
+          Get early access to advanced collaboration, document management, and
+          team features.
+        </p>
         <form id="modal-waitlist-form" class="waitlist-form">
           <div class="form-column">
             <input
@@ -304,6 +404,111 @@
         }
       }
       loadCount();
+
+      // Inline generator functionality
+      const inlineMarkdownInput = document.getElementById(
+        "inline-markdown-input"
+      );
+      const inlineCreateButton = document.getElementById(
+        "inline-create-button"
+      );
+      const inlineButtonText = document.getElementById("inline-button-text");
+      const inlineError = document.getElementById("inline-error");
+      const inlineResult = document.getElementById("inline-result");
+      const inlineResultUrl = document.getElementById("inline-result-url");
+      const inlineViewLink = document.getElementById("inline-view-link");
+      const inlineCopyButton = document.getElementById("inline-copy-button");
+      const inlineCreateAnother = document.getElementById(
+        "inline-create-another"
+      );
+
+      function showInlineError(message) {
+        inlineError.textContent = message;
+        inlineError.style.display = "block";
+        setTimeout(() => {
+          inlineError.style.display = "none";
+        }, 5000);
+      }
+
+      function hideInlineError() {
+        inlineError.style.display = "none";
+      }
+
+      inlineCreateButton.addEventListener("click", async () => {
+        const markdown = inlineMarkdownInput.value.trim();
+
+        if (!markdown) {
+          showInlineError("Please enter some markdown content");
+          return;
+        }
+
+        // Disable button and show loading
+        inlineCreateButton.disabled = true;
+        inlineButtonText.innerHTML =
+          '<span class="spinner"></span> Creating...';
+        hideInlineError();
+
+        try {
+          const response = await fetch("/api/render", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ markdown }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to create link");
+          }
+
+          // Show result
+          inlineResultUrl.value = data.url;
+          inlineViewLink.href = data.url;
+          inlineResult.style.display = "block";
+
+          // Track event
+          if (typeof track !== "undefined") {
+            track("inline_doc_create");
+          }
+
+          // Scroll to result
+          inlineResult.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        } catch (error) {
+          showInlineError(error.message);
+        } finally {
+          inlineCreateButton.disabled = false;
+          inlineButtonText.textContent = "Create Link";
+        }
+      });
+
+      // Copy result
+      inlineCopyButton.addEventListener("click", () => {
+        inlineResultUrl.select();
+        navigator.clipboard.writeText(inlineResultUrl.value);
+
+        const originalText = inlineCopyButton.textContent;
+        inlineCopyButton.textContent = "Copied!";
+        setTimeout(() => {
+          inlineCopyButton.textContent = originalText;
+        }, 2000);
+      });
+
+      // Create another
+      inlineCreateAnother.addEventListener("click", (e) => {
+        e.preventDefault();
+        inlineMarkdownInput.value = "";
+        inlineResult.style.display = "none";
+        inlineMarkdownInput.focus();
+      });
+
+      // Allow Enter+Cmd/Ctrl to submit
+      inlineMarkdownInput.addEventListener("keydown", (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+          inlineCreateButton.click();
+        }
+      });
     </script>
   </body>
 </html>

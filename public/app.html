@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Link - Outframer</title>
+    <meta
+      name="description"
+      content="Turn your Markdown documents into beautiful, shareable links"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>"
+    />
+    <style>
+      .app-container {
+        min-height: 100vh;
+        background: var(--bg-primary, #fafafa);
+      }
+      .app-header {
+        background: #fff;
+        border-bottom: 1px solid #e5e5e5;
+        padding: 1rem 2rem;
+      }
+      .app-header-content {
+        max-width: 900px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: inherit;
+        font-weight: 600;
+      }
+      .app-main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 3rem 2rem;
+      }
+      .app-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: #1a1a1a;
+      }
+      .app-subtitle {
+        font-size: 1.125rem;
+        color: #666;
+        margin-bottom: 2rem;
+      }
+      .upload-section {
+        background: #fff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+      }
+      .tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e5e5e5;
+      }
+      .tab {
+        padding: 0.75rem 1rem;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 1rem;
+        color: #666;
+        transition: all 0.2s;
+      }
+      .tab.active {
+        color: #1a1a1a;
+        border-bottom-color: #1a1a1a;
+      }
+      .tab-content {
+        display: none;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .markdown-textarea {
+        width: 100%;
+        min-height: 300px;
+        padding: 1rem;
+        border: 1px solid #d4d4d4;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+        resize: vertical;
+        transition: border-color 0.2s;
+      }
+      .markdown-textarea:focus {
+        outline: none;
+        border-color: #1a1a1a;
+      }
+      .file-upload-zone {
+        border: 2px dashed #d4d4d4;
+        border-radius: 6px;
+        padding: 3rem 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .file-upload-zone:hover,
+      .file-upload-zone.drag-over {
+        border-color: #1a1a1a;
+        background: #fafafa;
+      }
+      .file-upload-icon {
+        font-size: 3rem;
+        color: #d4d4d4;
+        margin-bottom: 1rem;
+      }
+      .file-upload-text {
+        font-size: 1rem;
+        color: #666;
+        margin-bottom: 0.5rem;
+      }
+      .file-upload-hint {
+        font-size: 0.875rem;
+        color: #999;
+      }
+      .file-input {
+        display: none;
+      }
+      .file-selected {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #f5f5f5;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .file-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .remove-file {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #999;
+        font-size: 1.25rem;
+      }
+      .create-button {
+        width: 100%;
+        padding: 1rem 2rem;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-top: 1.5rem;
+      }
+      .create-button:hover:not(:disabled) {
+        background: #333;
+      }
+      .create-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .result-section {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        padding: 2rem;
+        display: none;
+      }
+      .result-section.show {
+        display: block;
+      }
+      .result-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #0c4a6e;
+      }
+      .result-link {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      .result-input {
+        flex: 1;
+        padding: 0.75rem 1rem;
+        border: 1px solid #bae6fd;
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.875rem;
+        background: #fff;
+      }
+      .copy-button {
+        padding: 0.75rem 1.5rem;
+        background: #0c4a6e;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+      }
+      .copy-button:hover {
+        background: #075985;
+      }
+      .result-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+      .result-action {
+        padding: 0.5rem 1rem;
+        background: #fff;
+        border: 1px solid #bae6fd;
+        border-radius: 6px;
+        color: #0c4a6e;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .result-action:hover {
+        background: #f0f9ff;
+      }
+      .error-section {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 1.5rem;
+        display: none;
+        color: #991b1b;
+      }
+      .error-section.show {
+        display: block;
+        margin-bottom: 2rem;
+      }
+      .spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 0.6s linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+      @media (max-width: 768px) {
+        .app-main {
+          padding: 2rem 1rem;
+        }
+        .app-title {
+          font-size: 2rem;
+        }
+        .upload-section {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="app-header">
+        <div class="app-header-content">
+          <a href="/" class="app-logo">
+            <i class="hgi-stroke hgi-file-01"></i>
+            <span>Outframer</span>
+          </a>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <h1 class="app-title">Create a shareable link</h1>
+        <p class="app-subtitle">
+          Paste your markdown or upload a .md file to get a beautiful,
+          shareable link
+        </p>
+
+        <div class="error-section" id="error-section"></div>
+
+        <div class="upload-section">
+          <div class="tabs">
+            <button class="tab active" data-tab="paste">
+              <i class="hgi-stroke hgi-clipboard-01"></i> Paste Markdown
+            </button>
+            <button class="tab" data-tab="upload">
+              <i class="hgi-stroke hgi-upload-01"></i> Upload File
+            </button>
+          </div>
+
+          <div class="tab-content active" id="paste-tab">
+            <textarea
+              id="markdown-input"
+              class="markdown-textarea"
+              placeholder="# My Document&#10;&#10;Paste your markdown here...&#10;&#10;- Supports all standard markdown&#10;- Code blocks&#10;- Tables&#10;- And more!"
+            ></textarea>
+          </div>
+
+          <div class="tab-content" id="upload-tab">
+            <div
+              class="file-upload-zone"
+              id="file-upload-zone"
+              tabindex="0"
+              role="button"
+            >
+              <div class="file-upload-icon">
+                <i class="hgi-stroke hgi-upload-01"></i>
+              </div>
+              <div class="file-upload-text">
+                Drop a .md file here or click to browse
+              </div>
+              <div class="file-upload-hint">Maximum file size: 200 KB</div>
+            </div>
+            <input
+              type="file"
+              id="file-input"
+              class="file-input"
+              accept=".md,.markdown,text/markdown"
+            />
+            <div class="file-selected" id="file-selected" style="display: none">
+              <div class="file-info">
+                <i class="hgi-stroke hgi-file-01"></i>
+                <span id="file-name"></span>
+              </div>
+              <button class="remove-file" id="remove-file">&times;</button>
+            </div>
+          </div>
+
+          <button class="create-button" id="create-button">
+            <span id="button-text">Create Link</span>
+          </button>
+        </div>
+
+        <div class="result-section" id="result-section">
+          <div class="result-title">
+            <i class="hgi-stroke hgi-checkmark-circle-01"></i> Link created!
+          </div>
+          <div class="result-link">
+            <input
+              type="text"
+              class="result-input"
+              id="result-url"
+              readonly
+            />
+            <button class="copy-button" id="copy-result">Copy</button>
+          </div>
+          <div class="result-actions">
+            <a
+              href="#"
+              target="_blank"
+              class="result-action"
+              id="view-link"
+            >
+              <i class="hgi-stroke hgi-view"></i> View document
+            </a>
+            <a
+              href="#"
+              class="result-action"
+              id="create-another"
+            >
+              <i class="hgi-stroke hgi-add-01"></i> Create another
+            </a>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
+

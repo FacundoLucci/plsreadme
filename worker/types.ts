@@ -2,6 +2,7 @@ export interface Env {
   DB: D1Database;
   ANALYTICS: AnalyticsEngineDataset;
   ASSETS: Fetcher;
+  DOCS_BUCKET: R2Bucket;
   DISCORD_WEBHOOK_URL?: string;  // Optional Discord webhook for notifications
   RESEND_API_KEY?: string;       // Optional Resend API key for email notifications
   NOTIFICATION_EMAIL?: string;   // Your email to receive notifications
@@ -36,5 +37,15 @@ export interface TrackingEvent {
   anon_id: string;
   cta_location?: string;
   timestamp: number;
+}
+
+export interface DocRecord {
+  id: string;
+  r2_key: string;
+  content_type: string;
+  bytes: number;
+  created_at: string;
+  sha256: string | null;
+  title: string | null;
 }
 

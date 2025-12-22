@@ -17,3 +17,7 @@ database_id = "b977c6e1-b40e-4fd1-bbe1-f38a881593c3"
 binding = "ANALYTICS"
 dataset = "outframer_events"
 
+[[r2_buckets]]
+binding = "DOCS_BUCKET"
+bucket_name = "outframer-docs"
+
