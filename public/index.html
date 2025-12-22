@@ -41,7 +41,9 @@
       <section class="hero">
         <h1 class="hero-title">
           <span class="hero-mono">Turn AI-generated documents into</span><br />
-          <span class="hero-accent">clean, reviewable links.</span>
+          <span class="hero-accent" id="hero-accent" role="button" tabindex="0"
+            >clean, reviewable links.</span
+          >
         </h1>
 
         <p class="hero-subtitle">
@@ -303,7 +305,7 @@
           <!-- Teams & Business -->
           <div class="premium-feature-card">
             <div class="premium-feature-icon">
-              <i class="hgi-stroke hgi-user-group-01"></i>
+              <i class="hgi-stroke hgi-user-multiple"></i>
             </div>
             <h3 class="premium-feature-title">Teams & Business</h3>
             <ul class="premium-feature-list">
@@ -507,6 +509,38 @@
       inlineMarkdownInput.addEventListener("keydown", (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
           inlineCreateButton.click();
+        }
+      });
+
+      // Easter egg: Markdown meta-joke on hero text
+      const heroAccent = document.getElementById("hero-accent");
+      let isTransformed = false;
+
+      function transformHeroText() {
+        if (isTransformed) return;
+        isTransformed = true;
+
+        const originalText = heroAccent.textContent;
+        heroAccent.classList.add("hero-accent-markdown");
+        heroAccent.textContent = `[${originalText}](https://outframer.com)`;
+
+        // Track easter egg
+        if (typeof track !== "undefined") {
+          track("easter_egg_hero_click");
+        }
+
+        setTimeout(() => {
+          heroAccent.classList.remove("hero-accent-markdown");
+          heroAccent.textContent = originalText;
+          isTransformed = false;
+        }, 2000);
+      }
+
+      heroAccent.addEventListener("click", transformHeroText);
+      heroAccent.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          transformHeroText();
         }
       });
     </script>

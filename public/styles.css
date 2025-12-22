@@ -174,6 +174,40 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   position: relative;
+  user-select: none;
+}
+
+.hero-accent-markdown {
+  font-family: var(--font-mono) !important;
+  font-size: 0.85em;
+  background: linear-gradient(
+    135deg,
+    #10b981,
+    #059669
+  ) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  animation: markdownReveal 0.3s ease-out;
+}
+
+.hero-accent-markdown::after {
+  display: none;
+}
+
+@keyframes markdownReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .hero-accent::after {
@@ -1818,5 +1852,20 @@ body {
   .section-subtitle,
   .cta-subtitle {
     font-size: 1rem;
+  }
+}
+
+/* iPhone SE and small screens */
+@media (max-width: 375px) {
+  .hero-title {
+    font-size: clamp(1.75rem, 4.5vw, 3rem);
+  }
+
+  .hero-accent {
+    font-size: 0.95em;
+  }
+
+  .hero-accent-markdown {
+    font-size: 0.75em;
   }
 }
