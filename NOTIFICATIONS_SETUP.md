@@ -1,12 +1,13 @@
 # Beta Signup Notifications Setup
 
-**Last updated:** Dec 21, 2025
+**Last updated:** Dec 22, 2025 (UTC)
 
 ## What Changed
 
 ✅ **Database**: Added `requested_features` field to store user feedback
 ✅ **Frontend**: Added textarea asking "What feature would you most like to see?"
 ✅ **Backend**: Added notification support (Discord + Email via Resend)
+✅ **Backend (Docs)**: Added optional Discord notifications when someone generates a document link (`POST /api/render`)
 
 ## How It Works Now
 
@@ -84,6 +85,21 @@ After deploying, test by:
 2. Clicking "Get beta access"
 3. Entering a test email + feature request
 4. Check your Discord channel or email inbox!
+
+### Testing “Link Generated” Discord Notifications (Docs)
+
+1. **Set the secret (recommended: use a separate channel/webhook):**
+   ```bash
+   npx wrangler secret put DISCORD_LINK_WEBHOOK_URL
+   ```
+2. **Deploy:**
+   ```bash
+   npm run deploy
+   ```
+3. **Send a test notification (no doc creation needed):**
+   - Visit: `/api/render/test-discord`
+4. **Real notifications:**
+   - Any `POST /api/render` that creates a doc will send a Discord message with the new `/v/:id` link.
 
 ## Checking Signups Manually
 

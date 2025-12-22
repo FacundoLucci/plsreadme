@@ -3,7 +3,8 @@ export interface Env {
   ANALYTICS: AnalyticsEngineDataset;
   ASSETS: Fetcher;
   DOCS_BUCKET: R2Bucket;
-  DISCORD_WEBHOOK_URL?: string;  // Optional Discord webhook for notifications
+  DISCORD_WEBHOOK_URL?: string;        // Optional Discord webhook (used for waitlist notifications)
+  DISCORD_LINK_WEBHOOK_URL?: string;   // Optional Discord webhook (used for link/doc creation notifications)
   RESEND_API_KEY?: string;       // Optional Resend API key for email notifications
   NOTIFICATION_EMAIL?: string;   // Your email to receive notifications
 }
