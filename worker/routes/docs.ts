@@ -9,6 +9,51 @@ const app = new Hono<{ Bindings: Env }>();
 const MAX_FILE_SIZE = 200 * 1024; // 200 KB
 const RATE_LIMIT_PER_HOUR = 30;
 
+// Send Discord notification (link/doc creation)
+async function sendDiscordLinkCreatedNotification(
+  webhookUrl: string,
+  payload: { id: string; title: string | null; url: string; rawUrl: string; bytes: number }
+): Promise<void> {
+  try {
+    if (!webhookUrl || webhookUrl.trim() === '') return;
+
+    const safeTitle = (payload.title || 'Untitled').slice(0, 256);
+    const embed = {
+      title: '🔗 New link generated',
+      color: 0x10b981, // emerald
+      fields: [
+        { name: 'Title', value: safeTitle, inline: false },
+        { name: 'Doc ID', value: payload.id, inline: true },
+        { name: 'Size', value: `${payload.bytes} bytes`, inline: true },
+        { name: 'View', value: payload.url, inline: false },
+        { name: 'Raw', value: payload.rawUrl, inline: false },
+        { name: 'Time', value: new Date().toISOString(), inline: true },
+      ],
+      timestamp: new Date().toISOString(),
+    };
+
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error('Discord link notification failed:', {
+        status: res.status,
+        statusText: res.statusText,
+        body: text.slice(0, 500),
+      });
+    }
+  } catch (error) {
+    console.error(
+      'Discord link notification error:',
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+}
+
 // Configure marked for better security and formatting
 marked.setOptions({
   gfm: true,
@@ -321,7 +366,9 @@ app.post('/', async (c) => {
       const file = formData.get('file');
       
       if (file && typeof file !== 'string') {
-        markdown = await file.text();
+        // Cloudflare Workers typings (with lib ES2022) don't include DOM `File`,
+        // so we read the blob via Response to avoid `never` typing.
+        markdown = await new Response(file as any).text();
       } else {
         markdown = formData.get('markdown') as string || '';
       }
@@ -368,6 +415,27 @@ app.post('/', async (c) => {
       'INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title) VALUES (?, ?, ?, ?, ?, ?, ?)'
     ).bind(id, r2Key, 'text/markdown', markdown.length, now, hash, title).run();
 
+    // Send Discord notification (optional, best-effort)
+    const linkWebhookUrl = c.env.DISCORD_LINK_WEBHOOK_URL;
+    if (linkWebhookUrl) {
+      const baseUrl = new URL(c.req.url).origin;
+      const notifyPromise = sendDiscordLinkCreatedNotification(linkWebhookUrl, {
+        id,
+        title,
+        url: `${baseUrl}/v/${id}`,
+        rawUrl: `${baseUrl}/v/${id}/raw`,
+        bytes: markdown.length,
+      });
+
+      const execCtx = (c as any).executionCtx as ExecutionContext | undefined;
+      if (execCtx && typeof execCtx.waitUntil === 'function') {
+        execCtx.waitUntil(notifyPromise);
+      } else {
+        // Fallback (still best-effort)
+        notifyPromise.catch(() => {});
+      }
+    }
+
     // Track analytics event
     try {
       await c.env.ANALYTICS.writeDataPoint({
@@ -391,6 +459,25 @@ app.post('/', async (c) => {
     console.error('Error creating document:', error);
     return c.json({ error: 'Failed to create document' }, 500);
   }
+});
+
+// GET /api/render/test-discord - Test link generation Discord notification
+app.get('/test-discord', async (c) => {
+  if (!c.env.DISCORD_LINK_WEBHOOK_URL) {
+    return c.json({ error: 'DISCORD_LINK_WEBHOOK_URL not set' }, 400);
+  }
+
+  const baseUrl = new URL(c.req.url).origin;
+  const id = 'test-doc';
+  await sendDiscordLinkCreatedNotification(c.env.DISCORD_LINK_WEBHOOK_URL, {
+    id,
+    title: 'Test link notification',
+    url: `${baseUrl}/v/${id}`,
+    rawUrl: `${baseUrl}/v/${id}/raw`,
+    bytes: 1234,
+  });
+
+  return c.json({ success: true, message: 'Sent test Discord link notification' });
 });
 
 // GET /v/:id - Render the document as HTML
