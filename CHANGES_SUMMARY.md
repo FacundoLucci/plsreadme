@@ -84,3 +84,4 @@ Professional HTML email with the same information.
 See `NOTIFICATIONS_SETUP.md` for detailed setup instructions and troubleshooting.
 
 
+
