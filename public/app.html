@@ -185,6 +185,32 @@
       .markdown-status.warn {
         color: var(--app-error-text);
       }
+      .paste-actions {
+        margin-top: 1rem;
+        display: none;
+        justify-content: flex-start;
+      }
+      .paste-actions.show {
+        display: flex;
+      }
+      .convert-button {
+        padding: 0.65rem 1rem;
+        background: var(--app-surface);
+        border: 1px solid var(--app-border-light);
+        border-radius: 6px;
+        color: var(--app-text);
+        font-family: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .convert-button:hover:not(:disabled) {
+        border-color: var(--app-accent);
+      }
+      .convert-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
       .file-upload-zone {
         border: 2px dashed var(--app-border-light);
         border-radius: 6px;
@@ -401,6 +427,11 @@
               placeholder="# My Document&#10;&#10;Paste your markdown here...&#10;&#10;- Supports all standard markdown&#10;- Code blocks&#10;- Tables&#10;- And more!"
             ></textarea>
             <div class="markdown-status" id="markdown-status" aria-live="polite"></div>
+            <div class="paste-actions">
+              <button class="convert-button" id="convert-button" type="button">
+                Convert to Markdown
+              </button>
+            </div>
           </div>
 
           <div class="tab-content" id="upload-tab">

@@ -4,6 +4,7 @@ import type { Env } from './types';
 import { waitlistRoutes } from './routes/waitlist';
 import { analyticsRoutes } from './routes/analytics';
 import { docsRoutes } from './routes/docs';
+import { convertRoutes } from './routes/convert';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -17,6 +18,7 @@ app.use('/api/*', cors({
 // Mount routes
 app.route('/api/waitlist', waitlistRoutes);
 app.route('/api/render', docsRoutes);
+app.route('/api/convert', convertRoutes);
 app.route('/t', analyticsRoutes);
 
 // Mount document viewer routes
