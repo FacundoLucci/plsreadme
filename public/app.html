@@ -170,6 +170,21 @@
         outline: none;
         border-color: var(--app-accent);
       }
+      .markdown-status {
+        margin-top: 0.75rem;
+        font-size: 0.875rem;
+        color: var(--app-text-muted);
+        display: none;
+      }
+      .markdown-status.show {
+        display: block;
+      }
+      .markdown-status.good {
+        color: var(--app-success-text);
+      }
+      .markdown-status.warn {
+        color: var(--app-error-text);
+      }
       .file-upload-zone {
         border: 2px dashed var(--app-border-light);
         border-radius: 6px;
@@ -385,6 +400,7 @@
               class="markdown-textarea"
               placeholder="# My Document&#10;&#10;Paste your markdown here...&#10;&#10;- Supports all standard markdown&#10;- Code blocks&#10;- Tables&#10;- And more!"
             ></textarea>
+            <div class="markdown-status" id="markdown-status" aria-live="polite"></div>
           </div>
 
           <div class="tab-content" id="upload-tab">
