@@ -7,6 +7,8 @@ export interface Env {
   DISCORD_LINK_WEBHOOK_URL?: string;   // Optional Discord webhook (used for link/doc creation notifications)
   RESEND_API_KEY?: string;       // Optional Resend API key for email notifications
   NOTIFICATION_EMAIL?: string;   // Your email to receive notifications
+  OPENAI_API_KEY?: string;       // Optional OpenAI API key for text->markdown conversion
+  OPENAI_MODEL?: string;         // Optional OpenAI model override
 }
 
 export interface WaitlistSignup {
