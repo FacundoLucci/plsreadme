@@ -3,24 +3,22 @@ const tabs = document.querySelectorAll('.tab');
 const tabContents = document.querySelectorAll('.tab-content');
 
 function detectMarkdown(text) {
-  // Heuristic: look for common markdown constructs (not just URLs).
-  const mdSignals = [
-    /^#{1,6}\s+\S/m, // headings
+  // Updated 2025-12-25: Improved detection to prevent false positives from line breaks.
+  // Focus on stronger markdown tokens rather than weak signals.
+  const strongMdSignals = [
+    /^\s{0,3}#{1,6}\s+\S/m, // headings with proper spacing
     /^\s{0,3}>\s+\S/m, // blockquote
     /^\s{0,3}[-*+]\s+\S/m, // unordered list
     /^\s{0,3}\d+\.\s+\S/m, // ordered list
-    /```[\s\S]*?```/m, // fenced code block
-    /`[^`]+`/m, // inline code
-    /\[[^\]]+\]\([^)]+\)/m, // markdown link
-    /!\[[^\]]*]\([^)]+\)/m, // markdown image
-    /\*\*[^*]+\*\*/m, // bold
-    /(^|[^*])\*[^*\n]+\*(?!\*)/m, // italic (basic)
-    /__[^_]+__/m, // bold underscore
-    /(^|[^_])_[^_\n]+_(?!_)/m, // italic underscore (basic)
-    /^\s{0,3}---\s*$/m, // hr
-    /^\s{0,3}\|\s*[^|]+\s*\|/m, // table row-ish
+    /^```[\s\S]*?```$/m, // fenced code block (complete)
+    /^\s{0,3}---\s*$/m, // horizontal rule
+    /^\s{0,3}\|\s*[^|]+\s*\|/m, // table row
+    /\*\*[^*\n]+\*\*/m, // bold (no line breaks within)
+    /__[^_\n]+__/m, // bold underscore (no line breaks within)
+    /\[[^\]\n]+\]\([^)\n]+\)/m, // markdown link (no line breaks within)
+    /!\[[^\]\n]*]\([^)\n]+\)/m, // markdown image (no line breaks within)
   ];
-  return mdSignals.some((re) => re.test(text));
+  return strongMdSignals.some((re) => re.test(text));
 }
 
 const markdownStatus = document.getElementById('markdown-status');
@@ -73,7 +71,7 @@ function updateCreateButtonState() {
       message: 'Paste Markdown to enable “Create Link”.',
     });
     isConverting = false;
-    setConvertButtonState({ disabled: false, text: 'Convert to Markdown' });
+    setConvertButtonState({ disabled: false, text: 'Generate new Markdown' });
     setPasteActionsVisible(false);
     return;
   }
@@ -83,28 +81,29 @@ function updateCreateButtonState() {
     createButton.disabled = false;
     pasteLooksRichText = false;
     isConverting = false;
-    setConvertButtonState({ disabled: false, text: 'Convert to Markdown' });
-    setPasteActionsVisible(false);
+    setConvertButtonState({ disabled: false, text: 'Generate new Markdown' });
+    setPasteActionsVisible(true);
     setMarkdownStatus({
       show: true,
       kind: 'good',
-      message: 'Markdown detected.',
+      message: 'Markdown detected — ready to create link.',
     });
     return;
   }
 
-  createButton.disabled = true;
+  // No markdown detected, but button is still available (Updated 2025-12-25)
+  createButton.disabled = false;
   setPasteActionsVisible(true);
   setConvertButtonState({
     disabled: isConverting,
-    text: isConverting ? 'Converting…' : 'Convert to Markdown',
+    text: isConverting ? 'Generating…' : 'Generate new Markdown',
   });
   setMarkdownStatus({
     show: true,
-    kind: 'warn',
+    kind: null,
     message: pasteLooksRichText
-      ? 'No Markdown detected. It looks like you pasted rich text—try copying “as Markdown”, or paste raw Markdown here.'
-      : 'No Markdown detected. Add Markdown (e.g. start a title with “# ”) to enable “Create Link”.',
+      ? 'No Markdown detected. You can still create a link, or try "Generate new Markdown" to convert rich text.'
+      : 'No Markdown detected. You can still create a link as-is, or add Markdown formatting.',
   });
 }
 
@@ -235,12 +234,12 @@ if (convertButton) {
 
     const text = markdownInput.value.trim();
     if (!text) return;
-    if (detectMarkdown(text)) return;
+    // Updated 2025-12-25: Allow generating new markdown even if markdown is detected
 
     isConverting = true;
     hideError();
-    setConvertButtonState({ disabled: true, text: 'Converting…' });
-    setMarkdownStatus({ show: true, kind: null, message: 'Converting to Markdown…' });
+    setConvertButtonState({ disabled: true, text: 'Generating…' });
+    setMarkdownStatus({ show: true, kind: null, message: 'Generating new Markdown…' });
     updateCreateButtonState();
 
     try {
@@ -252,7 +251,7 @@ if (convertButton) {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to convert to Markdown');
+        throw new Error(data.error || 'Failed to generate Markdown');
       }
 
       if (typeof data.markdown !== 'string' || !data.markdown.trim()) {
@@ -261,17 +260,17 @@ if (convertButton) {
 
       markdownInput.value = data.markdown.trim();
       pasteLooksRichText = false;
-      setMarkdownStatus({ show: true, kind: 'good', message: 'Converted to Markdown.' });
+      setMarkdownStatus({ show: true, kind: 'good', message: 'Generated new Markdown.' });
     } catch (error) {
-      showError(error.message || 'Failed to convert to Markdown');
+      showError(error.message || 'Failed to generate Markdown');
       setMarkdownStatus({
         show: true,
         kind: 'warn',
-        message: 'Conversion failed. You can still paste Markdown manually.',
+        message: 'Generation failed. You can still paste Markdown manually.',
       });
     } finally {
       isConverting = false;
-      setConvertButtonState({ disabled: false, text: 'Convert to Markdown' });
+      setConvertButtonState({ disabled: false, text: 'Generate new Markdown' });
       updateCreateButtonState();
     }
   });
@@ -287,10 +286,7 @@ createButton.addEventListener('click', async () => {
       showError('Please enter some markdown content');
       return;
     }
-    if (!detectMarkdown(markdown)) {
-      showError('No Markdown detected. Convert to Markdown or paste Markdown to continue.');
-      return;
-    }
+    // Updated 2025-12-25: Removed markdown detection blocker - allow any content
   } else {
     if (!selectedFile) {
       showError('Please select a file to upload');
