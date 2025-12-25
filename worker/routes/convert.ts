@@ -4,7 +4,7 @@ import type { Env } from '../types';
 export const convertRoutes = new Hono<{ Bindings: Env }>();
 
 const MAX_INPUT_CHARS = 200 * 1024; // keep consistent with markdown upload limit
-const DEFAULT_MODEL = 'gpt-4.1-mini';
+const DEFAULT_MODEL = 'gpt-4.1-2025-04-14';
 const DEFAULT_CF_AI_MODEL = '@cf/meta/llama-3.1-8b-instruct';
 
 const SYSTEM_PROMPT = [
