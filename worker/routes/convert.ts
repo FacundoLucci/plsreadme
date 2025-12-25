@@ -5,6 +5,7 @@ export const convertRoutes = new Hono<{ Bindings: Env }>();
 
 const MAX_INPUT_CHARS = 200 * 1024; // keep consistent with markdown upload limit
 const DEFAULT_MODEL = 'gpt-4.1-mini';
+const DEFAULT_CF_AI_MODEL = '@cf/meta/llama-3.1-8b-instruct';
 
 const SYSTEM_PROMPT = [
   'You are a Markdown formatting assistant.',
@@ -38,14 +39,17 @@ function extractResponseText(payload: any): string {
   return parts.join('\n').trim();
 }
 
-// POST /api/convert - Convert plain text to markdown using OpenAI
+function extractCloudflareAIText(payload: any): string {
+  // Workers AI responses vary slightly by model/runtime.
+  if (typeof payload?.response === 'string') return payload.response.trim();
+  if (typeof payload?.result?.response === 'string') return payload.result.response.trim();
+  if (typeof payload?.output === 'string') return payload.output.trim();
+  return '';
+}
+
+// POST /api/convert - Convert plain text to markdown (OpenAI if configured, otherwise Workers AI)
 convertRoutes.post('/', async (c) => {
   try {
-    const key = c.env.OPENAI_API_KEY;
-    if (!key) {
-      return c.json({ error: 'AI conversion is not configured' }, 503);
-    }
-
     const body = await c.req.json<{ text?: unknown }>().catch(() => ({} as any));
     const text = typeof body?.text === 'string' ? body.text : '';
 
@@ -54,6 +58,37 @@ convertRoutes.post('/', async (c) => {
     }
     if (text.length > MAX_INPUT_CHARS) {
       return c.json({ error: `Input too large. Maximum size is ${MAX_INPUT_CHARS / 1024} KB` }, 400);
+    }
+
+    const key = c.env.OPENAI_API_KEY;
+    const hasWorkersAI = typeof c.env.AI?.run === 'function';
+
+    // Prefer OpenAI when configured; otherwise fall back to Workers AI (no secret required).
+    if (!key && !hasWorkersAI) {
+      return c.json(
+        { error: 'AI conversion is not configured (set OPENAI_API_KEY or enable the Workers AI binding)' },
+        503
+      );
+    }
+
+    if (!key && hasWorkersAI) {
+      const model = (c.env.CF_AI_MODEL || DEFAULT_CF_AI_MODEL).trim() || DEFAULT_CF_AI_MODEL;
+      const payload = await c.env.AI!.run(model, {
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: text },
+        ],
+        temperature: 0.2,
+        max_tokens: 1500,
+      });
+
+      const markdown = extractCloudflareAIText(payload).trim();
+      if (!markdown) {
+        console.error('Workers AI returned empty output:', { model, payload: JSON.stringify(payload).slice(0, 1000) });
+        return c.json({ error: 'AI returned empty output' }, 502);
+      }
+
+      return c.json({ markdown });
     }
 
     const model = (c.env.OPENAI_MODEL || DEFAULT_MODEL).trim() || DEFAULT_MODEL;
