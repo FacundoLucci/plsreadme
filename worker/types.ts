@@ -8,8 +8,15 @@ export interface Env {
   DISCORD_LINK_WEBHOOK_URL?: string;   // Optional Discord webhook (used for link/doc creation notifications)
   RESEND_API_KEY?: string;       // Optional Resend API key for email notifications
   NOTIFICATION_EMAIL?: string;   // Your email to receive notifications
+  // Workers AI binding (optional fallback for /api/convert when no OpenAI key is configured)
+  AI?: CloudflareAI;
   OPENAI_API_KEY?: string;       // Optional OpenAI API key for text->markdown conversion
   OPENAI_MODEL?: string;         // Optional OpenAI model override
+  CF_AI_MODEL?: string;          // Optional Workers AI model override
+}
+
+export interface CloudflareAI {
+  run(model: string, input: unknown): Promise<any>;
 }
 
 export interface WaitlistSignup {
