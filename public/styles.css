@@ -1541,7 +1541,7 @@ body {
   border-radius: 8px;
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: 1rem;
   line-height: 1.6;
   resize: vertical;
   transition: border-color var(--transition-base);
@@ -1659,7 +1659,7 @@ body {
   border-radius: 6px;
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
 
 .inline-copy-button {
