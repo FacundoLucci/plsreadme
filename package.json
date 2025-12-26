@@ -10,11 +10,15 @@
     "db:migrate:local": "wrangler d1 execute outframer-waitlist --local --file=./db/schema.sql"
   },
   "dependencies": {
-    "hono": "^4.6.0",
-    "marked": "^11.1.1",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "agents": "^0.3.0",
+    "ai": "^6.0.1",
     "dompurify": "^3.0.8",
+    "hono": "^4.6.0",
     "isomorphic-dompurify": "^2.9.0",
-    "nanoid": "^5.0.4"
+    "marked": "^11.1.1",
+    "nanoid": "^5.0.4",
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241205.0",
@@ -22,4 +26,3 @@
     "wrangler": "^4.56.0"
   }
 }
-

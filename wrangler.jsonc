@@ -1,0 +1,63 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "outframer",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "78aa716d1c2ddac7dab1162d38998f53",
+  "routes": [
+    { "pattern": "outframer.com", "zone_name": "outframer.com", "custom_domain": true }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/t", "/sse", "/mcp"]
+  },
+  "vars": {
+    "OPENAI_MODEL": "gpt-4.1-2025-04-14",
+    "CF_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "outframer-waitlist",
+      "database_id": "b977c6e1-b40e-4fd1-bbe1-f38a881593c3"
+    }
+  ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "outframer_events"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "DOCS_BUCKET",
+      "bucket_name": "outframer-docs"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "OutframerMCP",
+        "name": "MCP_OBJECT"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["OutframerMCP"]
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "enabled": true
+    }
+  }
+}
+

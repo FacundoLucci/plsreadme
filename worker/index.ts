@@ -5,6 +5,7 @@ import { waitlistRoutes } from './routes/waitlist';
 import { analyticsRoutes } from './routes/analytics';
 import { docsRoutes } from './routes/docs';
 import { convertRoutes } from './routes/convert';
+import { OutframerMCP as MCPServer } from './mcp-agent';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -55,5 +56,21 @@ app.get('*', async (c) => {
   return c.env.ASSETS.fetch(c.req.raw);
 });
 
-export default app;
+export default {
+  fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    const url = new URL(request.url);
+
+    // Handle MCP endpoints
+    if (url.pathname === '/sse' || url.pathname === '/sse/message') {
+      return MCPServer.serveSSE('/sse').fetch(request, env, ctx);
+    }
+
+    if (url.pathname === '/mcp') {
+      return MCPServer.serve('/mcp').fetch(request, env, ctx);
+    }
+
+    // Handle all other routes with Hono app
+    return app.fetch(request, env, ctx);
+  },
+};
 

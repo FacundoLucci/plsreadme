@@ -1,0 +1,41 @@
+{
+  "name": "outframer-mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for Outframer - generate markdown preview links from Cursor",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "outframer-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "outframer",
+    "markdown",
+    "cursor",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
+
+
