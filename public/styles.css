@@ -1643,6 +1643,8 @@ body {
 
 .inline-result-title .hgi-stroke {
   font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 .inline-result-link-wrapper {
