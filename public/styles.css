@@ -1711,6 +1711,8 @@ body {
 
 .inline-result-action .hgi-stroke {
   font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* ===================================
