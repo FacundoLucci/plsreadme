@@ -1700,7 +1700,7 @@ body {
   transition: all var(--transition-base);
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 0.5rem;
 }
 
 .inline-result-action:hover {
@@ -1711,6 +1711,8 @@ body {
 
 .inline-result-action .hgi-stroke {
   font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* ===================================
