@@ -227,9 +227,10 @@ markdownInput.addEventListener("input", () => {
   updateCreateButtonState();
 });
 
-// Allow Enter+Cmd/Ctrl to submit
-markdownInput.addEventListener("keydown", (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+// Allow Enter+Cmd/Ctrl to submit (using document-level delegation for reliability)
+document.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && document.activeElement === markdownInput) {
+    e.preventDefault();
     createButton.click();
   }
 });
