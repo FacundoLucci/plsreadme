@@ -4,6 +4,57 @@ import type { Env } from "../types";
 
 const app = new Hono<{ Bindings: Env }>();
 
+// Send Discord notification (link/doc creation)
+async function sendDiscordLinkCreatedNotification(
+  webhookUrl: string,
+  payload: {
+    id: string;
+    title: string | null;
+    url: string;
+    rawUrl: string;
+    bytes: number;
+  }
+): Promise<void> {
+  try {
+    if (!webhookUrl || webhookUrl.trim() === "") return;
+
+    const safeTitle = (payload.title || "Untitled").slice(0, 256);
+    const embed = {
+      title: "🔗 New link generated",
+      color: 0x10b981, // emerald
+      fields: [
+        { name: "Title", value: safeTitle, inline: false },
+        { name: "Doc ID", value: payload.id, inline: true },
+        { name: "Size", value: `${payload.bytes} bytes`, inline: true },
+        { name: "View", value: payload.url, inline: false },
+        { name: "Raw", value: payload.rawUrl, inline: false },
+        { name: "Time", value: new Date().toISOString(), inline: true },
+      ],
+      timestamp: new Date().toISOString(),
+    };
+
+    const res = await fetch(webhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ embeds: [embed] }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      console.error("Discord link notification failed:", {
+        status: res.status,
+        statusText: res.statusText,
+        body: text.slice(0, 500),
+      });
+    }
+  } catch (error) {
+    console.error(
+      "Discord link notification error:",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+}
+
 // Helper: Simple SHA-256 hash
 async function sha256(text: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -60,6 +111,26 @@ app.post("/", async (c) => {
     )
       .bind(id, r2Key, "text/markdown", markdown.length, now, hash, title, 0)
       .run();
+
+    // Send Discord notification (optional, best-effort)
+    const linkWebhookUrl = c.env.DISCORD_LINK_WEBHOOK_URL;
+    if (linkWebhookUrl) {
+      const baseUrl = "https://plsrd.me";
+      const notifyPromise = sendDiscordLinkCreatedNotification(linkWebhookUrl, {
+        id,
+        title,
+        url: `${baseUrl}/v/${id}`,
+        rawUrl: `${baseUrl}/v/${id}/raw`,
+        bytes: markdown.length,
+      });
+
+      const execCtx = (c as any).executionCtx as ExecutionContext | undefined;
+      if (execCtx && typeof execCtx.waitUntil === "function") {
+        execCtx.waitUntil(notifyPromise);
+      } else {
+        notifyPromise.catch(() => {});
+      }
+    }
 
     // Return id and url
     const baseUrl = "https://plsrd.me";
