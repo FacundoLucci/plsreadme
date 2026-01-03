@@ -227,6 +227,13 @@ markdownInput.addEventListener("input", () => {
   updateCreateButtonState();
 });
 
+// Allow Enter+Cmd/Ctrl to submit
+markdownInput.addEventListener("keydown", (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    createButton.click();
+  }
+});
+
 if (convertButton) {
   convertButton.addEventListener("click", async () => {
     const activeTab = document.querySelector(".tab.active")?.dataset?.tab;
