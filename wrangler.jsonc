@@ -6,7 +6,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "account_id": "78aa716d1c2ddac7dab1162d38998f53",
   "routes": [
-    { "pattern": "outframer.com", "zone_name": "outframer.com", "custom_domain": true }
+    { "pattern": "plsreadme.com/*", "zone_name": "plsreadme.com", "custom_domain": true },
+    { "pattern": "plsrd.me/*", "zone_name": "plsrd.me", "custom_domain": true }
   ],
   "ai": {
     "binding": "AI",

@@ -78,9 +78,9 @@ async function sendEmailNotification(apiKey: string, toEmail: string, email: str
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Outframer <onboarding@resend.dev>', // Change to your verified domain
+        from: 'plsreadme <onboarding@resend.dev>', // Change to your verified domain
         to: toEmail,
-        subject: '🎉 New Beta Signup - Outframer',
+        subject: '🎉 New Beta Signup - plsreadme',
         html: `
           <h2>New Beta Signup</h2>
           <p><strong>Email:</strong> ${email}</p>

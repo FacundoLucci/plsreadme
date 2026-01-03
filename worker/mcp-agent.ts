@@ -64,7 +64,7 @@ async function sendDiscordLinkCreatedNotification(
 
 export class OutframerMCP extends McpAgent {
   server = new McpServer({
-    name: 'Outframer',
+    name: 'plsreadme',
     version: '0.1.0',
   });
 

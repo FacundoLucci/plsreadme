@@ -1,7 +1,7 @@
-import { Hono } from 'hono';
-import { nanoid } from 'nanoid';
-import { marked } from 'marked';
-import type { Env, DocRecord } from '../types';
+import { Hono } from "hono";
+import { nanoid } from "nanoid";
+import { marked } from "marked";
+import type { Env, DocRecord } from "../types";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -12,35 +12,41 @@ const RATE_LIMIT_PER_HOUR = 30;
 // Send Discord notification (link/doc creation)
 async function sendDiscordLinkCreatedNotification(
   webhookUrl: string,
-  payload: { id: string; title: string | null; url: string; rawUrl: string; bytes: number }
+  payload: {
+    id: string;
+    title: string | null;
+    url: string;
+    rawUrl: string;
+    bytes: number;
+  }
 ): Promise<void> {
   try {
-    if (!webhookUrl || webhookUrl.trim() === '') return;
+    if (!webhookUrl || webhookUrl.trim() === "") return;
 
-    const safeTitle = (payload.title || 'Untitled').slice(0, 256);
+    const safeTitle = (payload.title || "Untitled").slice(0, 256);
     const embed = {
-      title: '🔗 New link generated',
+      title: "🔗 New link generated",
       color: 0x10b981, // emerald
       fields: [
-        { name: 'Title', value: safeTitle, inline: false },
-        { name: 'Doc ID', value: payload.id, inline: true },
-        { name: 'Size', value: `${payload.bytes} bytes`, inline: true },
-        { name: 'View', value: payload.url, inline: false },
-        { name: 'Raw', value: payload.rawUrl, inline: false },
-        { name: 'Time', value: new Date().toISOString(), inline: true },
+        { name: "Title", value: safeTitle, inline: false },
+        { name: "Doc ID", value: payload.id, inline: true },
+        { name: "Size", value: `${payload.bytes} bytes`, inline: true },
+        { name: "View", value: payload.url, inline: false },
+        { name: "Raw", value: payload.rawUrl, inline: false },
+        { name: "Time", value: new Date().toISOString(), inline: true },
       ],
       timestamp: new Date().toISOString(),
     };
 
     const res = await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ embeds: [embed] }),
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      console.error('Discord link notification failed:', {
+      const text = await res.text().catch(() => "");
+      console.error("Discord link notification failed:", {
         status: res.status,
         statusText: res.statusText,
         body: text.slice(0, 500),
@@ -48,7 +54,7 @@ async function sendDiscordLinkCreatedNotification(
     }
   } catch (error) {
     console.error(
-      'Discord link notification error:',
+      "Discord link notification error:",
       error instanceof Error ? error.message : String(error)
     );
   }
@@ -64,17 +70,17 @@ marked.setOptions({
 async function sha256(text: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 // Helper: Extract title from markdown
 function extractTitle(markdown: string): string | null {
-  const lines = markdown.split('\n');
+  const lines = markdown.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
-    if (trimmed.startsWith('# ')) {
+    if (trimmed.startsWith("# ")) {
       return trimmed.substring(2).trim();
     }
   }
@@ -85,11 +91,13 @@ function extractTitle(markdown: string): string | null {
 async function checkRateLimit(env: Env, ip: string): Promise<boolean> {
   const ipHash = await sha256(ip);
   const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  
+
   const result = await env.DB.prepare(
-    'SELECT COUNT(*) as count FROM docs WHERE sha256 = ? AND created_at > ?'
-  ).bind(ipHash, hourAgo).first<{ count: number }>();
-  
+    "SELECT COUNT(*) as count FROM docs WHERE sha256 = ? AND created_at > ?"
+  )
+    .bind(ipHash, hourAgo)
+    .first<{ count: number }>();
+
   return (result?.count || 0) < RATE_LIMIT_PER_HOUR;
 }
 
@@ -97,32 +105,36 @@ async function checkRateLimit(env: Env, ip: string): Promise<boolean> {
 function sanitizeHtml(html: string): string {
   // Remove script tags and event handlers
   return html
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/on\w+\s*=\s*"[^"]*"/gi, '')
-    .replace(/on\w+\s*=\s*'[^']*'/gi, '')
-    .replace(/javascript:/gi, '');
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/on\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/on\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/javascript:/gi, "");
 }
 
 // Helper: Generate HTML template for rendered doc
-function generateHtmlTemplate(title: string | null, htmlContent: string, docId: string): string {
-  const pageTitle = title || 'Untitled Document';
+function generateHtmlTemplate(
+  title: string | null,
+  htmlContent: string,
+  docId: string
+): string {
+  const pageTitle = title || "Untitled Document";
   const sanitizedHtml = sanitizeHtml(htmlContent);
-  
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${pageTitle} - Outframer</title>
+  <title>${pageTitle} – plsreadme</title>
   <meta property="og:title" content="${pageTitle}">
-  <meta property="og:description" content="View this document on Outframer">
-  <meta property="og:url" content="https://outframer.com/v/${docId}">
+  <meta property="og:description" content="View this document on plsreadme">
+  <meta property="og:url" content="https://plsreadme.com/v/${docId}">
   <meta property="og:type" content="article">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🙏</text></svg>">
   <style>
     html, body {
       margin: 0;
@@ -370,7 +382,7 @@ function generateHtmlTemplate(title: string | null, htmlContent: string, docId: 
     </article>
   </div>
   <div class="doc-toolbar">
-    <span class="doc-toolbar-item">Made readable with <a href="/">Outframer</a></span>
+    <span class="doc-toolbar-item">Made readable with <a href="/">plsreadme</a></span>
     <button class="doc-toolbar-item" onclick="copyLink()">
       <i class="hgi-stroke hgi-link-01"></i>
       Copy link
@@ -397,26 +409,26 @@ function generateHtmlTemplate(title: string | null, htmlContent: string, docId: 
 }
 
 // POST /api/render - Create a new document
-app.post('/', async (c) => {
+app.post("/", async (c) => {
   try {
-    const contentType = c.req.header('content-type') || '';
-    let markdown = '';
-    let clientIp = c.req.header('cf-connecting-ip') || 'unknown';
+    const contentType = c.req.header("content-type") || "";
+    let markdown = "";
+    let clientIp = c.req.header("cf-connecting-ip") || "unknown";
 
     // Parse input - either JSON or multipart form data
-    if (contentType.includes('application/json')) {
+    if (contentType.includes("application/json")) {
       const body = await c.req.json();
-      markdown = body.markdown || '';
-    } else if (contentType.includes('multipart/form-data')) {
+      markdown = body.markdown || "";
+    } else if (contentType.includes("multipart/form-data")) {
       const formData = await c.req.formData();
-      const file = formData.get('file');
-      
-      if (file && typeof file !== 'string') {
+      const file = formData.get("file");
+
+      if (file && typeof file !== "string") {
         // Cloudflare Workers typings (with lib ES2022) don't include DOM `File`,
         // so we read the blob via Response to avoid `never` typing.
         markdown = await new Response(file as any).text();
       } else {
-        markdown = formData.get('markdown') as string || '';
+        markdown = (formData.get("markdown") as string) || "";
       }
     } else {
       // Try to read as text
@@ -425,17 +437,23 @@ app.post('/', async (c) => {
 
     // Validate input
     if (!markdown || markdown.trim().length === 0) {
-      return c.json({ error: 'No markdown content provided' }, 400);
+      return c.json({ error: "No markdown content provided" }, 400);
     }
 
     if (markdown.length > MAX_FILE_SIZE) {
-      return c.json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024} KB` }, 400);
+      return c.json(
+        { error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024} KB` },
+        400
+      );
     }
 
     // Rate limiting
     const allowed = await checkRateLimit(c.env, clientIp);
     if (!allowed) {
-      return c.json({ error: 'Rate limit exceeded. Maximum 30 uploads per hour.' }, 429);
+      return c.json(
+        { error: "Rate limit exceeded. Maximum 30 uploads per hour." },
+        429
+      );
     }
 
     // Generate ID and hash
@@ -448,7 +466,7 @@ app.post('/', async (c) => {
     // Store in R2
     await c.env.DOCS_BUCKET.put(r2Key, markdown, {
       httpMetadata: {
-        contentType: 'text/markdown',
+        contentType: "text/markdown",
       },
       customMetadata: {
         created_at: now,
@@ -458,8 +476,10 @@ app.post('/', async (c) => {
 
     // Store metadata in D1
     await c.env.DB.prepare(
-      'INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    ).bind(id, r2Key, 'text/markdown', markdown.length, now, hash, title).run();
+      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    )
+      .bind(id, r2Key, "text/markdown", markdown.length, now, hash, title)
+      .run();
 
     // Send Discord notification (optional, best-effort)
     const linkWebhookUrl = c.env.DISCORD_LINK_WEBHOOK_URL;
@@ -474,7 +494,7 @@ app.post('/', async (c) => {
       });
 
       const execCtx = (c as any).executionCtx as ExecutionContext | undefined;
-      if (execCtx && typeof execCtx.waitUntil === 'function') {
+      if (execCtx && typeof execCtx.waitUntil === "function") {
         execCtx.waitUntil(notifyPromise);
       } else {
         // Fallback (still best-effort)
@@ -485,13 +505,13 @@ app.post('/', async (c) => {
     // Track analytics event
     try {
       await c.env.ANALYTICS.writeDataPoint({
-        blobs: ['doc_create', id],
+        blobs: ["doc_create", id],
         doubles: [markdown.length],
         indexes: [clientIp],
       });
     } catch (e) {
       // Silent fail on analytics
-      console.error('Analytics error:', e);
+      console.error("Analytics error:", e);
     }
 
     // Return success
@@ -502,48 +522,52 @@ app.post('/', async (c) => {
       raw_url: `${baseUrl}/v/${id}/raw`,
     });
   } catch (error) {
-    console.error('Error creating document:', error);
-    return c.json({ error: 'Failed to create document' }, 500);
+    console.error("Error creating document:", error);
+    return c.json({ error: "Failed to create document" }, 500);
   }
 });
 
 // GET /api/render/test-discord - Test link generation Discord notification
-app.get('/test-discord', async (c) => {
+app.get("/test-discord", async (c) => {
   if (!c.env.DISCORD_LINK_WEBHOOK_URL) {
-    return c.json({ error: 'DISCORD_LINK_WEBHOOK_URL not set' }, 400);
+    return c.json({ error: "DISCORD_LINK_WEBHOOK_URL not set" }, 400);
   }
 
   const baseUrl = new URL(c.req.url).origin;
-  const id = 'test-doc';
+  const id = "test-doc";
   await sendDiscordLinkCreatedNotification(c.env.DISCORD_LINK_WEBHOOK_URL, {
     id,
-    title: 'Test link notification',
+    title: "Test link notification",
     url: `${baseUrl}/v/${id}`,
     rawUrl: `${baseUrl}/v/${id}/raw`,
     bytes: 1234,
   });
 
-  return c.json({ success: true, message: 'Sent test Discord link notification' });
+  return c.json({
+    success: true,
+    message: "Sent test Discord link notification",
+  });
 });
 
 // GET /v/:id - Render the document as HTML
-app.get('/:id', async (c) => {
+app.get("/:id", async (c) => {
   try {
-    const id = c.req.param('id');
+    const id = c.req.param("id");
 
     // Fetch metadata from D1
-    const doc = await c.env.DB.prepare(
-      'SELECT * FROM docs WHERE id = ?'
-    ).bind(id).first<DocRecord>();
+    const doc = await c.env.DB.prepare("SELECT * FROM docs WHERE id = ?")
+      .bind(id)
+      .first<DocRecord>();
 
     if (!doc) {
-      return c.html(`
+      return c.html(
+        `
         <!DOCTYPE html>
         <html lang="en">
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Document Not Found - Outframer</title>
+          <title>Document Not Found</title>
           <link rel="stylesheet" href="/styles.css">
         </head>
         <body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center;">
@@ -554,18 +578,25 @@ app.get('/:id', async (c) => {
           </div>
         </body>
         </html>
-      `, 404);
+      `,
+        404
+      );
     }
 
     // Increment view_count
     await c.env.DB.prepare(
-      'UPDATE docs SET view_count = view_count + 1 WHERE id = ?'
-    ).bind(id).run();
+      "UPDATE docs SET view_count = view_count + 1 WHERE id = ?"
+    )
+      .bind(id)
+      .run();
 
     // Fetch content from R2
     const object = await c.env.DOCS_BUCKET.get(doc.r2_key);
     if (!object) {
-      return c.html('<h1>Error</h1><p>Document content not found in storage.</p>', 500);
+      return c.html(
+        "<h1>Error</h1><p>Document content not found in storage.</p>",
+        500
+      );
     }
 
     const markdown = await object.text();
@@ -577,43 +608,42 @@ app.get('/:id', async (c) => {
     const html = generateHtmlTemplate(doc.title, htmlContent as string, id);
     return c.html(html);
   } catch (error) {
-    console.error('Error rendering document:', error);
-    return c.html('<h1>Error</h1><p>Failed to render document.</p>', 500);
+    console.error("Error rendering document:", error);
+    return c.html("<h1>Error</h1><p>Failed to render document.</p>", 500);
   }
 });
 
 // GET /v/:id/raw - Get raw markdown
-app.get('/:id/raw', async (c) => {
+app.get("/:id/raw", async (c) => {
   try {
-    const id = c.req.param('id');
+    const id = c.req.param("id");
 
     // Fetch metadata from D1
-    const doc = await c.env.DB.prepare(
-      'SELECT * FROM docs WHERE id = ?'
-    ).bind(id).first<DocRecord>();
+    const doc = await c.env.DB.prepare("SELECT * FROM docs WHERE id = ?")
+      .bind(id)
+      .first<DocRecord>();
 
     if (!doc) {
-      return c.text('Document not found', 404);
+      return c.text("Document not found", 404);
     }
 
     // Fetch content from R2
     const object = await c.env.DOCS_BUCKET.get(doc.r2_key);
     if (!object) {
-      return c.text('Document content not found', 500);
+      return c.text("Document content not found", 500);
     }
 
     const markdown = await object.text();
 
     // Return raw markdown
     return c.text(markdown, 200, {
-      'Content-Type': 'text/markdown',
-      'Content-Disposition': `attachment; filename="${doc.title || id}.md"`,
+      "Content-Type": "text/markdown",
+      "Content-Disposition": `attachment; filename="${doc.title || id}.md"`,
     });
   } catch (error) {
-    console.error('Error fetching raw document:', error);
-    return c.text('Failed to fetch document', 500);
+    console.error("Error fetching raw document:", error);
+    return c.text("Failed to fetch document", 500);
   }
 });
 
 export { app as docsRoutes };
-

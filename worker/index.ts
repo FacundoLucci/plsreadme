@@ -34,6 +34,16 @@ app.route('/v', docsRoutes);
 // Health check
 app.get('/api/health', (c) => c.json({ status: 'ok' }));
 
+// Redirect plsrd.me root to plsreadme.com
+app.get('/', (c) => {
+  const hostname = new URL(c.req.url).hostname;
+  if (hostname === 'plsrd.me') {
+    return c.redirect('https://plsreadme.com', 301);
+  }
+  // Otherwise serve homepage normally
+  return c.env.ASSETS.fetch(c.req.raw);
+});
+
 // Fallback to static assets for all other routes
 app.get('*', async (c) => {
   return c.env.ASSETS.fetch(c.req.raw);
