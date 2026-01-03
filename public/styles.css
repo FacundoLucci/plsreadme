@@ -180,11 +180,7 @@ body {
 .hero-accent-markdown {
   font-family: var(--font-mono) !important;
   font-size: 0.85em;
-  background: linear-gradient(
-    135deg,
-    #10b981,
-    #059669
-  ) !important;
+  background: linear-gradient(135deg, #10b981, #059669) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
@@ -1456,6 +1452,14 @@ body {
     0 2px 8px rgba(37, 99, 235, 0.3);
 }
 
+.hero-cta-button {
+  margin-top: var(--space-xl);
+  font-size: 1.125rem;
+  padding: 1rem 2rem;
+  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4),
+    0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
 .header-cta:hover:not(:disabled) {
   box-shadow: 0 6px 28px rgba(59, 130, 246, 0.5),
     0 4px 12px rgba(59, 130, 246, 0.4);
@@ -1505,8 +1509,7 @@ body {
   background: var(--color-bg-alt);
   border: 1px solid var(--color-border);
   border-radius: 12px;
-  padding: var(--space-3xl) var(--space-xl);
-  margin-top: var(--space-4xl);
+  padding: var(--space-xl);
 }
 
 .inline-generator-title {

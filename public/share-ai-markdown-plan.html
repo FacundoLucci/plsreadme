@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Share AI Markdown Plan | Outframer</title>
+  <meta name="description" content="Share your AI-generated markdown plan with a clean preview link">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafafa; color: #1a1a1a; padding: 2rem; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+    .subtitle { font-size: 1.125rem; color: #666; margin-bottom: 2rem; }
+    .input-section { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 2rem; margin-bottom: 2rem; }
+    textarea { width: 100%; min-height: 300px; padding: 1rem; border: 1px solid #d4d4d4; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 1rem; line-height: 1.6; resize: vertical; }
+    textarea:focus { outline: none; border-color: #1a1a1a; }
+    .create-button { width: 100%; margin-top: 1rem; padding: 1rem 2rem; background: #1a1a1a; color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .create-button:hover { background: #333; }
+    .create-button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 1.5rem; display: none; margin-top: 1rem; }
+    .result.show { display: block; }
+    .result-input { width: 100%; padding: 0.75rem; border: 1px solid #bae6fd; border-radius: 6px; font-family: 'JetBrains Mono', monospace; margin: 1rem 0; }
+    .copy-button { padding: 0.75rem 1.5rem; background: #0c4a6e; color: #fff; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    .copy-button:hover { background: #075985; }
+    .error { background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 1rem; color: #991b1b; display: none; margin-top: 1rem; }
+    .error.show { display: block; }
+    .spinner { display: inline-block; width: 1rem; height: 1rem; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Share AI Markdown Plan</h1>
+    <p class="subtitle">Turn your AI-generated plan into a shareable link. Works with ChatGPT, Claude, and more.</p>
+    
+    <div class="input-section">
+      <textarea id="markdown-input" placeholder="# Project Plan&#10;&#10;Paste your AI-generated markdown plan here..."></textarea>
+      <button id="create-button" class="create-button">
+        <span id="button-text">Create Link</span>
+      </button>
+      
+      <div id="error" class="error"></div>
+      
+      <div id="result" class="result">
+        <strong>Link created!</strong>
+        <input type="text" id="result-url" class="result-input" readonly>
+        <button id="copy-button" class="copy-button">Copy Link</button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    const markdownInput = document.getElementById('markdown-input');
+    const createButton = document.getElementById('create-button');
+    const buttonText = document.getElementById('button-text');
+    const errorDiv = document.getElementById('error');
+    const resultDiv = document.getElementById('result');
+    const resultUrl = document.getElementById('result-url');
+    const copyButton = document.getElementById('copy-button');
+    
+    function showError(message) {
+      errorDiv.textContent = message;
+      errorDiv.classList.add('show');
+      setTimeout(() => errorDiv.classList.remove('show'), 5000);
+    }
+    
+    createButton.addEventListener('click', async () => {
+      const markdown = markdownInput.value.trim();
+      
+      if (!markdown) {
+        showError('Please enter some markdown content');
+        return;
+      }
+      
+      createButton.disabled = true;
+      buttonText.innerHTML = '<span class="spinner"></span> Creating...';
+      errorDiv.classList.remove('show');
+      
+      try {
+        const response = await fetch('/api/create-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create link');
+        }
+        
+        resultUrl.value = data.url;
+        resultDiv.classList.add('show');
+        
+        try {
+          await navigator.clipboard.writeText(data.url);
+        } catch (e) {
+          console.error('Failed to auto-copy:', e);
+        }
+      } catch (error) {
+        showError(error.message);
+      } finally {
+        createButton.disabled = false;
+        buttonText.textContent = 'Create Link';
+      }
+    });
+    
+    copyButton.addEventListener('click', () => {
+      resultUrl.select();
+      navigator.clipboard.writeText(resultUrl.value);
+      const originalText = copyButton.textContent;
+      copyButton.textContent = 'Copied!';
+      setTimeout(() => copyButton.textContent = originalText, 2000);
+    });
+  </script>
+</body>
+</html>

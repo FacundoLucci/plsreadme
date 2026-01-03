@@ -121,64 +121,18 @@ function generateHtmlTemplate(title: string | null, htmlContent: string, docId: 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
   <style>
-    body {
+    html, body {
       margin: 0;
       padding: 0;
+      min-height: 100%;
+      background: #fafafa;
+    }
+    body {
       font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg-primary, #fafafa);
-      color: var(--text-primary, #1a1a1a);
-    }
-    .doc-header {
-      background: #fff;
-      border-bottom: 1px solid #e5e5e5;
-      padding: 1rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(8px);
-      background: rgba(255, 255, 255, 0.95);
-    }
-    .doc-header-content {
-      max-width: 780px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .doc-logo {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      text-decoration: none;
-      color: inherit;
-      font-weight: 600;
-    }
-    .doc-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-    .doc-button {
-      padding: 0.5rem 1rem;
-      border: 1px solid #e5e5e5;
-      background: #fff;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-family: inherit;
-      transition: all 0.2s;
-      text-decoration: none;
-      color: inherit;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .doc-button:hover {
-      border-color: #d4d4d4;
-      background: #f9f9f9;
+      color: #1a1a1a;
     }
     .doc-container {
       max-width: 780px;
@@ -294,6 +248,43 @@ function generateHtmlTemplate(title: string | null, htmlContent: string, docId: 
       background: #f9f9f9;
       font-weight: 600;
     }
+    .doc-toolbar {
+      position: fixed;
+      bottom: 1rem;
+      left: 1rem;
+      display: flex;
+      gap: 0.5rem;
+      z-index: 100;
+    }
+    .doc-toolbar-item {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      color: #666;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      text-decoration: none;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      transition: all 0.2s;
+    }
+    .doc-toolbar-item:hover {
+      border-color: #d4d4d4;
+      background: rgba(249, 249, 249, 0.95);
+    }
+    .doc-toolbar-item a {
+      color: #1a1a1a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .doc-toolbar-item a:hover {
+      text-decoration: underline;
+    }
     @media (max-width: 768px) {
       .doc-container {
         padding: 0 1rem 2rem;
@@ -308,36 +299,91 @@ function generateHtmlTemplate(title: string | null, htmlContent: string, docId: 
         font-size: 1.5rem;
       }
     }
+    @media (prefers-color-scheme: dark) {
+      html, body {
+        background: #1a1a1a;
+      }
+      body {
+        color: #f5f5f5;
+      }
+      .doc-content {
+        background: #262626;
+        border-color: #404040;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+      .doc-content h1,
+      .doc-content h2,
+      .doc-content h3 {
+        color: #f5f5f5;
+      }
+      .doc-content p,
+      .doc-content li {
+        color: #d4d4d4;
+      }
+      .doc-content code {
+        background: #404040;
+        color: #f97583;
+      }
+      .doc-content pre {
+        background: #0d0d0d;
+      }
+      .doc-content blockquote {
+        border-left-color: #404040;
+        color: #a3a3a3;
+      }
+      .doc-content a {
+        color: #58a6ff;
+      }
+      .doc-content a:hover {
+        border-bottom-color: #58a6ff;
+      }
+      .doc-content hr {
+        border-top-color: #404040;
+      }
+      .doc-content th,
+      .doc-content td {
+        border-color: #404040;
+      }
+      .doc-content th {
+        background: #333;
+      }
+      .doc-toolbar-item {
+        background: rgba(38, 38, 38, 0.95);
+        border-color: #404040;
+        color: #a3a3a3;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      .doc-toolbar-item:hover {
+        border-color: #525252;
+        background: rgba(51, 51, 51, 0.95);
+      }
+      .doc-toolbar-item a {
+        color: #f5f5f5;
+      }
+    }
   </style>
 </head>
 <body>
-  <header class="doc-header">
-    <div class="doc-header-content">
-      <a href="/" class="doc-logo">
-        <i class="hgi-stroke hgi-file-01"></i>
-        <span>Outframer</span>
-      </a>
-      <div class="doc-actions">
-        <button class="doc-button" onclick="copyLink()">
-          <i class="hgi-stroke hgi-link-01"></i>
-          Copy link
-        </button>
-        <a href="/v/${docId}/raw" class="doc-button">
-          <i class="hgi-stroke hgi-download-01"></i>
-          Raw
-        </a>
-      </div>
-    </div>
-  </header>
   <div class="doc-container">
     <article class="doc-content">
       ${sanitizedHtml}
     </article>
   </div>
+  <div class="doc-toolbar">
+    <span class="doc-toolbar-item">Made readable with <a href="/">Outframer</a></span>
+    <button class="doc-toolbar-item" onclick="copyLink()">
+      <i class="hgi-stroke hgi-link-01"></i>
+      Copy link
+    </button>
+    <a href="/v/${docId}/raw" class="doc-toolbar-item">
+      <i class="hgi-stroke hgi-download-01"></i>
+      Raw
+    </a>
+  </div>
   <script>
     function copyLink() {
       navigator.clipboard.writeText(window.location.href).then(() => {
-        const btn = event.target.closest('.doc-button');
+        const btn = event.target.closest('.doc-toolbar-item');
         const originalText = btn.innerHTML;
         btn.innerHTML = '<i class="hgi-stroke hgi-checkmark-01"></i> Copied!';
         setTimeout(() => {
@@ -510,6 +556,11 @@ app.get('/:id', async (c) => {
         </html>
       `, 404);
     }
+
+    // Increment view_count
+    await c.env.DB.prepare(
+      'UPDATE docs SET view_count = view_count + 1 WHERE id = ?'
+    ).bind(id).run();
 
     // Fetch content from R2
     const object = await c.env.DOCS_BUCKET.get(doc.r2_key);

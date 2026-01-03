@@ -37,9 +37,9 @@ CREATE TABLE docs (
   bytes INTEGER NOT NULL,
   created_at TEXT NOT NULL,
   sha256 TEXT,
-  title TEXT
+  title TEXT,
+  view_count INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX idx_docs_created_at ON docs(created_at);
 CREATE INDEX idx_docs_sha256 ON docs(sha256);
-

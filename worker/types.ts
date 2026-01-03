@@ -58,5 +58,6 @@ export interface DocRecord {
   created_at: string;
   sha256: string | null;
   title: string | null;
+  view_count: number;
 }
 

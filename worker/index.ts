@@ -5,6 +5,8 @@ import { waitlistRoutes } from './routes/waitlist';
 import { analyticsRoutes } from './routes/analytics';
 import { docsRoutes } from './routes/docs';
 import { convertRoutes } from './routes/convert';
+import { linksRoutes } from './routes/links';
+import { adminRoutes } from './routes/admin';
 import { OutframerMCP as MCPServer } from './mcp-agent';
 
 const app = new Hono<{ Bindings: Env }>();
@@ -43,6 +45,8 @@ app.use('/api/*', cors({
 app.route('/api/waitlist', waitlistRoutes);
 app.route('/api/render', docsRoutes);
 app.route('/api/convert', convertRoutes);
+app.route('/api/create-link', linksRoutes);
+app.route('/api/admin', adminRoutes);
 app.route('/t', analyticsRoutes);
 
 // Mount document viewer routes

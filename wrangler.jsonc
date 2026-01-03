@@ -9,7 +9,8 @@
     { "pattern": "outframer.com", "zone_name": "outframer.com", "custom_domain": true }
   ],
   "ai": {
-    "binding": "AI"
+    "binding": "AI",
+    "remote": true
   },
   "assets": {
     "directory": "./public",

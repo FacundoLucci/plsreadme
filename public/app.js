@@ -1,6 +1,6 @@
 // Tab switching
-const tabs = document.querySelectorAll('.tab');
-const tabContents = document.querySelectorAll('.tab-content');
+const tabs = document.querySelectorAll(".tab");
+const tabContents = document.querySelectorAll(".tab-content");
 
 function detectMarkdown(text) {
   // Updated 2025-12-25: Improved detection to prevent false positives from line breaks.
@@ -21,7 +21,7 @@ function detectMarkdown(text) {
   return strongMdSignals.some((re) => re.test(text));
 }
 
-const markdownStatus = document.getElementById('markdown-status');
+const markdownStatus = document.getElementById("markdown-status");
 let pasteLooksRichText = false;
 let isConverting = false;
 let convertButton = null;
@@ -29,34 +29,34 @@ let pasteActions = null;
 
 function setPasteActionsVisible(visible) {
   if (!pasteActions) return;
-  pasteActions.classList.toggle('show', !!visible);
+  pasteActions.classList.toggle("show", !!visible);
 }
 
 function setConvertButtonState({ disabled, text }) {
   if (!convertButton) return;
   convertButton.disabled = !!disabled;
-  if (typeof text === 'string') convertButton.textContent = text;
+  if (typeof text === "string") convertButton.textContent = text;
 }
 
 function setMarkdownStatus({ show, kind, message }) {
   if (!markdownStatus) return;
-  markdownStatus.classList.remove('show', 'good', 'warn');
+  markdownStatus.classList.remove("show", "good", "warn");
   if (!show) {
-    markdownStatus.textContent = '';
+    markdownStatus.textContent = "";
     return;
   }
-  markdownStatus.classList.add('show');
+  markdownStatus.classList.add("show");
   if (kind) markdownStatus.classList.add(kind);
   markdownStatus.textContent = message;
 }
 
 function updateCreateButtonState() {
-  const activeTab = document.querySelector('.tab.active')?.dataset?.tab;
+  const activeTab = document.querySelector(".tab.active")?.dataset?.tab;
   if (!activeTab) return;
 
-  if (activeTab === 'upload') {
+  if (activeTab === "upload") {
     createButton.disabled = !selectedFile;
-    setMarkdownStatus({ show: false, kind: null, message: '' });
+    setMarkdownStatus({ show: false, kind: null, message: "" });
     setPasteActionsVisible(false);
     return;
   }
@@ -68,10 +68,10 @@ function updateCreateButtonState() {
     setMarkdownStatus({
       show: true,
       kind: null,
-      message: 'Paste Markdown to enable “Create Link”.',
+      message: "Paste Markdown to enable “Create Link”.",
     });
     isConverting = false;
-    setConvertButtonState({ disabled: false, text: 'Generate new Markdown' });
+    setConvertButtonState({ disabled: false, text: "Generate new Markdown" });
     setPasteActionsVisible(false);
     return;
   }
@@ -81,12 +81,12 @@ function updateCreateButtonState() {
     createButton.disabled = false;
     pasteLooksRichText = false;
     isConverting = false;
-    setConvertButtonState({ disabled: false, text: 'Generate new Markdown' });
+    setConvertButtonState({ disabled: false, text: "Generate new Markdown" });
     setPasteActionsVisible(true);
     setMarkdownStatus({
       show: true,
-      kind: 'good',
-      message: 'Markdown detected — ready to create link.',
+      kind: "good",
+      message: "Markdown detected — ready to create link.",
     });
     return;
   }
@@ -96,121 +96,121 @@ function updateCreateButtonState() {
   setPasteActionsVisible(true);
   setConvertButtonState({
     disabled: isConverting,
-    text: isConverting ? 'Generating…' : 'Generate new Markdown',
+    text: isConverting ? "Generating…" : "Generate new Markdown",
   });
   setMarkdownStatus({
     show: true,
     kind: null,
     message: pasteLooksRichText
       ? 'No Markdown detected. You can still create a link, or try "Generate new Markdown" to convert rich text.'
-      : 'No Markdown detected. You can still create a link as-is, or add Markdown formatting.',
+      : "No Markdown detected. You can still create a link as-is, or add Markdown formatting.",
   });
 }
 
-tabs.forEach(tab => {
-  tab.addEventListener('click', () => {
+tabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
-    
-    tabs.forEach(t => t.classList.remove('active'));
-    tabContents.forEach(tc => tc.classList.remove('active'));
-    
-    tab.classList.add('active');
-    document.getElementById(`${tabName}-tab`).classList.add('active');
+
+    tabs.forEach((t) => t.classList.remove("active"));
+    tabContents.forEach((tc) => tc.classList.remove("active"));
+
+    tab.classList.add("active");
+    document.getElementById(`${tabName}-tab`).classList.add("active");
 
     updateCreateButtonState();
   });
 });
 
 // File upload handling
-const fileUploadZone = document.getElementById('file-upload-zone');
-const fileInput = document.getElementById('file-input');
-const fileSelected = document.getElementById('file-selected');
-const fileName = document.getElementById('file-name');
-const removeFileBtn = document.getElementById('remove-file');
+const fileUploadZone = document.getElementById("file-upload-zone");
+const fileInput = document.getElementById("file-input");
+const fileSelected = document.getElementById("file-selected");
+const fileName = document.getElementById("file-name");
+const removeFileBtn = document.getElementById("remove-file");
 
 let selectedFile = null;
 
-fileUploadZone.addEventListener('click', () => {
+fileUploadZone.addEventListener("click", () => {
   fileInput.click();
 });
 
-fileUploadZone.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' || e.key === ' ') {
+fileUploadZone.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" || e.key === " ") {
     e.preventDefault();
     fileInput.click();
   }
 });
 
-fileUploadZone.addEventListener('dragover', (e) => {
+fileUploadZone.addEventListener("dragover", (e) => {
   e.preventDefault();
-  fileUploadZone.classList.add('drag-over');
+  fileUploadZone.classList.add("drag-over");
 });
 
-fileUploadZone.addEventListener('dragleave', () => {
-  fileUploadZone.classList.remove('drag-over');
+fileUploadZone.addEventListener("dragleave", () => {
+  fileUploadZone.classList.remove("drag-over");
 });
 
-fileUploadZone.addEventListener('drop', (e) => {
+fileUploadZone.addEventListener("drop", (e) => {
   e.preventDefault();
-  fileUploadZone.classList.remove('drag-over');
-  
+  fileUploadZone.classList.remove("drag-over");
+
   const files = e.dataTransfer.files;
   if (files.length > 0) {
     handleFileSelect(files[0]);
   }
 });
 
-fileInput.addEventListener('change', (e) => {
+fileInput.addEventListener("change", (e) => {
   if (e.target.files.length > 0) {
     handleFileSelect(e.target.files[0]);
   }
 });
 
-removeFileBtn.addEventListener('click', (e) => {
+removeFileBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   selectedFile = null;
-  fileInput.value = '';
-  fileSelected.style.display = 'none';
-  fileUploadZone.style.display = 'block';
+  fileInput.value = "";
+  fileSelected.style.display = "none";
+  fileUploadZone.style.display = "block";
   updateCreateButtonState();
 });
 
 function handleFileSelect(file) {
   const maxSize = 200 * 1024; // 200 KB
-  
+
   if (file.size > maxSize) {
-    showError('File is too large. Maximum size is 200 KB.');
+    showError("File is too large. Maximum size is 200 KB.");
     return;
   }
-  
-  if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
-    showError('Please select a Markdown file (.md or .markdown)');
+
+  if (!file.name.endsWith(".md") && !file.name.endsWith(".markdown")) {
+    showError("Please select a Markdown file (.md or .markdown)");
     return;
   }
-  
+
   selectedFile = file;
   fileName.textContent = file.name;
-  fileSelected.style.display = 'flex';
-  fileUploadZone.style.display = 'none';
+  fileSelected.style.display = "flex";
+  fileUploadZone.style.display = "none";
   hideError();
   updateCreateButtonState();
 }
 
 // Create link
-const createButton = document.getElementById('create-button');
-const buttonText = document.getElementById('button-text');
-const markdownInput = document.getElementById('markdown-input');
-convertButton = document.getElementById('convert-button');
-pasteActions = convertButton?.closest?.('.paste-actions') || null;
-const resultSection = document.getElementById('result-section');
-const resultUrl = document.getElementById('result-url');
-const viewLink = document.getElementById('view-link');
-const errorSection = document.getElementById('error-section');
+const createButton = document.getElementById("create-button");
+const buttonText = document.getElementById("button-text");
+const markdownInput = document.getElementById("markdown-input");
+convertButton = document.getElementById("convert-button");
+pasteActions = convertButton?.closest?.(".paste-actions") || null;
+const resultSection = document.getElementById("result-section");
+const resultUrl = document.getElementById("result-url");
+const viewLink = document.getElementById("view-link");
+const errorSection = document.getElementById("error-section");
 
-markdownInput.addEventListener('paste', (e) => {
+markdownInput.addEventListener("paste", (e) => {
   // Detect if the clipboard *source* looks like rich text, even if the textarea only receives plain text.
   try {
-    const html = e.clipboardData?.getData('text/html') || '';
+    const html = e.clipboardData?.getData("text/html") || "";
     pasteLooksRichText =
       !!html &&
       /<(h[1-6]|strong|b|em|i|ul|ol|li|code|pre|blockquote|p)\b/i.test(html);
@@ -222,15 +222,15 @@ markdownInput.addEventListener('paste', (e) => {
   setTimeout(updateCreateButtonState, 0);
 });
 
-markdownInput.addEventListener('input', () => {
+markdownInput.addEventListener("input", () => {
   pasteLooksRichText = false;
   updateCreateButtonState();
 });
 
 if (convertButton) {
-  convertButton.addEventListener('click', async () => {
-    const activeTab = document.querySelector('.tab.active')?.dataset?.tab;
-    if (activeTab !== 'paste') return;
+  convertButton.addEventListener("click", async () => {
+    const activeTab = document.querySelector(".tab.active")?.dataset?.tab;
+    if (activeTab !== "paste") return;
 
     const text = markdownInput.value.trim();
     if (!text) return;
@@ -238,149 +238,163 @@ if (convertButton) {
 
     isConverting = true;
     hideError();
-    setConvertButtonState({ disabled: true, text: 'Generating…' });
-    setMarkdownStatus({ show: true, kind: null, message: 'Generating new Markdown…' });
+    setConvertButtonState({ disabled: true, text: "Generating…" });
+    setMarkdownStatus({
+      show: true,
+      kind: null,
+      message: "Generating new Markdown…",
+    });
     updateCreateButtonState();
 
     try {
-      const response = await fetch('/api/convert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/convert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate Markdown');
+        throw new Error(data.error || "Failed to generate Markdown");
       }
 
-      if (typeof data.markdown !== 'string' || !data.markdown.trim()) {
-        throw new Error('AI returned empty Markdown');
+      if (typeof data.markdown !== "string" || !data.markdown.trim()) {
+        throw new Error("AI returned empty Markdown");
       }
 
       markdownInput.value = data.markdown.trim();
       pasteLooksRichText = false;
-      setMarkdownStatus({ show: true, kind: 'good', message: 'Generated new Markdown.' });
-    } catch (error) {
-      showError(error.message || 'Failed to generate Markdown');
       setMarkdownStatus({
         show: true,
-        kind: 'warn',
-        message: 'Generation failed. You can still paste Markdown manually.',
+        kind: "good",
+        message: "Generated new Markdown.",
+      });
+    } catch (error) {
+      showError(error.message || "Failed to generate Markdown");
+      setMarkdownStatus({
+        show: true,
+        kind: "warn",
+        message: "Generation failed. You can still paste Markdown manually.",
       });
     } finally {
       isConverting = false;
-      setConvertButtonState({ disabled: false, text: 'Generate new Markdown' });
+      setConvertButtonState({ disabled: false, text: "Generate new Markdown" });
       updateCreateButtonState();
     }
   });
 }
 
-createButton.addEventListener('click', async () => {
-  const activeTab = document.querySelector('.tab.active').dataset.tab;
-  let markdown = '';
-  
-  if (activeTab === 'paste') {
+createButton.addEventListener("click", async () => {
+  const activeTab = document.querySelector(".tab.active").dataset.tab;
+  let markdown = "";
+
+  if (activeTab === "paste") {
     markdown = markdownInput.value.trim();
     if (!markdown) {
-      showError('Please enter some markdown content');
+      showError("Please enter some markdown content");
       return;
     }
     // Updated 2025-12-25: Removed markdown detection blocker - allow any content
   } else {
     if (!selectedFile) {
-      showError('Please select a file to upload');
+      showError("Please select a file to upload");
       return;
     }
     markdown = await selectedFile.text();
   }
-  
+
   // Disable button and show loading
   createButton.disabled = true;
   buttonText.innerHTML = '<span class="spinner"></span> Creating...';
   hideError();
-  
+
   try {
-    const response = await fetch('/api/render', {
-      method: 'POST',
+    const response = await fetch("/api/create-link", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ markdown }),
     });
-    
+
     const data = await response.json();
-    
+
     if (!response.ok) {
-      throw new Error(data.error || 'Failed to create link');
+      throw new Error(data.error || "Failed to create link");
     }
-    
+
     // Show result
     resultUrl.value = data.url;
     viewLink.href = data.url;
-    resultSection.classList.add('show');
-    
+    resultSection.classList.add("show");
+
+    // Automatically copy the URL to clipboard
+    try {
+      await navigator.clipboard.writeText(data.url);
+      console.log("Link copied to clipboard");
+    } catch (clipboardError) {
+      console.error("Failed to auto-copy:", clipboardError);
+    }
+
     // Scroll to result
-    resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    
+    resultSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
     showError(error.message);
   } finally {
     createButton.disabled = false;
-    buttonText.textContent = 'Create Link';
+    buttonText.textContent = "Create Link";
   }
 });
 
 // Copy result
-const copyResultBtn = document.getElementById('copy-result');
-copyResultBtn.addEventListener('click', () => {
+const copyResultBtn = document.getElementById("copy-result");
+copyResultBtn.addEventListener("click", () => {
   resultUrl.select();
   navigator.clipboard.writeText(resultUrl.value);
-  
+
   const originalText = copyResultBtn.textContent;
-  copyResultBtn.textContent = 'Copied!';
+  copyResultBtn.textContent = "Copied!";
   setTimeout(() => {
     copyResultBtn.textContent = originalText;
   }, 2000);
 });
 
 // Create another
-const createAnotherBtn = document.getElementById('create-another');
-createAnotherBtn.addEventListener('click', (e) => {
+const createAnotherBtn = document.getElementById("create-another");
+createAnotherBtn.addEventListener("click", (e) => {
   e.preventDefault();
-  
+
   // Reset form
-  markdownInput.value = '';
+  markdownInput.value = "";
   selectedFile = null;
-  fileInput.value = '';
-  fileSelected.style.display = 'none';
-  fileUploadZone.style.display = 'block';
-  resultSection.classList.remove('show');
+  fileInput.value = "";
+  fileSelected.style.display = "none";
+  fileUploadZone.style.display = "block";
+  resultSection.classList.remove("show");
   pasteLooksRichText = false;
   isConverting = false;
-  setConvertButtonState({ disabled: false, text: 'Convert to Markdown' });
+  setConvertButtonState({ disabled: false, text: "Convert to Markdown" });
   updateCreateButtonState();
-  
+
   // Scroll to top
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
 // Error handling
 function showError(message) {
   errorSection.textContent = message;
-  errorSection.classList.add('show');
-  errorSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  errorSection.classList.add("show");
+  errorSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function hideError() {
-  errorSection.classList.remove('show');
+  errorSection.classList.remove("show");
 }
 
 // Track page view
-if (typeof track !== 'undefined') {
-  track('app_view');
+if (typeof track !== "undefined") {
+  track("app_view");
 }
 
 // Initialize on load
 updateCreateButtonState();
-

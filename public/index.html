@@ -66,15 +66,11 @@
       <!-- Hero Section -->
       <section class="hero">
         <h1 class="hero-title">
-          <span class="hero-mono">Turn AI-generated documents into</span><br />
-          <span class="hero-accent" id="hero-accent" role="button" tabindex="0"
-            >clean, reviewable links.</span
-          >
+          Turn AI-generated markdown into a clean, shareable link.
         </h1>
 
         <p class="hero-subtitle">
-          Paste in ChatGPT output, drop a <code>.md</code> file, whatever. Get a
-          link anyone can view and comment on.
+          Paste your markdown. Get a beautiful preview. Share the link.
         </p>
 
         <!-- Social Proof -->
@@ -82,357 +78,88 @@
           Join <strong id="waitlist-count"></strong> builders already on the
           waitlist.
         </div>
+        <button
+          class="cta-button hero-cta-button"
+          onclick="document.getElementById('inline-markdown-input').focus(); document.getElementById('inline-markdown-input').scrollIntoView({ behavior: 'smooth', block: 'center' });"
+        >
+          <span class="cta-text">Paste Markdown →</span>
+        </button>
       </section>
 
       <!-- Inline Generator Section -->
-      <section class="section inline-generator-section">
-        <h2 class="inline-generator-title">Try it now — no account needed</h2>
-
-        <div class="inline-generator">
-          <div
-            class="inline-error"
-            id="inline-error"
-            style="display: none"
-          ></div>
-
-          <textarea
-            id="inline-markdown-input"
-            class="inline-textarea"
-            placeholder="# Paste your markdown here&#10;&#10;Try it with ChatGPT output, documentation, notes — anything in markdown format."
-            rows="8"
-          ></textarea>
-
-          <button class="inline-create-button" id="inline-create-button">
-            <span id="inline-button-text">Create Link</span>
-          </button>
-
-          <div class="inline-full-experience">
-            <a href="/app.html" class="inline-full-link">
-              Or go to full experience →
-            </a>
-          </div>
-
-          <div class="inline-result" id="inline-result" style="display: none">
-            <div class="inline-result-title">
-              <i class="hgi-stroke hgi-checkmark-circle-01"></i> Link created!
-            </div>
-            <div class="inline-result-link-wrapper">
-              <input
-                type="text"
-                class="inline-result-input"
-                id="inline-result-url"
-                readonly
-              />
-              <button class="inline-copy-button" id="inline-copy-button">
-                Copy
-              </button>
-            </div>
-            <div class="inline-result-actions">
-              <a
-                href="#"
-                target="_blank"
-                class="inline-result-action"
-                id="inline-view-link"
-              >
-                <i class="hgi-stroke hgi-view"></i> View document
-              </a>
-              <a
-                href="#"
-                class="inline-result-action"
-                id="inline-create-another"
-              >
-                <i class="hgi-stroke hgi-add-01"></i> Create another
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Problem Section -->
-      <section class="section problem-section">
-        <p class="problem-eyebrow">Sound familiar?</p>
-
-        <div class="frustration-cards">
-          <div class="frustration-card">
-            <span class="frustration-quote"
-              >"Wait, all the bullet points got mangled..."</span
-            >
-            <span class="frustration-context"
-              >— You, pasting into Google Docs</span
-            >
-          </div>
-          <div class="frustration-card">
-            <span class="frustration-quote"
-              >"Can you just resend it as a PDF?"</span
-            >
-            <span class="frustration-context"
-              >— Your client, confused by the .md file</span
-            >
-          </div>
-          <div class="frustration-card">
-            <span class="frustration-quote"
-              >"I left some comments... somewhere"</span
-            >
-            <span class="frustration-context"
-              >— Your reviewer, via Slack + email + text</span
-            >
-          </div>
-        </div>
-
-        <div class="problem-agitation">
-          <p>
-            You spend
-            <strong>more time formatting and chasing feedback</strong> than
-            actually using the AI output.
-          </p>
-        </div>
-
-        <div class="before-after">
-          <div class="before-state">
-            <span class="state-label">Without Outframer</span>
-            <div class="chaos-visual">
-              <span class="chaos-item chaos-1">Copy</span>
-              <span class="chaos-item chaos-2">Paste</span>
-              <span class="chaos-item chaos-3">Fix</span>
-              <span class="chaos-item chaos-4">Email</span>
-              <span class="chaos-item chaos-5">Wait</span>
-              <span class="chaos-item chaos-6">Chase</span>
-              <span class="chaos-item chaos-7">Repeat</span>
-            </div>
-          </div>
-          <div class="vs-divider">
-            <i class="hgi-stroke hgi-arrow-right-01"></i>
-          </div>
-          <div class="after-state">
-            <span class="state-label">With Outframer</span>
-            <div class="clean-visual">
-              <i class="hgi-stroke hgi-link-01"></i>
-              <span>One link. Done.</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- How It Works Section -->
-      <section class="section section-alt">
-        <h2 class="section-title">How it works</h2>
-
-        <div class="how-it-works">
-          <!-- Step 1: Markdown File -->
-          <div class="workflow-step">
-            <div class="step-visual">
-              <div class="step-image-wrapper">
-                <img
-                  src="/markdown-editor.png"
-                  alt="Markdown file editor"
-                  class="step-image"
-                />
-                <div class="step-overlay"></div>
-              </div>
-            </div>
-            <div class="step-content">
-              <h3 class="step-title">Start with your markdown</h3>
-              <p class="step-description">
-                From ChatGPT outputs to existing <code>.md</code> files — your
-                content is ready to share.
-              </p>
-            </div>
-          </div>
-
-          <div class="workflow-connector">
-            <div class="connector-line"></div>
-            <i class="hgi-stroke hgi-arrow-down-01 connector-icon"></i>
-          </div>
-
-          <!-- Step 2: Paste/Upload -->
-          <div class="workflow-step">
-            <div class="step-visual">
-              <div class="step-icon-wrapper">
-                <i class="hgi-stroke hgi-upload-01 step-icon-large"></i>
-                <div class="step-icon-glow"></div>
-              </div>
-            </div>
-            <div class="step-content">
-              <h3 class="step-title">Paste or upload</h3>
-              <p class="step-description">
-                Drop your markdown content or upload a file. No formatting to
-                fix, no accounts needed.
-              </p>
-            </div>
-          </div>
-
-          <div class="workflow-connector">
-            <div class="connector-line"></div>
-            <i class="hgi-stroke hgi-arrow-down-01 connector-icon"></i>
-          </div>
-
-          <!-- Step 3: Beautiful Preview with Comments -->
-          <div class="workflow-step">
-            <div class="step-visual">
-              <div class="step-image-wrapper">
-                <img
-                  src="/preview-with-comments.png"
-                  alt="Beautiful markdown preview with comments"
-                  class="step-image"
-                />
-                <div class="step-overlay"></div>
-              </div>
-            </div>
-            <div class="step-content">
-              <h3 class="step-title">Share & collect feedback</h3>
-              <p class="step-description">
-                Get one clean link with a beautiful preview. Reviewers can
-                comment directly on sections — no accounts required.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Features Section -->
       <section class="section">
-        <h2 class="section-title">Free now. Premium features coming soon.</h2>
-        <p class="section-subtitle">
-          The free tool creates beautiful shareable links. Join the beta for
-          advanced collaboration and team features.
-        </p>
+        <div class="inline-generator-section">
+          <h2 class="inline-generator-title">Try it now — no account needed</h2>
 
-        <div class="premium-features-grid">
-          <!-- Comments & Collaboration -->
-          <div class="premium-feature-card">
-            <div class="premium-feature-icon">
-              <i class="hgi-stroke hgi-comment-01"></i>
-            </div>
-            <h3 class="premium-feature-title">Comments & Collaboration</h3>
-            <ul class="premium-feature-list">
-              <li>Inline comments on any section</li>
-              <li>Threaded discussions</li>
-              <li>@mentions and notifications</li>
-              <li>Resolve and track feedback</li>
-            </ul>
-            <span class="premium-badge">Premium</span>
-          </div>
+          <div class="inline-generator">
+            <div
+              class="inline-error"
+              id="inline-error"
+              style="display: none"
+            ></div>
 
-          <!-- Document Management -->
-          <div class="premium-feature-card">
-            <div class="premium-feature-icon">
-              <i class="hgi-stroke hgi-folder-01"></i>
-            </div>
-            <h3 class="premium-feature-title">Document Management</h3>
-            <ul class="premium-feature-list">
-              <li>Edit and update published docs</li>
-              <li>Version history</li>
-              <li>Analytics and view tracking</li>
-              <li>Custom short URLs</li>
-            </ul>
-            <span class="premium-badge">Premium</span>
-          </div>
+            <textarea
+              id="inline-markdown-input"
+              class="inline-textarea"
+              placeholder="# Paste your markdown here&#10;&#10;Try it with ChatGPT output, documentation, notes — anything in markdown format."
+              rows="8"
+            ></textarea>
 
-          <!-- Teams & Business -->
-          <div class="premium-feature-card">
-            <div class="premium-feature-icon">
-              <i class="hgi-stroke hgi-user-multiple"></i>
+            <button class="inline-create-button" id="inline-create-button">
+              <span id="inline-button-text">Create Link</span>
+            </button>
+
+            <div class="inline-full-experience">
+              <a href="/app.html" class="inline-full-link">
+                Or go to full experience →
+              </a>
             </div>
-            <h3 class="premium-feature-title">Teams & Business</h3>
-            <ul class="premium-feature-list">
-              <li>Team workspaces</li>
-              <li>Custom branding and domains</li>
-              <li>White-label experience</li>
-              <li>Access controls and permissions</li>
-              <li>SSO integration</li>
-            </ul>
-            <span class="premium-badge">Premium</span>
+
+            <div class="inline-result" id="inline-result" style="display: none">
+              <div class="inline-result-title">
+                <i class="hgi-stroke hgi-checkmark-circle-01"></i> Link created!
+              </div>
+              <div class="inline-result-link-wrapper">
+                <input
+                  type="text"
+                  class="inline-result-input"
+                  id="inline-result-url"
+                  readonly
+                />
+                <button class="inline-copy-button" id="inline-copy-button">
+                  Copy
+                </button>
+              </div>
+              <div class="inline-result-actions">
+                <a
+                  href="#"
+                  target="_blank"
+                  class="inline-result-action"
+                  id="inline-view-link"
+                >
+                  <i class="hgi-stroke hgi-view"></i> View document
+                </a>
+                <a
+                  href="#"
+                  class="inline-result-action"
+                  id="inline-create-another"
+                >
+                  <i class="hgi-stroke hgi-add-01"></i> Create another
+                </a>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
-
-      <!-- Bottom CTA Section -->
-      <section class="section section-cta-bottom">
-        <h2 class="section-title">Join the premium beta</h2>
-        <p class="cta-subtitle">
-          Get early access to collaboration, document management, and team
-          features.
-        </p>
-
-        <button
-          id="open-waitlist-modal-bottom"
-          class="cta-button bottom-cta-button"
-          data-cta="bottom"
-        >
-          <span class="cta-text">Request early access</span>
-        </button>
       </section>
 
       <!-- Footer -->
       <footer class="footer">
-        <p>&copy; 2025 Outframer</p>
+        <p>&copy; 2026 Outframer</p>
       </footer>
-    </div>
-
-    <!-- Waitlist Modal -->
-    <div id="waitlist-modal" class="modal">
-      <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h2>Join the premium beta</h2>
-        <p>
-          Get early access to advanced collaboration, document management, and
-          team features.
-        </p>
-        <form id="modal-waitlist-form" class="waitlist-form">
-          <div class="form-column">
-            <input
-              type="email"
-              name="email"
-              id="modal-email"
-              placeholder="you@company.com"
-              required
-              aria-label="Email address"
-              class="form-input"
-            />
-            <textarea
-              name="requested_features"
-              id="modal-features"
-              placeholder="What feature would you most like to see? (optional)"
-              aria-label="Feature request"
-              class="form-textarea"
-              rows="3"
-            ></textarea>
-            <input
-              type="text"
-              name="honeypot"
-              id="honeypot"
-              class="honeypot-field"
-              aria-hidden="true"
-              tabindex="-1"
-              style="position: absolute; left: -9999px"
-            />
-            <button type="submit" class="form-button">
-              <span class="button-text">Request access</span>
-              <span class="button-loader"></span>
-            </button>
-          </div>
-          <p class="form-message" id="modal-form-message"></p>
-        </form>
-      </div>
     </div>
 
     <script src="/track.js"></script>
     <script>
-      // Fetch and display waitlist count
-      async function loadCount() {
-        try {
-          const res = await fetch("/api/waitlist/count");
-          const data = await res.json();
-          if (data.count) {
-            document.getElementById("waitlist-count").textContent = data.count;
-            document.getElementById("social-proof").style.display = "block";
-          }
-        } catch (e) {
-          // Silently fail
-        }
-      }
-      loadCount();
-
       // Inline generator functionality
       const inlineMarkdownInput = document.getElementById(
         "inline-markdown-input"
@@ -477,7 +204,7 @@
         hideInlineError();
 
         try {
-          const response = await fetch("/api/render", {
+          const response = await fetch("/api/create-link", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -495,6 +222,14 @@
           inlineResultUrl.value = data.url;
           inlineViewLink.href = data.url;
           inlineResult.style.display = "block";
+
+          // Automatically copy the URL to clipboard
+          try {
+            await navigator.clipboard.writeText(data.url);
+            console.log("Link copied to clipboard");
+          } catch (clipboardError) {
+            console.error("Failed to auto-copy:", clipboardError);
+          }
 
           // Track event
           if (typeof track !== "undefined") {
@@ -535,38 +270,6 @@
       inlineMarkdownInput.addEventListener("keydown", (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
           inlineCreateButton.click();
-        }
-      });
-
-      // Easter egg: Markdown meta-joke on hero text
-      const heroAccent = document.getElementById("hero-accent");
-      let isTransformed = false;
-
-      function transformHeroText() {
-        if (isTransformed) return;
-        isTransformed = true;
-
-        const originalText = heroAccent.textContent;
-        heroAccent.classList.add("hero-accent-markdown");
-        heroAccent.textContent = `[${originalText}](https://outframer.com)`;
-
-        // Track easter egg
-        if (typeof track !== "undefined") {
-          track("easter_egg_hero_click");
-        }
-
-        setTimeout(() => {
-          heroAccent.classList.remove("hero-accent-markdown");
-          heroAccent.textContent = originalText;
-          isTransformed = false;
-        }, 2000);
-      }
-
-      heroAccent.addEventListener("click", transformHeroText);
-      heroAccent.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          transformHeroText();
         }
       });
     </script>

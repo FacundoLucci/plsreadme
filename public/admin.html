@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin - Outframer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #fafafa;
+      color: #1a1a1a;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+    }
+    
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    
+    .metric-card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+    
+    .metric-label {
+      font-size: 0.875rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+    }
+    
+    .metric-value {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+    
+    .error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 1rem;
+      color: #991b1b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Metrics Dashboard</h1>
+    
+    <div id="loading" class="loading">Loading metrics...</div>
+    <div id="error" class="error" style="display: none;"></div>
+    
+    <div id="metrics" class="metrics" style="display: none;">
+      <div class="metric-card">
+        <div class="metric-label">Links created today</div>
+        <div class="metric-value" id="links-today">-</div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-label">Links created yesterday</div>
+        <div class="metric-value" id="links-yesterday">-</div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-label">Total links</div>
+        <div class="metric-value" id="links-total">-</div>
+      </div>
+      
+      <div class="metric-card">
+        <div class="metric-label">Average links/day (last 7 days)</div>
+        <div class="metric-value" id="links-avg">-</div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    async function loadMetrics() {
+      try {
+        const response = await fetch('/api/admin/metrics');
+        
+        if (!response.ok) {
+          throw new Error('Failed to load metrics');
+        }
+        
+        const data = await response.json();
+        
+        document.getElementById('links-today').textContent = data.links_today;
+        document.getElementById('links-yesterday').textContent = data.links_yesterday;
+        document.getElementById('links-total').textContent = data.total_links;
+        document.getElementById('links-avg').textContent = data.avg_links_per_day;
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('metrics').style.display = 'grid';
+      } catch (error) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').textContent = error.message;
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+    
+    loadMetrics();
+  </script>
+</body>
+</html>
