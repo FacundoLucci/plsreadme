@@ -227,16 +227,6 @@ markdownInput.addEventListener("input", () => {
   updateCreateButtonState();
 });
 
-// Allow Enter+Cmd/Ctrl to submit (capture phase to beat extension interference)
-document.addEventListener("keydown", (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === "Enter" && document.activeElement === markdownInput) {
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    createButton.click();
-  }
-}, true); // capture phase - fires before bubbling phase handlers
-
 if (convertButton) {
   convertButton.addEventListener("click", async () => {
     const activeTab = document.querySelector(".tab.active")?.dataset?.tab;

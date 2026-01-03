@@ -437,6 +437,11 @@
           </div>
 
           <div class="tab-content active" id="paste-tab">
+            <!-- Honeypot to attract password manager extensions away from the textarea -->
+            <div aria-hidden="true" style="position: absolute; left: -9999px; top: -9999px;">
+              <input type="text" name="username" autocomplete="username" tabindex="-1" />
+              <input type="password" name="password" autocomplete="current-password" tabindex="-1" />
+            </div>
             <textarea
               id="markdown-input"
               class="markdown-textarea"
