@@ -613,6 +613,31 @@ app.get("/:id", async (c) => {
   }
 });
 
+// GET /api/render/count - Get docs count for social proof
+app.get("/count", async (c) => {
+  try {
+    const result = await c.env.DB.prepare(
+      "SELECT COUNT(*) as count FROM docs"
+    ).first<{ count: number }>();
+
+    const count = result?.count || 0;
+
+    // Apply social proof rules
+    let display: string | null = null;
+    if (count >= 100) {
+      display = `${Math.floor(count / 100) * 100}+`;
+    } else if (count >= 10) {
+      display = count.toString();
+    }
+    // < 10: null (hide)
+
+    return c.json({ count, display });
+  } catch (error) {
+    console.error("Count error:", error);
+    return c.json({ count: 0, display: null });
+  }
+});
+
 // GET /v/:id/raw - Get raw markdown
 app.get("/:id/raw", async (c) => {
   try {

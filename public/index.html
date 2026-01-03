@@ -65,14 +65,15 @@
 
       <!-- Hero Section -->
       <section class="hero">
-        <h1 class="hero-title">Turn markdown into shareable links.</h1>
+        <h1 class="hero-title">
+          Turn AI-generated markdown into clean, shareable links.
+        </h1>
 
         <p class="hero-subtitle">Paste your markdown. Get a plsrd.me link.</p>
 
         <!-- Social Proof -->
         <div id="social-proof" class="social-proof" style="display: none">
-          Join <strong id="waitlist-count"></strong> builders already on the
-          waitlist.
+          <strong id="links-count"></strong> links generated and counting.
         </div>
         <button
           class="cta-button hero-cta-button"
@@ -268,6 +269,20 @@
           inlineCreateButton.click();
         }
       });
+
+      // Fetch and display social proof count (links generated)
+      (async function loadSocialProof() {
+        try {
+          const response = await fetch("/api/render/count");
+          const data = await response.json();
+          if (data.display) {
+            document.getElementById("links-count").textContent = data.display;
+            document.getElementById("social-proof").style.display = "block";
+          }
+        } catch (error) {
+          console.error("Failed to load social proof:", error);
+        }
+      })();
     </script>
   </body>
 </html>

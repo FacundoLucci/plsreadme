@@ -184,33 +184,10 @@ waitlistRoutes.post('/', async (c) => {
         );
       }
 
-      // Fire-and-forget, but keep the Worker alive long enough to finish.
-      // Without waitUntil(), the runtime may terminate before webhook fetch completes.
+      // Fire-and-forget with waitUntil to keep Worker alive
       if (notificationPromises.length > 0) {
-        // Create promise that handles errors but doesn't reject (for waitUntil)
-        const all = Promise.all(notificationPromises).then(
-          () => console.log('All notifications completed successfully'),
-          (err) => console.error('Notification error:', err)
-        );
-        
-        // Access execution context - Hono provides this via c.executionCtx
-        const execCtx = (c as any).executionCtx as ExecutionContext | undefined;
-        if (execCtx && typeof execCtx.waitUntil === 'function') {
-          execCtx.waitUntil(all);
-          console.log('Using executionCtx.waitUntil() for background notifications');
-        } else {
-          // Fallback: try c.event (Service Worker syntax)
-          const event = (c as any).event as { waitUntil?: (promise: Promise<unknown>) => void } | undefined;
-          if (event && typeof event.waitUntil === 'function') {
-            event.waitUntil(all);
-            console.log('Using event.waitUntil() for background notifications');
-          } else {
-            console.warn('Execution context not available - notifications may not complete');
-            console.warn('Available context keys:', Object.keys(c));
-            // Still execute but don't block - this might work in some cases
-            all.catch(() => {});
-          }
-        }
+        const notifyAll = Promise.allSettled(notificationPromises);
+        c.executionCtx.waitUntil(notifyAll);
       }
 
       return c.json({ success: true });
