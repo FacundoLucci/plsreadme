@@ -7,32 +7,11 @@ import { docsRoutes } from './routes/docs';
 import { convertRoutes } from './routes/convert';
 import { linksRoutes } from './routes/links';
 import { adminRoutes } from './routes/admin';
+// Export the MCP Durable Object class for Cloudflare binding
+export { OutframerMCP } from './mcp-agent';
 import { OutframerMCP as MCPServer } from './mcp-agent';
 
 const app = new Hono<{ Bindings: Env }>();
-
-// Durable Object kept for backwards compatibility with existing instances.
-// Cloudflare will reject deploys if a class referenced by existing DO instances
-// is removed or renamed without a migration.
-export class OutframerMCP {
-  private state: DurableObjectState;
-  private env: Env;
-
-  constructor(state: DurableObjectState, env: Env) {
-    this.state = state;
-    this.env = env;
-  }
-
-  async fetch(_request: Request): Promise<Response> {
-    return new Response(
-      'OutframerMCP Durable Object is no longer used by this Worker.',
-      {
-        status: 410,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-      }
-    );
-  }
-}
 
 // CORS for API routes
 app.use('/api/*', cors({
