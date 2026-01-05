@@ -1544,7 +1544,7 @@ body {
   border-radius: 8px;
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: 16px;
   line-height: 1.6;
   resize: vertical;
   transition: border-color var(--transition-base);
