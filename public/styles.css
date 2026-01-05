@@ -1848,7 +1848,8 @@ body {
 
   .inline-textarea {
     min-height: 150px;
-    font-size: 0.8125rem;
+    /* Keep >=16px to prevent iOS Safari input-zoom on focus */
+    font-size: 16px;
   }
 
   .premium-features-grid {
