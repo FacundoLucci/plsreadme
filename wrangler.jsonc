@@ -4,6 +4,7 @@
   "main": "worker/index.ts",
   "compatibility_date": "2025-01-01",
   "compatibility_flags": ["nodejs_compat"],
+  "preview_urls": true,
   "account_id": "78aa716d1c2ddac7dab1162d38998f53",
   "routes": [
     { "pattern": "plsreadme.com", "zone_name": "plsreadme.com", "custom_domain": true },
