@@ -28,7 +28,7 @@ app.get("/:docId", async (c) => {
     }
 
     const { results } = await c.env.DB.prepare(
-      "SELECT id, doc_id, author_name, body, created_at FROM comments WHERE doc_id = ? AND flagged = 0 ORDER BY created_at ASC"
+      "SELECT id, doc_id, author_name, body, anchor_id, created_at FROM comments WHERE doc_id = ? AND flagged = 0 ORDER BY created_at ASC"
     )
       .bind(docId)
       .all();
@@ -53,10 +53,12 @@ app.post("/:docId", async (c) => {
       return c.json({ error: "Document not found" }, 404);
     }
 
-    const body = await c.req.json<{ author_name?: string; body?: string }>();
+    const body = await c.req.json<{ author_name?: string; body?: string; anchor_id?: string }>();
 
     const authorName = (body.author_name || "").trim();
     const commentBody = (body.body || "").trim();
+    const anchorIdRaw = typeof body.anchor_id === "string" ? body.anchor_id.trim() : "";
+    const anchorId = anchorIdRaw || "doc-root";
 
     if (!authorName || authorName.length < 1 || authorName.length > 50) {
       return c.json({ error: "author_name must be 1-50 characters" }, 400);
@@ -64,6 +66,10 @@ app.post("/:docId", async (c) => {
 
     if (!commentBody || commentBody.length < 1 || commentBody.length > 2000) {
       return c.json({ error: "body must be 1-2000 characters" }, 400);
+    }
+
+    if (!anchorId || anchorId.length < 1 || anchorId.length > 120) {
+      return c.json({ error: "anchor_id must be 1-120 characters" }, 400);
     }
 
     // Rate limiting
@@ -85,9 +91,9 @@ app.post("/:docId", async (c) => {
     const now = new Date().toISOString();
 
     await c.env.DB.prepare(
-      "INSERT INTO comments (id, doc_id, author_name, body, created_at, ip_hash, flagged) VALUES (?, ?, ?, ?, ?, ?, 0)"
+      "INSERT INTO comments (id, doc_id, author_name, body, anchor_id, created_at, ip_hash, flagged) VALUES (?, ?, ?, ?, ?, ?, ?, 0)"
     )
-      .bind(id, docId, authorName, commentBody, now, ipHash)
+      .bind(id, docId, authorName, commentBody, anchorId, now, ipHash)
       .run();
 
     const comment: CommentRecord = {
@@ -95,6 +101,7 @@ app.post("/:docId", async (c) => {
       doc_id: docId,
       author_name: authorName,
       body: commentBody,
+      anchor_id: anchorId,
       created_at: now,
       ip_hash: null, // don't expose
       flagged: 0,

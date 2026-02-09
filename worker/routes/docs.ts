@@ -112,13 +112,50 @@ function sanitizeHtml(html: string): string {
 }
 
 // Helper: Generate HTML template for rendered doc
+function slugifyAnchorText(text: string): string {
+  const stripped = text
+    .toLowerCase()
+    .replace(/&[a-z0-9#]+;/gi, " ")
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return stripped || "node";
+}
+
+function addStableAnchorIds(html: string): string {
+  const used = new Map<string, number>();
+  const eligible = /<(h[1-6]|p|li|blockquote|pre)(\s[^>]*)?>([\s\S]*?)<\/\1>/gi;
+
+  return html.replace(eligible, (full, tag, attrs = "", inner) => {
+    if (/\sid\s*=\s*["'][^"']+["']/i.test(attrs)) {
+      return full;
+    }
+
+    const text = inner
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
+
+    const base = slugifyAnchorText(text || tag);
+    const count = (used.get(base) || 0) + 1;
+    used.set(base, count);
+    const id = count === 1 ? base : `${base}-${count}`;
+
+    return `<${tag}${attrs} id="${id}">${inner}</${tag}>`;
+  });
+}
+
+// Helper: Generate HTML template for rendered doc
 function generateHtmlTemplate(
   title: string | null,
   htmlContent: string,
   docId: string
 ): string {
   const pageTitle = title || "Untitled Document";
-  const sanitizedHtml = sanitizeHtml(htmlContent);
+  const anchoredHtml = addStableAnchorIds(htmlContent);
+  const sanitizedHtml = sanitizeHtml(anchoredHtml);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -133,468 +170,107 @@ function generateHtmlTemplate(
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🙏</text></svg>">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      min-height: 100%;
-      background: #fafafa;
-    }
-    body {
-      font-family: 'Instrument Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      color: #1a1a1a;
-    }
-    .doc-container {
-      max-width: 780px;
-      margin: 2rem auto;
-      padding: 0 2rem 4rem;
-    }
-    .doc-content {
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-radius: 8px;
-      padding: 3rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-    .doc-content h1 {
-      margin-top: 0;
-      margin-bottom: 1.5rem;
-      font-size: 2.5rem;
-      font-weight: 700;
-      line-height: 1.2;
-      color: #1a1a1a;
-    }
-    .doc-content h2 {
-      margin-top: 2.5rem;
-      margin-bottom: 1rem;
-      font-size: 1.875rem;
-      font-weight: 600;
-      line-height: 1.3;
-      color: #1a1a1a;
-    }
-    .doc-content h3 {
-      margin-top: 2rem;
-      margin-bottom: 0.75rem;
-      font-size: 1.5rem;
-      font-weight: 600;
-      line-height: 1.4;
-      color: #1a1a1a;
-    }
-    .doc-content p {
-      margin: 1rem 0;
-      line-height: 1.7;
-      color: #404040;
-    }
-    .doc-content ul, .doc-content ol {
-      margin: 1rem 0;
-      padding-left: 1.5rem;
-      line-height: 1.7;
-    }
-    .doc-content li {
-      margin: 0.5rem 0;
-      color: #404040;
-    }
-    .doc-content code {
-      font-family: monospace;
-      background: #f5f5f5;
-      padding: 0.125rem 0.375rem;
-      border-radius: 4px;
-      font-size: 0.875em;
-      color: #d73a49;
-    }
-    .doc-content pre {
-      background: #1a1a1a;
-      color: #f5f5f5;
-      padding: 1.5rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      margin: 1.5rem 0;
-      line-height: 1.3;
-    }
-    .doc-content pre code {
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      font-size: 0.875rem;
-      line-height: 1.3;
-    }
-    .doc-content blockquote {
-      margin: 1.5rem 0;
-      padding-left: 1.5rem;
-      border-left: 4px solid #e5e5e5;
-      color: #666;
-      font-style: italic;
-    }
-    .doc-content a {
-      color: #0066cc;
-      text-decoration: none;
-      border-bottom: 1px solid transparent;
-      transition: border-color 0.2s;
-    }
-    .doc-content a:hover {
-      border-bottom-color: #0066cc;
-    }
-    .doc-content img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 6px;
-      margin: 1.5rem 0;
-    }
-    .doc-content hr {
-      margin: 2rem 0;
-      border: none;
-      border-top: 1px solid #e5e5e5;
-    }
-    .doc-content table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1.5rem 0;
-    }
-    .doc-content th, .doc-content td {
-      padding: 0.75rem;
-      border: 1px solid #e5e5e5;
-      text-align: left;
-    }
-    .doc-content th {
-      background: #f9f9f9;
-      font-weight: 600;
-    }
-    .doc-toolbar {
-      position: fixed;
-      bottom: 1rem;
-      left: 1rem;
-      display: flex;
-      gap: 0.5rem;
-      z-index: 100;
-    }
-    .doc-toolbar-item {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(8px);
-      border: 1px solid #e5e5e5;
-      border-radius: 6px;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.75rem;
-      color: #666;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      text-decoration: none;
-      font-family: inherit;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.375rem;
-      transition: all 0.2s;
-    }
-    .doc-toolbar-item:hover {
-      border-color: #d4d4d4;
-      background: rgba(249, 249, 249, 0.95);
-    }
-    .doc-toolbar-item a {
-      color: #1a1a1a;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .doc-toolbar-item a:hover {
-      text-decoration: underline;
-    }
-    @media (max-width: 768px) {
-      .doc-container {
-        padding: 0 1rem 2rem;
-      }
-      .doc-content {
-        padding: 1.5rem;
-      }
-      .doc-content h1 {
-        font-size: 2rem;
-      }
-      .doc-content h2 {
-        font-size: 1.5rem;
-      }
-    }
-    /* Comments section */
-    .comments-section {
-      margin-top: 1.5rem;
-      background: #fff;
-      border: 1px solid #e5e5e5;
-      border-radius: 8px;
-      padding: 2rem 3rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    }
-    .comments-heading {
-      margin: 0 0 1.5rem;
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #1a1a1a;
-    }
-    .comments-list {
-      display: flex;
-      flex-direction: column;
-    }
-    .comment-item {
-      padding: 1rem 0;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .comment-item:last-child {
-      border-bottom: none;
-    }
-    .comment-meta {
-      display: flex;
-      align-items: baseline;
-      gap: 0.5rem;
-      margin-bottom: 0.25rem;
-    }
-    .comment-author {
-      font-weight: 600;
-      color: #1a1a1a;
-      font-size: 0.875rem;
-    }
-    .comment-time {
-      font-size: 0.75rem;
-      color: #999;
-    }
-    .comment-body {
-      color: #404040;
-      font-size: 0.9rem;
-      line-height: 1.6;
-      margin: 0;
-      white-space: pre-wrap;
-    }
-    .comment-form {
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid #e5e5e5;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-    .comment-form input,
-    .comment-form textarea {
-      font-family: inherit;
-      font-size: 0.875rem;
-      padding: 0.625rem 0.75rem;
-      border: 1px solid #e5e5e5;
-      border-radius: 6px;
-      background: #fafafa;
-      color: #1a1a1a;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .comment-form input:focus,
-    .comment-form textarea:focus {
-      border-color: #0066cc;
-    }
-    .comment-form textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
-    .comment-form button {
-      align-self: flex-start;
-      font-family: inherit;
-      font-size: 0.875rem;
-      font-weight: 500;
-      padding: 0.5rem 1.25rem;
-      background: #1a1a1a;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .comment-form button:hover {
-      background: #333;
-    }
-    .comment-form button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .comment-error {
-      color: #dc2626;
-      font-size: 0.8rem;
-      display: none;
-    }
-    .comments-empty {
-      color: #999;
-      font-size: 0.875rem;
-      padding: 1rem 0;
-    }
-    @media (max-width: 768px) {
-      .comments-section {
-        padding: 1.5rem;
-      }
-    }
+    :root { color-scheme: light dark; }
+    html, body { margin: 0; padding: 0; background: #fafafa; }
+    body { font-family: 'Instrument Sans', sans-serif; color: #1f2937; }
+    .layout { max-width: 1240px; margin: 0 auto; padding: 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; }
+    .doc-content { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 2.2rem; line-height: 1.7; }
+    .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id] { position: relative; cursor: pointer; }
+    .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(59,130,246,0.08); }
+    .doc-content .anchor-selected { background: rgba(59,130,246,0.16); border-radius: 6px; }
+    .anchor-dot { position: absolute; left: -14px; top: 0.7em; width: 8px; height: 8px; border-radius: 50%; background: #2563eb; }
+    .side-panel { position: sticky; top: 1rem; align-self: start; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; max-height: calc(100vh - 2rem); overflow: auto; }
+    .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .panel-title { margin: 0; font-size: 1rem; }
+    .anchor-context { font-size: 0.82rem; color: #6b7280; margin: 0.5rem 0 0.75rem; }
+    .general-btn { border: 1px solid #d1d5db; background: #f9fafb; border-radius: 6px; font-size: 0.78rem; padding: 0.25rem 0.55rem; cursor: pointer; }
+    .comments-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
+    .comment-item { border-bottom: 1px solid #f3f4f6; padding-bottom: 0.75rem; }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-meta { font-size: 0.75rem; color: #6b7280; }
+    .comment-author { font-weight: 600; color: #111827; margin-right: 0.5rem; }
+    .comment-body { margin: 0.3rem 0 0; white-space: pre-wrap; font-size: 0.88rem; }
+    .comment-form { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.9rem; }
+    .comment-form input,.comment-form textarea { width: 100%; box-sizing: border-box; padding: 0.55rem 0.65rem; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; color: inherit; font-family: inherit; }
+    .comment-form textarea { min-height: 80px; resize: vertical; }
+    .comment-form button { align-self: flex-start; background: #111827; color: #fff; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
+    .comment-error { display: none; color: #dc2626; font-size: 0.8rem; }
+    .comments-empty { color: #6b7280; font-size: 0.85rem; }
+    .doc-toolbar { position: fixed; left: 1rem; bottom: 1rem; display: flex; gap: 0.5rem; }
+    .doc-toolbar-item { border: 1px solid #d1d5db; border-radius: 6px; background: rgba(255,255,255,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: #111827; text-decoration: none; }
+    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .side-panel { position: static; max-height: none; } .anchor-dot { left: -10px; } }
     @media (prefers-color-scheme: dark) {
-      html, body {
-        background: #1a1a1a;
-      }
-      body {
-        color: #f5f5f5;
-      }
-      .doc-content {
-        background: #262626;
-        border-color: #404040;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-      }
-      .doc-content h1,
-      .doc-content h2,
-      .doc-content h3 {
-        color: #f5f5f5;
-      }
-      .doc-content p,
-      .doc-content li {
-        color: #d4d4d4;
-      }
-      .doc-content code {
-        background: #404040;
-        color: #f97583;
-      }
-      .doc-content pre {
-        background: #0d0d0d;
-      }
-      .doc-content blockquote {
-        border-left-color: #404040;
-        color: #a3a3a3;
-      }
-      .doc-content a {
-        color: #58a6ff;
-      }
-      .doc-content a:hover {
-        border-bottom-color: #58a6ff;
-      }
-      .doc-content hr {
-        border-top-color: #404040;
-      }
-      .doc-content th,
-      .doc-content td {
-        border-color: #404040;
-      }
-      .doc-content th {
-        background: #333;
-      }
-      .doc-toolbar-item {
-        background: rgba(38, 38, 38, 0.95);
-        border-color: #404040;
-        color: #a3a3a3;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-      }
-      .doc-toolbar-item:hover {
-        border-color: #525252;
-        background: rgba(51, 51, 51, 0.95);
-      }
-      .doc-toolbar-item a {
-        color: #f5f5f5;
-      }
-      .comments-section {
-        background: #262626;
-        border-color: #404040;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-      }
-      .comments-heading {
-        color: #f5f5f5;
-      }
-      .comment-item {
-        border-bottom-color: #333;
-      }
-      .comment-author {
-        color: #f5f5f5;
-      }
-      .comment-time {
-        color: #777;
-      }
-      .comment-body {
-        color: #d4d4d4;
-      }
-      .comment-form {
-        border-top-color: #404040;
-      }
-      .comment-form input,
-      .comment-form textarea {
-        background: #1a1a1a;
-        border-color: #404040;
-        color: #f5f5f5;
-      }
-      .comment-form input:focus,
-      .comment-form textarea:focus {
-        border-color: #58a6ff;
-      }
-      .comment-form button {
-        background: #f5f5f5;
-        color: #1a1a1a;
-      }
-      .comment-form button:hover {
-        background: #d4d4d4;
-      }
-      .comments-empty {
-        color: #777;
-      }
+      html, body { background: #111827; color: #e5e7eb; }
+      .doc-content,.side-panel { background: #1f2937; border-color: #374151; }
+      .doc-content :is(p,li,blockquote) { color: #d1d5db; }
+      .doc-content :is(h1,h2,h3,h4,h5,h6) { color: #f9fafb; }
+      .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
+      .doc-content .anchor-selected { background: rgba(96,165,250,0.22); }
+      .general-btn,.comment-form input,.comment-form textarea,.doc-toolbar-item { background: #111827; border-color: #4b5563; color: #e5e7eb; }
+      .comment-author { color: #f9fafb; }
     }
   </style>
 </head>
 <body>
-  <div class="doc-container">
-    <article class="doc-content">
-      ${sanitizedHtml}
-    </article>
-    <section class="comments-section">
-      <h2 class="comments-heading">Comments (<span id="comment-count">0</span>)</h2>
-      <div class="comments-list" id="comments-list">
-        <p class="comments-empty" id="comments-empty">No comments yet. Be the first!</p>
+  <div class="layout">
+    <article class="doc-content" id="doc-content">${sanitizedHtml}</article>
+    <aside class="side-panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Comments (<span id="comment-count">0</span>)</h2>
+        <button id="general-btn" class="general-btn" type="button">General</button>
       </div>
+      <p class="anchor-context" id="anchor-context">Commenting on: General</p>
+      <div class="comments-list" id="comments-list"><p class="comments-empty" id="comments-empty">No comments for this anchor yet.</p></div>
       <form class="comment-form" id="comment-form">
         <input type="text" id="comment-name" placeholder="Your name" required maxlength="50" />
         <textarea id="comment-body" placeholder="Write a comment…" required maxlength="2000"></textarea>
         <div class="comment-error" id="comment-error"></div>
         <button type="submit">Post comment</button>
       </form>
-    </section>
+    </aside>
   </div>
   <div class="doc-toolbar">
     <span class="doc-toolbar-item">Made readable with <a href="/">plsreadme</a></span>
-    <button class="doc-toolbar-item" onclick="copyLink()">
-      <i class="hgi-stroke hgi-link-01"></i>
-      Copy link
-    </button>
-    <a href="/v/${docId}/raw" class="doc-toolbar-item">
-      <i class="hgi-stroke hgi-download-01"></i>
-      Raw
-    </a>
+    <button class="doc-toolbar-item" onclick="copyLink()">Copy link</button>
+    <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
   </div>
   <script>
-    function copyLink() {
-      navigator.clipboard.writeText(window.location.href).then(() => {
-        const btn = event.target.closest('.doc-toolbar-item');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="hgi-stroke hgi-checkmark-01"></i> Copied!';
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-        }, 2000);
-      });
-    }
-
+    function copyLink() { navigator.clipboard.writeText(window.location.href); }
     (function() {
-      const DOC_ID = '${docId}';
-      const listEl = document.getElementById('comments-list');
-      const emptyEl = document.getElementById('comments-empty');
-      const countEl = document.getElementById('comment-count');
-      const form = document.getElementById('comment-form');
-      const nameInput = document.getElementById('comment-name');
-      const bodyInput = document.getElementById('comment-body');
-      const errorEl = document.getElementById('comment-error');
+      var DOC_ID = '${docId}';
+      var DOC_ROOT = 'doc-root';
+      var selectedAnchor = DOC_ROOT;
+      var selectedEl = null;
+      var selectedDot = null;
+      var allComments = [];
+      var contentEl = document.getElementById('doc-content');
+      var listEl = document.getElementById('comments-list');
+      var emptyEl = document.getElementById('comments-empty');
+      var countEl = document.getElementById('comment-count');
+      var form = document.getElementById('comment-form');
+      var nameInput = document.getElementById('comment-name');
+      var bodyInput = document.getElementById('comment-body');
+      var errorEl = document.getElementById('comment-error');
+      var contextEl = document.getElementById('anchor-context');
+      var generalBtn = document.getElementById('general-btn');
 
-      // Restore saved name
-      const saved = localStorage.getItem('plsreadme_author_name');
+      var saved = localStorage.getItem('plsreadme_author_name');
       if (saved) nameInput.value = saved;
-      nameInput.addEventListener('input', function() {
-        localStorage.setItem('plsreadme_author_name', this.value.trim());
-      });
+      nameInput.addEventListener('input', function() { localStorage.setItem('plsreadme_author_name', this.value.trim()); });
 
       function relativeTime(dateStr) {
         var diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
         if (diff < 60) return 'just now';
         if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
         if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
-        if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
-        return new Date(dateStr).toLocaleDateString();
+        return Math.floor(diff / 86400) + 'd ago';
+      }
+
+      function contextText() {
+        if (selectedAnchor === DOC_ROOT) return 'Commenting on: General';
+        var snippet = selectedEl ? (selectedEl.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80) : selectedAnchor;
+        return 'Comment on: ' + snippet;
       }
 
       function renderComment(c) {
@@ -607,21 +283,56 @@ function generateHtmlTemplate(
         return div;
       }
 
+      function renderComments() {
+        listEl.innerHTML = '';
+        var filtered = allComments.filter(function(c) { return (c.anchor_id || DOC_ROOT) === selectedAnchor; });
+        countEl.textContent = filtered.length;
+        contextEl.textContent = contextText();
+        if (!filtered.length) {
+          emptyEl.style.display = '';
+          listEl.appendChild(emptyEl);
+          return;
+        }
+        emptyEl.style.display = 'none';
+        filtered.forEach(function(c) { listEl.appendChild(renderComment(c)); });
+      }
+
+      function clearSelection() {
+        if (selectedEl) selectedEl.classList.remove('anchor-selected');
+        if (selectedDot && selectedDot.parentNode) selectedDot.parentNode.removeChild(selectedDot);
+        selectedEl = null;
+        selectedDot = null;
+      }
+
+      function selectGeneral() {
+        selectedAnchor = DOC_ROOT;
+        clearSelection();
+        renderComments();
+      }
+
+      function selectAnchor(el) {
+        clearSelection();
+        selectedEl = el;
+        selectedAnchor = el.id || DOC_ROOT;
+        el.classList.add('anchor-selected');
+        selectedDot = document.createElement('span');
+        selectedDot.className = 'anchor-dot';
+        el.appendChild(selectedDot);
+        renderComments();
+      }
+
+      contentEl.addEventListener('click', function(e) {
+        var target = e.target && e.target.closest ? e.target.closest('h1,h2,h3,h4,h5,h6,p,li,blockquote,pre') : null;
+        if (!target || !target.id || !contentEl.contains(target)) return;
+        selectAnchor(target);
+      });
+
+      generalBtn.addEventListener('click', selectGeneral);
+
       function loadComments() {
         fetch('/api/comments/' + DOC_ID)
           .then(function(r) { return r.json(); })
-          .then(function(data) {
-            var comments = data.comments || [];
-            countEl.textContent = comments.length;
-            if (comments.length === 0) {
-              emptyEl.style.display = '';
-              return;
-            }
-            emptyEl.style.display = 'none';
-            comments.forEach(function(c) {
-              listEl.appendChild(renderComment(c));
-            });
-          })
+          .then(function(data) { allComments = data.comments || []; renderComments(); })
           .catch(function() {});
       }
 
@@ -630,23 +341,21 @@ function generateHtmlTemplate(
         errorEl.style.display = 'none';
         var btn = form.querySelector('button');
         btn.disabled = true;
+
         fetch('/api/comments/' + DOC_ID, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ author_name: nameInput.value.trim(), body: bodyInput.value.trim() })
+          body: JSON.stringify({ author_name: nameInput.value.trim(), body: bodyInput.value.trim(), anchor_id: selectedAnchor })
         })
           .then(function(r) {
             if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed'); });
             return r.json();
           })
           .then(function(data) {
-            var c = data.comment;
-            emptyEl.style.display = 'none';
-            listEl.appendChild(renderComment(c));
-            var n = parseInt(countEl.textContent) + 1;
-            countEl.textContent = n;
+            allComments.push(data.comment);
             bodyInput.value = '';
             localStorage.setItem('plsreadme_author_name', nameInput.value.trim());
+            renderComments();
           })
           .catch(function(err) {
             errorEl.textContent = err.message;

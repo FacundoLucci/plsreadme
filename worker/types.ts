@@ -55,6 +55,7 @@ export interface CommentRecord {
   doc_id: string;
   author_name: string;
   body: string;
+  anchor_id: string;
   created_at: string;
   ip_hash: string | null;
   flagged: number;
