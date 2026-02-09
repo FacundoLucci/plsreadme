@@ -541,7 +541,7 @@ function generateHtmlTemplate(
         <p class="comments-empty" id="comments-empty">No comments yet. Be the first!</p>
       </div>
       <form class="comment-form" id="comment-form">
-        <input type="text" id="comment-name" placeholder="Your name" required maxlength="100" />
+        <input type="text" id="comment-name" placeholder="Your name" required maxlength="50" />
         <textarea id="comment-body" placeholder="Write a comment…" required maxlength="2000"></textarea>
         <div class="comment-error" id="comment-error"></div>
         <button type="submit">Post comment</button>
@@ -584,8 +584,8 @@ function generateHtmlTemplate(
       // Restore saved name
       const saved = localStorage.getItem('plsreadme_author_name');
       if (saved) nameInput.value = saved;
-      nameInput.addEventListener('change', function() {
-        localStorage.setItem('plsreadme_author_name', this.value);
+      nameInput.addEventListener('input', function() {
+        localStorage.setItem('plsreadme_author_name', this.value.trim());
       });
 
       function relativeTime(dateStr) {
