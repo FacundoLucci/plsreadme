@@ -312,6 +312,117 @@ function generateHtmlTemplate(
         font-size: 1.5rem;
       }
     }
+    /* Comments section */
+    .comments-section {
+      margin-top: 1.5rem;
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 2rem 3rem;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .comments-heading {
+      margin: 0 0 1.5rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+    }
+    .comment-item {
+      padding: 1rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .comment-item:last-child {
+      border-bottom: none;
+    }
+    .comment-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+    .comment-author {
+      font-weight: 600;
+      color: #1a1a1a;
+      font-size: 0.875rem;
+    }
+    .comment-time {
+      font-size: 0.75rem;
+      color: #999;
+    }
+    .comment-body {
+      color: #404040;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      margin: 0;
+      white-space: pre-wrap;
+    }
+    .comment-form {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e5e5e5;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .comment-form input,
+    .comment-form textarea {
+      font-family: inherit;
+      font-size: 0.875rem;
+      padding: 0.625rem 0.75rem;
+      border: 1px solid #e5e5e5;
+      border-radius: 6px;
+      background: #fafafa;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .comment-form input:focus,
+    .comment-form textarea:focus {
+      border-color: #0066cc;
+    }
+    .comment-form textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    .comment-form button {
+      align-self: flex-start;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 0.5rem 1.25rem;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .comment-form button:hover {
+      background: #333;
+    }
+    .comment-form button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .comment-error {
+      color: #dc2626;
+      font-size: 0.8rem;
+      display: none;
+    }
+    .comments-empty {
+      color: #999;
+      font-size: 0.875rem;
+      padding: 1rem 0;
+    }
+    @media (max-width: 768px) {
+      .comments-section {
+        padding: 1.5rem;
+      }
+    }
     @media (prefers-color-scheme: dark) {
       html, body {
         background: #1a1a1a;
@@ -373,6 +484,49 @@ function generateHtmlTemplate(
       .doc-toolbar-item a {
         color: #f5f5f5;
       }
+      .comments-section {
+        background: #262626;
+        border-color: #404040;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      }
+      .comments-heading {
+        color: #f5f5f5;
+      }
+      .comment-item {
+        border-bottom-color: #333;
+      }
+      .comment-author {
+        color: #f5f5f5;
+      }
+      .comment-time {
+        color: #777;
+      }
+      .comment-body {
+        color: #d4d4d4;
+      }
+      .comment-form {
+        border-top-color: #404040;
+      }
+      .comment-form input,
+      .comment-form textarea {
+        background: #1a1a1a;
+        border-color: #404040;
+        color: #f5f5f5;
+      }
+      .comment-form input:focus,
+      .comment-form textarea:focus {
+        border-color: #58a6ff;
+      }
+      .comment-form button {
+        background: #f5f5f5;
+        color: #1a1a1a;
+      }
+      .comment-form button:hover {
+        background: #d4d4d4;
+      }
+      .comments-empty {
+        color: #777;
+      }
     }
   </style>
 </head>
@@ -381,6 +535,18 @@ function generateHtmlTemplate(
     <article class="doc-content">
       ${sanitizedHtml}
     </article>
+    <section class="comments-section">
+      <h2 class="comments-heading">Comments (<span id="comment-count">0</span>)</h2>
+      <div class="comments-list" id="comments-list">
+        <p class="comments-empty" id="comments-empty">No comments yet. Be the first!</p>
+      </div>
+      <form class="comment-form" id="comment-form">
+        <input type="text" id="comment-name" placeholder="Your name" required maxlength="100" />
+        <textarea id="comment-body" placeholder="Write a comment…" required maxlength="2000"></textarea>
+        <div class="comment-error" id="comment-error"></div>
+        <button type="submit">Post comment</button>
+      </form>
+    </section>
   </div>
   <div class="doc-toolbar">
     <span class="doc-toolbar-item">Made readable with <a href="/">plsreadme</a></span>
@@ -404,6 +570,93 @@ function generateHtmlTemplate(
         }, 2000);
       });
     }
+
+    (function() {
+      const DOC_ID = '${docId}';
+      const listEl = document.getElementById('comments-list');
+      const emptyEl = document.getElementById('comments-empty');
+      const countEl = document.getElementById('comment-count');
+      const form = document.getElementById('comment-form');
+      const nameInput = document.getElementById('comment-name');
+      const bodyInput = document.getElementById('comment-body');
+      const errorEl = document.getElementById('comment-error');
+
+      // Restore saved name
+      const saved = localStorage.getItem('plsreadme_author_name');
+      if (saved) nameInput.value = saved;
+      nameInput.addEventListener('change', function() {
+        localStorage.setItem('plsreadme_author_name', this.value);
+      });
+
+      function relativeTime(dateStr) {
+        var diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+        if (diff < 60) return 'just now';
+        if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+        if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+        if (diff < 2592000) return Math.floor(diff / 86400) + 'd ago';
+        return new Date(dateStr).toLocaleDateString();
+      }
+
+      function renderComment(c) {
+        var div = document.createElement('div');
+        div.className = 'comment-item';
+        div.innerHTML = '<div class="comment-meta"><span class="comment-author"></span><span class="comment-time"></span></div><p class="comment-body"></p>';
+        div.querySelector('.comment-author').textContent = c.author_name;
+        div.querySelector('.comment-time').textContent = relativeTime(c.created_at);
+        div.querySelector('.comment-body').textContent = c.body;
+        return div;
+      }
+
+      function loadComments() {
+        fetch('/api/comments/' + DOC_ID)
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            var comments = data.comments || [];
+            countEl.textContent = comments.length;
+            if (comments.length === 0) {
+              emptyEl.style.display = '';
+              return;
+            }
+            emptyEl.style.display = 'none';
+            comments.forEach(function(c) {
+              listEl.appendChild(renderComment(c));
+            });
+          })
+          .catch(function() {});
+      }
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        errorEl.style.display = 'none';
+        var btn = form.querySelector('button');
+        btn.disabled = true;
+        fetch('/api/comments/' + DOC_ID, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ author_name: nameInput.value.trim(), body: bodyInput.value.trim() })
+        })
+          .then(function(r) {
+            if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed'); });
+            return r.json();
+          })
+          .then(function(data) {
+            var c = data.comment;
+            emptyEl.style.display = 'none';
+            listEl.appendChild(renderComment(c));
+            var n = parseInt(countEl.textContent) + 1;
+            countEl.textContent = n;
+            bodyInput.value = '';
+            localStorage.setItem('plsreadme_author_name', nameInput.value.trim());
+          })
+          .catch(function(err) {
+            errorEl.textContent = err.message;
+            errorEl.style.display = '';
+          })
+          .finally(function() { btn.disabled = false; });
+      });
+
+      loadComments();
+    })();
   </script>
 </body>
 </html>`;
