@@ -19,7 +19,7 @@
 
   /* Typography */
   --font-sans: "Instrument Sans", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+  --font-mono: monospace;
 
   /* Spacing */
   --space-xs: 0.25rem;

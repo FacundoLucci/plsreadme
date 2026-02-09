@@ -132,7 +132,7 @@ function generateHtmlTemplate(
   <meta property="og:type" content="article">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🙏</text></svg>">
   <style>
@@ -197,7 +197,7 @@ function generateHtmlTemplate(
       color: #404040;
     }
     .doc-content code {
-      font-family: 'JetBrains Mono', monospace;
+      font-family: monospace;
       background: #f5f5f5;
       padding: 0.125rem 0.375rem;
       border-radius: 4px;
@@ -211,13 +211,14 @@ function generateHtmlTemplate(
       border-radius: 6px;
       overflow-x: auto;
       margin: 1.5rem 0;
+      line-height: 1.3;
     }
     .doc-content pre code {
       background: transparent;
       color: inherit;
       padding: 0;
       font-size: 0.875rem;
-      line-height: 1.6;
+      line-height: 1.3;
     }
     .doc-content blockquote {
       margin: 1.5rem 0;
