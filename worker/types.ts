@@ -50,6 +50,16 @@ export interface TrackingEvent {
   timestamp: number;
 }
 
+export interface CommentRecord {
+  id: string;
+  doc_id: string;
+  author_name: string;
+  body: string;
+  created_at: string;
+  ip_hash: string | null;
+  flagged: number;
+}
+
 export interface DocRecord {
   id: string;
   r2_key: string;

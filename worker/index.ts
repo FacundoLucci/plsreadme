@@ -7,6 +7,7 @@ import { docsRoutes } from './routes/docs';
 import { convertRoutes } from './routes/convert';
 import { linksRoutes } from './routes/links';
 import { adminRoutes } from './routes/admin';
+import { commentsRoutes } from './routes/comments';
 // Export the MCP Durable Object class for Cloudflare binding
 export { OutframerMCP } from './mcp-agent';
 import { OutframerMCP as MCPServer } from './mcp-agent';
@@ -26,6 +27,7 @@ app.route('/api/render', docsRoutes);
 app.route('/api/convert', convertRoutes);
 app.route('/api/create-link', linksRoutes);
 app.route('/api/admin', adminRoutes);
+app.route('/api/comments', commentsRoutes);
 app.route('/t', analyticsRoutes);
 
 // Mount document viewer routes
