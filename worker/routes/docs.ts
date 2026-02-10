@@ -191,12 +191,17 @@ function generateHtmlTemplate(
     .comment-meta { font-size: 0.75rem; color: #6b7280; }
     .comment-author { font-weight: 600; color: #111827; margin-right: 0.5rem; }
     .comment-body { margin: 0.3rem 0 0; white-space: pre-wrap; font-size: 0.88rem; }
-    .comment-form { display: flex; flex-direction: column; gap: 0.55rem; margin-top: 0.9rem; }
-    .comment-form input,.comment-form textarea { width: 100%; box-sizing: border-box; padding: 0.55rem 0.65rem; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; color: inherit; font-family: inherit; }
-    .comment-form textarea { min-height: 80px; resize: vertical; }
-    .comment-form button { align-self: flex-start; background: #111827; color: #fff; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
     .comment-error { display: none; color: #dc2626; font-size: 0.8rem; }
     .comments-empty { color: #6b7280; font-size: 0.85rem; }
+    /* Inline comment box */
+    #inline-comment-box { display: none; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; margin: 0.75rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    #inline-comment-box .inline-form { display: flex; flex-direction: column; gap: 0.55rem; }
+    #inline-comment-box input, #inline-comment-box textarea { width: 100%; box-sizing: border-box; padding: 0.55rem 0.65rem; border: 1px solid #d1d5db; border-radius: 6px; background: #fff; color: inherit; font-family: inherit; }
+    #inline-comment-box textarea { min-height: 80px; resize: vertical; }
+    #inline-comment-box .inline-btn-row { display: flex; gap: 0.5rem; align-items: center; }
+    #inline-comment-box .btn-post { background: #111827; color: #fff; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
+    #inline-comment-box .btn-cancel { background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
+    #inline-comment-box .inline-error { display: none; color: #dc2626; font-size: 0.8rem; margin-top: 0.25rem; }
     .doc-toolbar { position: fixed; left: 1rem; bottom: 1rem; display: flex; gap: 0.5rem; }
     .doc-toolbar-item { border: 1px solid #d1d5db; border-radius: 6px; background: rgba(255,255,255,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: #111827; text-decoration: none; }
     @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .side-panel { position: static; max-height: none; } .anchor-dot { left: -10px; } }
@@ -204,17 +209,33 @@ function generateHtmlTemplate(
       html, body { background: #111827; color: #e5e7eb; }
       .doc-content,.side-panel { background: #1f2937; border-color: #374151; }
       .doc-content :is(p,li,blockquote) { color: #d1d5db; }
-      .doc-content :is(h1,h2,h3,h4,h5,h6) { color: #f9fafb; }
+      .doc-content :is(h1,h2,h3,h4,h5,h6) { color: #f9fabf; }
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
       .doc-content .anchor-selected { background: rgba(96,165,250,0.22); }
-      .general-btn,.comment-form input,.comment-form textarea,.doc-toolbar-item { background: #111827; border-color: #4b5563; color: #e5e7eb; }
+      .general-btn,.doc-toolbar-item { background: #111827; border-color: #4b5563; color: #e5e7eb; }
       .comment-author { color: #f9fafb; }
+      #inline-comment-box { background: #1f2937; border-color: #374151; }
+      #inline-comment-box input, #inline-comment-box textarea { background: #111827; border-color: #4b5563; color: #e5e7eb; }
+      #inline-comment-box .btn-post { background: #f9fafb; color: #111827; }
+      #inline-comment-box .btn-cancel { background: transparent; color: #9ca3af; border-color: #4b5563; }
     }
   </style>
 </head>
 <body>
   <div class="layout">
-    <article class="doc-content" id="doc-content">${sanitizedHtml}</article>
+    <article class="doc-content" id="doc-content">${sanitizedHtml}
+      <div id="inline-comment-box">
+        <div class="inline-form">
+          <input type="text" id="comment-name" placeholder="Your name" required maxlength="50" />
+          <textarea id="comment-body" placeholder="Write a comment…" required maxlength="2000"></textarea>
+          <div class="inline-error" id="comment-error"></div>
+          <div class="inline-btn-row">
+            <button type="button" class="btn-post" id="inline-post-btn">Post</button>
+            <button type="button" class="btn-cancel" id="inline-cancel-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </article>
     <aside class="side-panel">
       <div class="panel-header">
         <h2 class="panel-title">Comments (<span id="comment-count">0</span>)</h2>
@@ -222,12 +243,6 @@ function generateHtmlTemplate(
       </div>
       <p class="anchor-context" id="anchor-context">Commenting on: General</p>
       <div class="comments-list" id="comments-list"><p class="comments-empty" id="comments-empty">No comments for this anchor yet.</p></div>
-      <form class="comment-form" id="comment-form">
-        <input type="text" id="comment-name" placeholder="Your name" required maxlength="50" />
-        <textarea id="comment-body" placeholder="Write a comment…" required maxlength="2000"></textarea>
-        <div class="comment-error" id="comment-error"></div>
-        <button type="submit">Post comment</button>
-      </form>
     </aside>
   </div>
   <div class="doc-toolbar">
@@ -248,12 +263,14 @@ function generateHtmlTemplate(
       var listEl = document.getElementById('comments-list');
       var emptyEl = document.getElementById('comments-empty');
       var countEl = document.getElementById('comment-count');
-      var form = document.getElementById('comment-form');
       var nameInput = document.getElementById('comment-name');
       var bodyInput = document.getElementById('comment-body');
       var errorEl = document.getElementById('comment-error');
       var contextEl = document.getElementById('anchor-context');
       var generalBtn = document.getElementById('general-btn');
+      var inlineBox = document.getElementById('inline-comment-box');
+      var postBtn = document.getElementById('inline-post-btn');
+      var cancelBtn = document.getElementById('inline-cancel-btn');
 
       var saved = localStorage.getItem('plsreadme_author_name');
       if (saved) nameInput.value = saved;
@@ -310,6 +327,19 @@ function generateHtmlTemplate(
         renderComments();
       }
 
+      function showInlineBox(el) {
+        el.insertAdjacentElement('afterend', inlineBox);
+        inlineBox.style.display = 'block';
+        bodyInput.focus();
+        // Scroll into view on mobile
+        setTimeout(function() { inlineBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 100);
+      }
+
+      function hideInlineBox() {
+        inlineBox.style.display = 'none';
+        errorEl.style.display = 'none';
+      }
+
       function selectAnchor(el) {
         clearSelection();
         selectedEl = el;
@@ -319,15 +349,37 @@ function generateHtmlTemplate(
         selectedDot.className = 'anchor-dot';
         el.appendChild(selectedDot);
         renderComments();
+        showInlineBox(el);
       }
 
       contentEl.addEventListener('click', function(e) {
+        // Ignore clicks inside the inline comment box
+        if (e.target.closest && e.target.closest('#inline-comment-box')) return;
         var target = e.target && e.target.closest ? e.target.closest('h1,h2,h3,h4,h5,h6,p,li,blockquote,pre') : null;
         if (!target || !target.id || !contentEl.contains(target)) return;
         selectAnchor(target);
       });
 
-      generalBtn.addEventListener('click', selectGeneral);
+      generalBtn.addEventListener('click', function() {
+        selectGeneral();
+        hideInlineBox();
+      });
+
+      cancelBtn.addEventListener('click', function() {
+        hideInlineBox();
+        clearSelection();
+        selectedAnchor = DOC_ROOT;
+        renderComments();
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && inlineBox.style.display !== 'none') {
+          hideInlineBox();
+          clearSelection();
+          selectedAnchor = DOC_ROOT;
+          renderComments();
+        }
+      });
 
       function loadComments() {
         fetch('/api/comments/' + DOC_ID)
@@ -336,16 +388,21 @@ function generateHtmlTemplate(
           .catch(function() {});
       }
 
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
+      function postComment() {
         errorEl.style.display = 'none';
-        var btn = form.querySelector('button');
-        btn.disabled = true;
+        var name = nameInput.value.trim();
+        var body = bodyInput.value.trim();
+        if (!name || !body) {
+          errorEl.textContent = 'Name and comment are required.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        postBtn.disabled = true;
 
         fetch('/api/comments/' + DOC_ID, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ author_name: nameInput.value.trim(), body: bodyInput.value.trim(), anchor_id: selectedAnchor })
+          body: JSON.stringify({ author_name: name, body: body, anchor_id: selectedAnchor })
         })
           .then(function(r) {
             if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed'); });
@@ -354,14 +411,19 @@ function generateHtmlTemplate(
           .then(function(data) {
             allComments.push(data.comment);
             bodyInput.value = '';
-            localStorage.setItem('plsreadme_author_name', nameInput.value.trim());
+            localStorage.setItem('plsreadme_author_name', name);
             renderComments();
           })
           .catch(function(err) {
             errorEl.textContent = err.message;
-            errorEl.style.display = '';
+            errorEl.style.display = 'block';
           })
-          .finally(function() { btn.disabled = false; });
+          .finally(function() { postBtn.disabled = false; });
+      }
+
+      postBtn.addEventListener('click', postComment);
+      bodyInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) postComment();
       });
 
       loadComments();
