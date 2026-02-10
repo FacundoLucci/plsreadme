@@ -202,6 +202,20 @@ function generateHtmlTemplate(
     #inline-comment-box .btn-post { background: #111827; color: #fff; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
     #inline-comment-box .btn-cancel { background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
     #inline-comment-box .inline-error { display: none; color: #dc2626; font-size: 0.8rem; margin-top: 0.25rem; }
+    /* Sidebar grouped comments */
+    .comment-group { margin-bottom: 1rem; }
+    .comment-group-header { display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.6rem; background: #f3f4f6; border-radius: 6px; cursor: pointer; font-size: 0.82rem; color: #374151; font-weight: 500; border: none; width: 100%; text-align: left; }
+    .comment-group-header:hover { background: #e5e7eb; }
+    .comment-group-header .group-count { font-size: 0.7rem; color: #6b7280; margin-left: auto; white-space: nowrap; }
+    .comment-group-comments { padding-left: 0.5rem; margin-top: 0.35rem; }
+    .sidebar-comment { border-bottom: 1px solid #f3f4f6; padding: 0.4rem 0; font-size: 0.82rem; }
+    .sidebar-comment:last-child { border-bottom: none; }
+    .sidebar-comment .sc-author { font-weight: 600; color: #111827; }
+    .sidebar-comment .sc-time { color: #9ca3af; font-size: 0.72rem; margin-left: 0.3rem; }
+    .sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4b5563; white-space: pre-wrap; }
+    .sidebar-empty { color: #6b7280; font-size: 0.85rem; padding: 1rem 0; }
+    @keyframes flash-highlight { 0% { background: rgba(59,130,246,0.3); } 100% { background: transparent; } }
+    .flash-highlight { animation: flash-highlight 1.2s ease-out; }
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .doc-toolbar { position: fixed; left: 1rem; bottom: 1rem; display: flex; gap: 0.5rem; }
     .doc-toolbar-item { border: 1px solid #d1d5db; border-radius: 6px; background: rgba(255,255,255,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: #111827; text-decoration: none; }
@@ -220,6 +234,12 @@ function generateHtmlTemplate(
       #inline-comment-box .btn-post { background: #f9fafb; color: #111827; }
       #inline-comment-box .btn-cancel { background: transparent; color: #9ca3af; border-color: #4b5563; }
       .comment-badge { background: #60a5fa; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+      .comment-group-header { background: #374151; color: #d1d5db; }
+      .comment-group-header:hover { background: #4b5563; }
+      .sidebar-comment { border-color: #374151; }
+      .sidebar-comment .sc-author { color: #f9fafb; }
+      .sidebar-comment .sc-body { color: #9ca3af; }
+      @keyframes flash-highlight { 0% { background: rgba(96,165,250,0.35); } 100% { background: transparent; } }
     }
   </style>
 </head>
@@ -243,8 +263,7 @@ function generateHtmlTemplate(
         <h2 class="panel-title">Comments (<span id="comment-count">0</span>)</h2>
         <button id="general-btn" class="general-btn" type="button">General</button>
       </div>
-      <p class="anchor-context" id="anchor-context">Commenting on: General</p>
-      <div class="comments-list" id="comments-list"><p class="comments-empty" id="comments-empty">No comments for this anchor yet.</p></div>
+      <div id="sidebar-groups"></div>
     </aside>
   </div>
   <div class="doc-toolbar">
@@ -262,14 +281,12 @@ function generateHtmlTemplate(
       var selectedDot = null;
       var allComments = [];
       var contentEl = document.getElementById('doc-content');
-      var listEl = document.getElementById('comments-list');
-      var emptyEl = document.getElementById('comments-empty');
       var countEl = document.getElementById('comment-count');
       var nameInput = document.getElementById('comment-name');
       var bodyInput = document.getElementById('comment-body');
       var errorEl = document.getElementById('comment-error');
-      var contextEl = document.getElementById('anchor-context');
       var generalBtn = document.getElementById('general-btn');
+      var sidebarGroupsEl = document.getElementById('sidebar-groups');
       var inlineBox = document.getElementById('inline-comment-box');
       var postBtn = document.getElementById('inline-post-btn');
       var cancelBtn = document.getElementById('inline-cancel-btn');
@@ -286,35 +303,61 @@ function generateHtmlTemplate(
         return Math.floor(diff / 86400) + 'd ago';
       }
 
-      function contextText() {
-        if (selectedAnchor === DOC_ROOT) return 'Commenting on: General';
-        var snippet = selectedEl ? (selectedEl.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 80) : selectedAnchor;
-        return 'Comment on: ' + snippet;
+      function scrollToAnchor(anchorId) {
+        var el = anchorId === DOC_ROOT ? contentEl : document.getElementById(anchorId);
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('flash-highlight');
+        setTimeout(function() { el.classList.remove('flash-highlight'); }, 1200);
       }
 
-      function renderComment(c) {
-        var div = document.createElement('div');
-        div.className = 'comment-item';
-        div.innerHTML = '<div class="comment-meta"><span class="comment-author"></span><span class="comment-time"></span></div><p class="comment-body"></p>';
-        div.querySelector('.comment-author').textContent = c.author_name;
-        div.querySelector('.comment-time').textContent = relativeTime(c.created_at);
-        div.querySelector('.comment-body').textContent = c.body;
-        return div;
-      }
-
-      function renderComments() {
-        listEl.innerHTML = '';
-        var filtered = allComments.filter(function(c) { return (c.anchor_id || DOC_ROOT) === selectedAnchor; });
-        countEl.textContent = filtered.length;
-        contextEl.textContent = contextText();
-        if (!filtered.length) {
-          emptyEl.style.display = '';
-          listEl.appendChild(emptyEl);
+      function renderSidebar() {
+        sidebarGroupsEl.innerHTML = '';
+        countEl.textContent = allComments.length;
+        if (!allComments.length) {
+          sidebarGroupsEl.innerHTML = '<p class="sidebar-empty">No comments yet.</p>';
           return;
         }
-        emptyEl.style.display = 'none';
-        filtered.forEach(function(c) { listEl.appendChild(renderComment(c)); });
+        // Group by anchor_id
+        var groups = {};
+        var order = [];
+        allComments.forEach(function(c) {
+          var aid = c.anchor_id || DOC_ROOT;
+          if (!groups[aid]) { groups[aid] = []; order.push(aid); }
+          groups[aid].push(c);
+        });
+        // Put doc-root first
+        order.sort(function(a, b) { return a === DOC_ROOT ? -1 : b === DOC_ROOT ? 1 : 0; });
+        order.forEach(function(aid) {
+          var section = document.createElement('div');
+          section.className = 'comment-group';
+          var header = document.createElement('button');
+          header.className = 'comment-group-header';
+          var label = 'General';
+          if (aid !== DOC_ROOT) {
+            var targetEl = document.getElementById(aid);
+            label = targetEl ? (targetEl.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 60) : aid;
+          }
+          header.innerHTML = '<span>' + label.replace(/</g, '&lt;') + '</span><span class="group-count">' + groups[aid].length + '</span>';
+          header.addEventListener('click', function() { scrollToAnchor(aid); });
+          section.appendChild(header);
+          var list = document.createElement('div');
+          list.className = 'comment-group-comments';
+          groups[aid].forEach(function(c) {
+            var item = document.createElement('div');
+            item.className = 'sidebar-comment';
+            item.innerHTML = '<div><span class="sc-author"></span><span class="sc-time"></span></div><p class="sc-body"></p>';
+            item.querySelector('.sc-author').textContent = c.author_name;
+            item.querySelector('.sc-time').textContent = relativeTime(c.created_at);
+            item.querySelector('.sc-body').textContent = c.body;
+            list.appendChild(item);
+          });
+          section.appendChild(list);
+          sidebarGroupsEl.appendChild(section);
+        });
       }
+
+      function renderComments() { renderSidebar(); }
 
       function clearSelection() {
         if (selectedEl) selectedEl.classList.remove('anchor-selected');

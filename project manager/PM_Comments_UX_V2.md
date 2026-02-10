@@ -43,7 +43,7 @@ Current UX requires looking at a separate panel. Inline input feels natural — 
 
 ---
 
-## Phase 2: Comment Count Indicators on Nodes
+## ✅ Phase 2: Comment Count Indicators on Nodes (7287248)
 
 ### What
 After comments load, show a small **comment count badge** next to each node that has comments. Badge appears in the left margin/padding of the doc container (like Google Docs comment indicators).
