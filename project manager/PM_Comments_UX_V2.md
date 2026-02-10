@@ -108,7 +108,7 @@ Desktop has screen real estate for a persistent comment overview. Clicking a com
 
 ---
 
-## Phase 4: Dismissible Onboarding Tip
+## ✅ Phase 4: Dismissible Onboarding Tip (faf63bf)
 
 ### What
 A small floating tip/banner appears **above the toolbar** (bottom of screen) on first visit:
