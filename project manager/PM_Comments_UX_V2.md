@@ -75,7 +75,7 @@ Users need to see at a glance which parts of the document have discussion.
 
 ---
 
-## Phase 3: Desktop Sidebar Comment List with Scroll-to-Node
+## ✅ Phase 3: Desktop Sidebar Comment List with Scroll-to-Node (e2b8f1d)
 
 ### What
 On desktop (>768px), show a **right sidebar** listing all comments grouped by anchor. Each group shows:

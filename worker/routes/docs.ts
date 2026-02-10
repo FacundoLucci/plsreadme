@@ -219,6 +219,14 @@ function generateHtmlTemplate(
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .doc-toolbar { position: fixed; left: 1rem; bottom: 1rem; display: flex; gap: 0.5rem; }
     .doc-toolbar-item { border: 1px solid #d1d5db; border-radius: 6px; background: rgba(255,255,255,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: #111827; text-decoration: none; }
+    /* Onboarding tip */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(12px); } }
+    .onboarding-tip { position: fixed; bottom: 3.5rem; left: 50%; transform: translateX(-50%); z-index: 50; background: rgba(255,255,255,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid #e5e7eb; border-radius: 10px; padding: 0.55rem 1rem; font-size: 0.82rem; color: #374151; box-shadow: 0 2px 10px rgba(0,0,0,0.08); display: flex; align-items: center; gap: 0.75rem; animation: fadeUp 0.4s ease-out; white-space: nowrap; }
+    .onboarding-tip.hiding { animation: fadeOut 0.35s ease-in forwards; }
+    .onboarding-tip .tip-dismiss { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; padding: 0 0.15rem; line-height: 1; }
+    .onboarding-tip .tip-dismiss:hover { color: #6b7280; }
+    @media (max-width: 640px) { .onboarding-tip { left: 1rem; right: 1rem; transform: none; white-space: normal; } }
     @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .side-panel { position: static; max-height: none; } .anchor-dot { left: -10px; } }
     @media (prefers-color-scheme: dark) {
       html, body { background: #111827; color: #e5e7eb; }
@@ -240,6 +248,9 @@ function generateHtmlTemplate(
       .sidebar-comment .sc-author { color: #f9fafb; }
       .sidebar-comment .sc-body { color: #9ca3af; }
       @keyframes flash-highlight { 0% { background: rgba(96,165,250,0.35); } 100% { background: transparent; } }
+      .onboarding-tip { background: rgba(31,41,55,0.92); border-color: #374151; color: #d1d5db; box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
+      .onboarding-tip .tip-dismiss { color: #6b7280; }
+      .onboarding-tip .tip-dismiss:hover { color: #9ca3af; }
     }
   </style>
 </head>
@@ -266,6 +277,7 @@ function generateHtmlTemplate(
       <div id="sidebar-groups"></div>
     </aside>
   </div>
+  <div class="onboarding-tip" id="onboarding-tip" style="display:none"><span>\u{1F4AC} Click any paragraph to leave a comment</span><button class="tip-dismiss" id="tip-dismiss" aria-label="Dismiss">\u00D7</button></div>
   <div class="doc-toolbar">
     <span class="doc-toolbar-item">Made readable with <a href="/">plsreadme</a></span>
     <button class="doc-toolbar-item" onclick="copyLink()">Copy link</button>
@@ -506,6 +518,22 @@ function generateHtmlTemplate(
       });
 
       loadComments();
+
+      // Onboarding tip
+      (function() {
+        if (localStorage.getItem('plsreadme_tip_dismissed')) return;
+        var tip = document.getElementById('onboarding-tip');
+        if (!tip) return;
+        tip.style.display = 'flex';
+        function hideTip() {
+          if (tip.classList.contains('hiding')) return;
+          tip.classList.add('hiding');
+          setTimeout(function() { tip.style.display = 'none'; }, 350);
+          localStorage.setItem('plsreadme_tip_dismissed', '1');
+        }
+        document.getElementById('tip-dismiss').addEventListener('click', hideTip);
+        setTimeout(hideTip, 8000);
+      })();
     })();
   </script>
 </body>
