@@ -10,7 +10,7 @@ Upgrade the anchored comments UX from a static sidebar panel to a polished, intu
 
 ---
 
-## Phase 1: Floating Inline Comment Input
+## ✅ Phase 1: Floating Inline Comment Input (0e0eb0f)
 
 ### What
 When user taps/clicks a commentable node (h1-h6, p, li, blockquote, pre), a floating input box appears **directly below that node** (not in a sidebar). Contains:

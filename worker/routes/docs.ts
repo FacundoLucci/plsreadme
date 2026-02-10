@@ -202,6 +202,7 @@ function generateHtmlTemplate(
     #inline-comment-box .btn-post { background: #111827; color: #fff; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
     #inline-comment-box .btn-cancel { background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
     #inline-comment-box .inline-error { display: none; color: #dc2626; font-size: 0.8rem; margin-top: 0.25rem; }
+    .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .doc-toolbar { position: fixed; left: 1rem; bottom: 1rem; display: flex; gap: 0.5rem; }
     .doc-toolbar-item { border: 1px solid #d1d5db; border-radius: 6px; background: rgba(255,255,255,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: #111827; text-decoration: none; }
     @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .side-panel { position: static; max-height: none; } .anchor-dot { left: -10px; } }
@@ -218,6 +219,7 @@ function generateHtmlTemplate(
       #inline-comment-box input, #inline-comment-box textarea { background: #111827; border-color: #4b5563; color: #e5e7eb; }
       #inline-comment-box .btn-post { background: #f9fafb; color: #111827; }
       #inline-comment-box .btn-cancel { background: transparent; color: #9ca3af; border-color: #4b5563; }
+      .comment-badge { background: #60a5fa; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
     }
   </style>
 </head>
@@ -381,10 +383,43 @@ function generateHtmlTemplate(
         }
       });
 
+      var isMobile = window.innerWidth <= 980;
+
+      function renderBadges() {
+        // Remove existing badges
+        contentEl.querySelectorAll('.comment-badge').forEach(function(b) { b.remove(); });
+        // Group by anchor_id
+        var counts = {};
+        allComments.forEach(function(c) {
+          var aid = c.anchor_id || DOC_ROOT;
+          if (aid === DOC_ROOT) return;
+          counts[aid] = (counts[aid] || 0) + 1;
+        });
+        Object.keys(counts).forEach(function(aid) {
+          var el = document.getElementById(aid);
+          if (!el || !contentEl.contains(el)) return;
+          var badge = document.createElement('span');
+          badge.className = 'comment-badge';
+          badge.textContent = counts[aid];
+          badge.setAttribute('data-anchor', aid);
+          badge.addEventListener('click', function(e) {
+            e.stopPropagation();
+            if (isMobile) {
+              selectAnchor(el);
+            } else {
+              selectAnchor(el);
+              var panel = document.querySelector('.side-panel');
+              if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+          el.appendChild(badge);
+        });
+      }
+
       function loadComments() {
         fetch('/api/comments/' + DOC_ID)
           .then(function(r) { return r.json(); })
-          .then(function(data) { allComments = data.comments || []; renderComments(); })
+          .then(function(data) { allComments = data.comments || []; renderComments(); renderBadges(); })
           .catch(function() {});
       }
 
@@ -413,6 +448,7 @@ function generateHtmlTemplate(
             bodyInput.value = '';
             localStorage.setItem('plsreadme_author_name', name);
             renderComments();
+            renderBadges();
           })
           .catch(function(err) {
             errorEl.textContent = err.message;
