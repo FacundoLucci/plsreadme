@@ -52,21 +52,21 @@ Add versioning to the data model and update API endpoints.
 
 ---
 
-### Phase 2: Frontend Comment Display ⚪
+### Phase 2: Frontend Comment Display ✅ (5898157)
 
 Update the preview page to visually distinguish comments from previous versions and handle orphaned anchors.
 
 **Primary code area:** `worker/routes/docs.ts` (the `generateHtmlTemplate` function and inline JS)
 **Out of scope:** API changes, R2 storage changes
 
-- [ ] Pass `doc_version` into the HTML template (from docs table on render)
-- [ ] In sidebar comment rendering: compare comment `doc_version` to current `doc_version`
-- [ ] Comments from older versions get a subtle badge: `v{n}` in muted text next to timestamp
-- [ ] Comments from older versions get a slightly different background (e.g., light yellow / amber tint)
-- [ ] Group header for older-version comments shows "(from earlier version)" label
-- [ ] Orphaned anchors (anchor ID not found in current DOM): fall back comment to "General" group with note "original paragraph was edited"
-- [ ] Dark mode styles for version badges and older-comment tint
-- [ ] Test: create doc, add comment, edit doc so anchor breaks → comment should appear in General with version badge
+- [x] Pass `doc_version` into the HTML template (from docs table on render)
+- [x] In sidebar comment rendering: compare comment `doc_version` to current `doc_version`
+- [x] Comments from older versions get a subtle badge: `v{n}` in muted text next to timestamp
+- [x] Comments from older versions get a slightly different background (e.g., light yellow / amber tint)
+- [x] Group header for older-version comments shows "(from earlier version)" label
+- [x] Orphaned anchors (anchor ID not found in current DOM): fall back comment to "General" group with note "original paragraph was edited"
+- [x] Dark mode styles for version badges and older-comment tint
+- [x] Test: create doc, add comment, edit doc so anchor breaks → comment should appear in General with version badge
 
 **Acceptance Criteria:**
 - Comments on current version display normally (no badge)
