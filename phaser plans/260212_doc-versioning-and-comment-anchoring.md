@@ -82,20 +82,20 @@ Update the preview page to visually distinguish comments from previous versions 
 
 ---
 
-### Phase 3: Version Reference & Polish ⚪
+### Phase 3: Version Reference & Polish ✅ (3f8e248)
 
 Allow readers to see what a comment was referencing, and handle edge cases.
 
 **Primary code area:** `worker/routes/docs.ts` (template JS), `worker/routes/comments.ts`
 **Out of scope:** Full version browser, version rollback
 
-- [ ] On sidebar comment from previous version: add small "view original context" link that fetches the versioned raw markdown from R2 (`/v/{id}/raw?version={n}`)
-- [ ] Add `GET /v/:id/raw?version=n` endpoint: serve `md/{id}_v{n}.md` from R2 (404 if not found)
-- [ ] Handle edge case: doc edited multiple times → all version comments display correctly with their respective version badges
-- [ ] Handle edge case: doc with no comments → edit works exactly as before (no regressions)
-- [ ] Handle edge case: comment POST on a doc that was just edited → gets latest version
-- [ ] Update API resource info in MCP to mention versioning behavior
-- [ ] Commit, push, deploy
+- [x] On sidebar comment from previous version: add small "view original context" link that fetches the versioned raw markdown from R2 (`/v/{id}/raw?version={n}`)
+- [x] Add `GET /v/:id/raw?version=n` endpoint: serve `md/{id}_v{n}.md` from R2 (404 if not found)
+- [x] Handle edge case: doc edited multiple times → all version comments display correctly with their respective version badges
+- [x] Handle edge case: doc with no comments → edit works exactly as before (no regressions)
+- [x] Handle edge case: comment POST on a doc that was just edited → gets latest version
+- [x] Update API resource info in MCP to mention versioning behavior
+- [x] Commit, push, deploy
 
 **Acceptance Criteria:**
 - "View original context" link works for old-version comments
