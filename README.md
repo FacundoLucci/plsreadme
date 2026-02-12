@@ -57,10 +57,25 @@ curl -X POST https://plsreadme.com/api/render \
 
 ```json
 {
-  "id": "abc123",
-  "url": "https://plsreadme.com/v/abc123",
-  "raw_url": "https://plsreadme.com/v/abc123/raw"
+  "id": "abc123def456",
+  "url": "https://plsreadme.com/v/abc123def456",
+  "raw_url": "https://plsreadme.com/v/abc123def456/raw",
+  "admin_token": "sk_..."
 }
+```
+
+Save the `admin_token` — you'll need it to edit or delete:
+
+```bash
+# Update
+curl -X PUT https://plsreadme.com/v/abc123def456 \
+  -H "Authorization: Bearer sk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"markdown": "# Updated content"}'
+
+# Delete
+curl -X DELETE https://plsreadme.com/v/abc123def456 \
+  -H "Authorization: Bearer sk_..."
 ```
 
 ### MCP (AI Editors)
@@ -151,14 +166,23 @@ clawhub install plsreadme
 
 | Tool | What it does |
 |------|-------------|
-| `plsreadme_share_file` | Share a local `.md` file by path → returns shareable link |
+| `plsreadme_share_file` | Share a local file by path → returns shareable link. Re-sharing updates the same link. |
 | `plsreadme_share_text` | Share markdown or plain text directly → returns shareable link |
+| `plsreadme_update` | Update an existing doc with new content (by ID or file path) |
+| `plsreadme_delete` | Delete a shared doc permanently (by ID or file path) |
+| `plsreadme_list` | List all documents you've shared from this project |
 
 **Prompts:**
 - `share-document` — Guided flow to share content as a readable link
 - `refactor-and-share` — Uses your AI model to refactor raw text into polished markdown, then shares it
 
 Plain text input? No problem — the MCP auto-structures it into markdown, or you can use the `refactor-and-share` prompt to leverage your AI's reasoning for a polished result.
+
+### .plsreadme Record File
+
+The MCP server tracks your shared documents in a `.plsreadme` JSON file in your project root. This stores document IDs, URLs, and admin tokens needed for editing and deleting.
+
+**⚠️ Add `.plsreadme` to your `.gitignore`** — it contains admin tokens. The tool will warn you if it's missing.
 
 ## 🏗 Architecture
 
@@ -169,11 +193,11 @@ Built on Cloudflare's edge stack for speed everywhere:
 │  Web / API  │────▶│  Cloudflare      │────▶│   R2    │
 │  MCP Client │     │  Workers (Hono)  │     │ (docs)  │
 └─────────────┘     └──────────────────┘     └─────────┘
-                           │                       
-                    ┌──────┴──────┐                
-                    │     D1      │                
-                    │ (metadata)  │                
-                    └─────────────┘                
+                           │
+                    ┌──────┴──────┐
+                    │     D1      │
+                    │ (metadata)  │
+                    └─────────────┘
 ```
 
 - **Hono** — Lightweight web framework on Workers
