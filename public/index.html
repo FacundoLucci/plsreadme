@@ -58,9 +58,12 @@
           <i class="hgi-stroke hgi-file-01 logo-mark"></i>
           <span class="logo-text">plsreadme</span>
         </a>
-        <a href="/app.html" class="cta-button header-cta">
-          <span class="cta-text">Go to app!</span>
-        </a>
+        <nav style="display: flex; align-items: center; gap: var(--space-md);">
+          <a href="/mcp-setup" style="font-size: 0.875rem; font-weight: 500; color: var(--color-text-muted); text-decoration: none; transition: color 0.2s;" onmouseover="this.style.color='var(--color-accent)'" onmouseout="this.style.color='var(--color-text-muted)'">⚡ MCP Server</a>
+          <a href="/app.html" class="cta-button header-cta">
+            <span class="cta-text">Go to app!</span>
+          </a>
+        </nav>
       </header>
 
       <!-- Hero Section -->
@@ -146,6 +149,18 @@
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- MCP Highlight -->
+      <section class="section" style="padding-bottom: var(--space-3xl);">
+        <div style="max-width: 640px; margin: 0 auto; text-align: center; padding: var(--space-2xl) var(--space-xl); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px;">
+          <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.25); border-radius: 20px; font-size: 0.8125rem; font-weight: 600; color: var(--color-accent); margin-bottom: var(--space-md);">⚡ NEW</span>
+          <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: var(--space-sm);">MCP Server for AI Editors</h2>
+          <p style="color: var(--color-text-muted); font-size: 1rem; margin-bottom: var(--space-lg); max-width: 480px; margin-left: auto; margin-right: auto;">Share markdown as <code style="font-family: var(--font-mono); font-size: 0.9em; background: var(--color-bg); padding: 0.15em 0.4em; border-radius: 4px; border: 1px solid var(--color-border); color: var(--color-accent);">plsrd.me</code> links directly from Cursor, Claude Desktop, VS Code, or any MCP client — no copy-pasting needed.</p>
+          <a href="/mcp-setup" class="cta-button" style="display: inline-flex; text-decoration: none;">
+            <span class="cta-text">Set up MCP →</span>
+          </a>
         </div>
       </section>
 

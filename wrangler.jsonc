@@ -17,7 +17,7 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/t", "/sse", "/sse/*", "/mcp", "/mcp-setup"]
+    "run_worker_first": ["/api/*", "/t", "/v/*", "/sse", "/sse/*", "/mcp"]
   },
   "vars": {
     "OPENAI_MODEL": "gpt-4.1-2025-04-14",
