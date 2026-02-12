@@ -3,7 +3,7 @@ name: Publish plsreadme-mcp
 on:
   push:
     tags:
-      - 'mcp-v*' # e.g. mcp-v0.5.0
+      - 'mcp-v*' # e.g. mcp-v0.5.1
 
 jobs:
   publish:
@@ -13,6 +13,7 @@ jobs:
         working-directory: packages/mcp
     permissions:
       contents: read
+      id-token: write # Required for trusted publishing (OIDC)
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +26,4 @@ jobs:
 
       - run: npm run build
 
-      - run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --access public --provenance
