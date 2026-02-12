@@ -217,6 +217,8 @@ function generateHtmlTemplate(
     .sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4b5563; white-space: pre-wrap; }
     .sidebar-comment-old { background: rgba(245, 158, 11, 0.08); border-radius: 6px; padding: 0.45rem 0.5rem; }
     .sidebar-comment .sc-note { margin: 0.2rem 0 0; color: #92400e; font-size: 0.7rem; }
+    .sidebar-comment .sc-context-link { margin-left: 0.45rem; font-size: 0.68rem; color: #2563eb; text-decoration: none; }
+    .sidebar-comment .sc-context-link:hover { text-decoration: underline; }
     .sidebar-empty { color: #6b7280; font-size: 0.85rem; padding: 1rem 0; }
     @keyframes flash-highlight { 0% { background: rgba(59,130,246,0.3); } 100% { background: transparent; } }
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
@@ -256,6 +258,7 @@ function generateHtmlTemplate(
       .sidebar-comment .sc-body { color: #9ca3af; }
       .sidebar-comment-old { background: rgba(251, 191, 36, 0.14); }
       .sidebar-comment .sc-note { color: #fbbf24; }
+      .sidebar-comment .sc-context-link { color: #93c5fd; }
       @keyframes flash-highlight { 0% { background: rgba(96,165,250,0.35); } 100% { background: transparent; } }
       .onboarding-tip { background: rgba(31,41,55,0.92); border-color: #374151; color: #d1d5db; box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
       .onboarding-tip .tip-dismiss { color: #6b7280; }
@@ -391,13 +394,17 @@ function generateHtmlTemplate(
             var c = entry.comment;
             var item = document.createElement('div');
             item.className = 'sidebar-comment' + (entry.isOlder ? ' sidebar-comment-old' : '');
-            item.innerHTML = '<div><span class="sc-author"></span><span class="sc-time"></span><span class="sc-version" style="display:none"></span></div><p class="sc-body"></p><p class="sc-note" style="display:none"></p>';
+            item.innerHTML = '<div><span class="sc-author"></span><span class="sc-time"></span><span class="sc-version" style="display:none"></span><a class="sc-context-link" style="display:none" target="_blank" rel="noopener">view original context</a></div><p class="sc-body"></p><p class="sc-note" style="display:none"></p>';
             item.querySelector('.sc-author').textContent = c.author_name;
             item.querySelector('.sc-time').textContent = relativeTime(c.created_at);
             if (entry.isOlder) {
               var versionEl = item.querySelector('.sc-version');
               versionEl.style.display = 'inline-block';
               versionEl.textContent = 'v' + entry.version;
+
+              var contextLinkEl = item.querySelector('.sc-context-link');
+              contextLinkEl.style.display = 'inline';
+              contextLinkEl.href = '/v/' + DOC_ID + '/raw?version=' + entry.version;
             }
             item.querySelector('.sc-body').textContent = c.body;
             if (entry.isOrphan) {
@@ -815,10 +822,11 @@ app.get("/count", async (c) => {
   }
 });
 
-// GET /v/:id/raw - Get raw markdown
+// GET /v/:id/raw - Get raw markdown (latest by default, archived when version=n)
 app.get("/:id/raw", async (c) => {
   try {
     const id = c.req.param("id");
+    const versionParam = c.req.query("version");
 
     // Fetch metadata from D1
     const doc = await c.env.DB.prepare("SELECT * FROM docs WHERE id = ?")
@@ -829,10 +837,19 @@ app.get("/:id/raw", async (c) => {
       return c.text("Document not found", 404);
     }
 
+    let r2Key = doc.r2_key;
+    if (versionParam !== undefined) {
+      const version = Number(versionParam);
+      if (!Number.isInteger(version) || version < 1) {
+        return c.text("Invalid version query parameter", 400);
+      }
+      r2Key = `md/${id}_v${version}.md`;
+    }
+
     // Fetch content from R2
-    const object = await c.env.DOCS_BUCKET.get(doc.r2_key);
+    const object = await c.env.DOCS_BUCKET.get(r2Key);
     if (!object) {
-      return c.text("Document content not found", 500);
+      return c.text(versionParam !== undefined ? "Document version not found" : "Document content not found", 404);
     }
 
     const markdown = await object.text();
@@ -840,7 +857,7 @@ app.get("/:id/raw", async (c) => {
     // Return raw markdown
     return c.text(markdown, 200, {
       "Content-Type": "text/markdown",
-      "Content-Disposition": `attachment; filename="${doc.title || id}.md"`,
+      "Content-Disposition": `attachment; filename="${doc.title || id}${versionParam ? `_v${versionParam}` : ""}.md"`,
     });
   } catch (error) {
     console.error("Error fetching raw document:", error);
