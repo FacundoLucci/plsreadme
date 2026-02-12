@@ -3,6 +3,32 @@ import type { Env } from '../types';
 
 export const convertRoutes = new Hono<{ Bindings: Env }>();
 
+// --- Rate limiting (per-IP, in-memory per isolate) ---
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_LIMIT_MAX = 10; // 10 conversions per IP per hour
+
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now >= entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX) return true;
+  return false;
+}
+
+// Periodic cleanup to prevent memory leaks
+function cleanupRateLimits() {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now >= entry.resetAt) rateLimitMap.delete(ip);
+  }
+}
+
 const MAX_INPUT_CHARS = 200 * 1024; // keep consistent with markdown upload limit
 const DEFAULT_MODEL = 'gpt-4.1-2025-04-14';
 const DEFAULT_CF_AI_MODEL = '@cf/meta/llama-3.1-8b-instruct';
@@ -50,6 +76,14 @@ function extractCloudflareAIText(payload: any): string {
 // POST /api/convert - Convert plain text to markdown (OpenAI if configured, otherwise Workers AI)
 convertRoutes.post('/', async (c) => {
   try {
+    // Rate limit by IP
+    const ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for') || 'unknown';
+    if (isRateLimited(ip)) {
+      return c.json({ error: 'Rate limit exceeded. Max 10 conversions per hour.' }, 429);
+    }
+    // Cleanup stale entries periodically (cheap, runs inline)
+    if (rateLimitMap.size > 1000) cleanupRateLimits();
+
     const body = await c.req.json<{ text?: unknown }>().catch(() => ({} as any));
     const text = typeof body?.text === 'string' ? body.text : '';
 
