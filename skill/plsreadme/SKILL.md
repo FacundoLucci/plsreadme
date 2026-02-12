@@ -37,12 +37,13 @@ Or use the remote endpoint (zero install):
 ## Tools
 
 - **`plsreadme_share_file`** — Share a local `.md` file by path. Reads from disk, uploads, returns link.
-- **`plsreadme_share_text`** — Share markdown text directly. Good for generated content, conversation output, or composed docs.
+- **`plsreadme_share_text`** — Share text directly (markdown preferred; plain text supported). Good for generated content, conversation output, or composed docs.
 
 ## Usage Guidelines
 
 - Max file size: 200KB
 - Links are permanent and publicly accessible — confirm with the user before sharing sensitive content
+- If input is non-markdown, refactor it with your own model first (or let `plsreadme_share_text` auto-structure plain text)
 - The first `# Heading` becomes the document title
 - Output includes a readable URL and a raw markdown URL
 

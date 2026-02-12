@@ -25,6 +25,40 @@ function extractTitle(markdown: string): string | null {
   return null;
 }
 
+function looksLikeMarkdown(input: string): boolean {
+  return /(^|\n)\s{0,3}(#|>|-|\*|\d+\.|```|\|.+\|)/m.test(input) ||
+    /\[[^\]]+\]\([^\)]+\)/.test(input);
+}
+
+function coerceToMarkdown(input: string): string {
+  const text = input.trim();
+  if (!text) return text;
+  if (looksLikeMarkdown(text)) return text;
+
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length === 0) return text;
+
+  // If input is plain text, apply a lightweight markdown structure.
+  const first = lines[0];
+  const isLikelyTitle = first.length <= 80 && !/[.!?]$/.test(first);
+  const body = isLikelyTitle ? lines.slice(1) : lines;
+
+  const out: string[] = [];
+  if (isLikelyTitle) out.push(`# ${first}`);
+
+  for (const line of body) {
+    if (/^[-*•]\s+/.test(line)) {
+      out.push(`- ${line.replace(/^[-*•]\s+/, '')}`);
+    } else if (/^\d+[\.)]\s+/.test(line)) {
+      out.push(line.replace(/^(\d+)[\.)]\s+/, '$1. '));
+    } else {
+      out.push(line);
+    }
+  }
+
+  return out.join('\n\n');
+}
+
 async function uploadMarkdown(markdown: string): Promise<PlsreadmeResponse> {
   const response = await fetch(PLSREADME_API_URL, {
     method: 'POST',
@@ -77,7 +111,7 @@ function formatError(message: string) {
 // Create MCP server
 const server = new McpServer({
   name: 'plsreadme',
-  version: '0.3.0',
+  version: '0.4.0',
 });
 
 // Tool 1: Share a local markdown file as a readable web link
@@ -145,15 +179,15 @@ Returns the shareable URL. The link is permanent and publicly accessible.`,
 // Tool 2: Share markdown text as a readable web link
 server.tool(
   'plsreadme_share_text',
-  `Share markdown text as a clean, readable web link on plsreadme.com.
+  `Share text as a clean, readable web link on plsreadme.com.
 
-Use when the user wants to share markdown content (not a file) as a link. Good for generated docs, formatted text, or content composed in the conversation.
+Use when the user wants to share content (markdown or plain text) as a link. Good for generated docs, formatted text, or content composed in the conversation.
 
-Accepts raw markdown as a string. Returns the shareable URL.`,
+If input is not markdown, this tool applies lightweight markdown structuring before upload. Returns the shareable URL.`,
   {
     markdown: z
       .string()
-      .describe('The markdown content to share. Will be rendered as a readable web page.'),
+      .describe('Content to share. Markdown preferred, but plain text is accepted and auto-structured.'),
     title: z
       .string()
       .optional()
@@ -183,8 +217,9 @@ Accepts raw markdown as a string. Returns the shareable URL.`,
     }
 
     try {
-      const result = await uploadMarkdown(markdown);
-      const displayTitle = title || extractTitle(markdown);
+      const prepared = coerceToMarkdown(markdown);
+      const result = await uploadMarkdown(prepared);
+      const displayTitle = title || extractTitle(prepared);
       return formatSuccess(displayTitle, result.url, result.raw_url);
     } catch (err) {
       return formatError((err as Error).message);
@@ -195,12 +230,12 @@ Accepts raw markdown as a string. Returns the shareable URL.`,
 // Prompt: Share a document
 server.prompt(
   'share-document',
-  'Share a markdown file or text as a readable web link',
+  'Share markdown or plain text as a readable web link',
   {
     content: z
       .string()
       .optional()
-      .describe('Markdown content or file path to share'),
+      .describe('Content or file path to share'),
   },
   ({ content }) => ({
     messages: [
@@ -210,7 +245,37 @@ server.prompt(
           type: 'text',
           text: content
             ? `Share this as a plsreadme link:\n\n${content}`
-            : 'Help me share a markdown document as a readable web link using plsreadme.',
+            : 'Help me share content as a readable web link using plsreadme.',
+        },
+      },
+    ],
+  })
+);
+
+// Prompt: Refactor non-markdown with the client model, then share
+server.prompt(
+  'refactor-and-share',
+  'Use your own model to refactor raw text into clean markdown, then share with plsreadme',
+  {
+    content: z.string().describe('Raw text, notes, or mixed content to refactor and share'),
+    style: z
+      .string()
+      .optional()
+      .describe('Optional style target, e.g. "PRD", "README", "meeting notes"'),
+  },
+  ({ content, style }) => ({
+    messages: [
+      {
+        role: 'user',
+        content: {
+          type: 'text',
+          text: [
+            'Refactor the following content into polished markdown using your own reasoning.',
+            style ? `Target style: ${style}` : 'Target style: clean readable document',
+            'Then call plsreadme_share_text with the final markdown.',
+            '',
+            content,
+          ].join('\n'),
         },
       },
     ],
