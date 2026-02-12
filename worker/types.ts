@@ -70,5 +70,6 @@ export interface DocRecord {
   sha256: string | null;
   title: string | null;
   view_count: number;
+  admin_token: string | null;
 }
 

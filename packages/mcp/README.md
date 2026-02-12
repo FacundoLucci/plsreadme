@@ -1,8 +1,8 @@
 # plsreadme-mcp
 
-MCP server for [plsreadme.com](https://plsreadme.com) — share markdown files and text as clean, readable web links.
+MCP server for [plsreadme.com](https://plsreadme.com) — share, update, and delete markdown documents as clean, readable web links.
 
-Turn any markdown file or text into a shareable link, right from your editor.
+Turn any markdown file or text into a shareable link, right from your editor. Edit and delete without leaving your workflow.
 
 ## Quick Install
 
@@ -61,8 +61,6 @@ Add to `claude_desktop_config.json`:
 
 ### Windsurf
 
-Add to your Windsurf MCP config:
-
 ```json
 {
   "mcpServers": {
@@ -76,8 +74,6 @@ Add to your Windsurf MCP config:
 
 ### Remote MCP (no install needed)
 
-Some clients support remote MCP servers. Use the URL directly:
-
 ```
 https://plsreadme.com/mcp
 ```
@@ -88,55 +84,79 @@ https://plsreadme.com/mcp
 npx add-mcp plsreadme-mcp
 ```
 
+### OpenClaw
+
+```bash
+clawhub install plsreadme
+```
+
 ## Tools
 
 ### `plsreadme_share_file`
 
-Share a local markdown file as a readable web link.
+Share a local file as a readable web link. Re-sharing the same file updates the existing link.
 
 ```
 "Share README.md as a link"
-"Generate a plsreadme link for docs/architecture.md"
+"Share docs/architecture.md on plsreadme"
 ```
-
-**Parameters:**
-- `file_path` (string, required) — Path to the markdown file
 
 ### `plsreadme_share_text`
 
-Share markdown text as a readable web link.
+Share markdown or plain text as a readable web link. Plain text is auto-structured.
 
 ```
 "Share this markdown as a plsreadme link"
-"Turn this PRD into a shareable link"
+"Turn these notes into a shareable page"
 ```
 
-**Parameters:**
-- `markdown` (string, required) — Markdown content to share
-- `title` (string, optional) — Document title (auto-detected from first H1 if omitted)
+### `plsreadme_update`
 
-## Use Cases
+Update an existing document with new content.
 
-- **Share READMEs** — Send a colleague a nicely rendered README link
-- **Share PRDs & proposals** — Turn a doc into a link for stakeholders
-- **Share meeting notes** — Quick link to formatted notes
-- **Share code docs** — API docs, architecture decisions, changelogs
+```
+"Update the shared PRD with the latest version"
+"Refresh the plsreadme link for my API docs"
+```
+
+### `plsreadme_delete`
+
+Delete a shared document permanently.
+
+```
+"Delete that plsreadme link I created"
+"Remove the shared doc for meeting-notes.md"
+```
+
+### `plsreadme_list`
+
+List all documents you've shared from this project.
+
+```
+"Show my plsreadme links"
+"What docs have I shared?"
+```
+
+## .plsreadme Record File
+
+The server tracks shared documents in a `.plsreadme` JSON file. This stores document IDs, URLs, and admin tokens needed for edit/delete.
+
+**⚠️ Add `.plsreadme` to your `.gitignore`** — it contains admin tokens. The tool will warn you if it's missing.
+
+## Prompts
+
+- **`share-document`** — Guided flow to share content as a readable link
+- **`refactor-and-share`** — Use your AI to refactor raw text into polished markdown, then share
 
 ## Limits
 
 - Maximum file size: 200KB
 - Links are permanent and publicly accessible
+- 30 uploads per hour per IP
 
 ## Requirements
 
 - Node.js 18+
-
-## Development
-
-```bash
-npm install
-npm run build
-```
 
 ## License
 

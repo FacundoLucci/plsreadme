@@ -591,8 +591,9 @@ app.post("/", async (c) => {
       );
     }
 
-    // Generate ID and hash
-    const id = nanoid(10);
+    // Generate ID, admin token, and hash
+    const id = nanoid(12);
+    const adminToken = `sk_${nanoid(24)}`;
     const hash = await sha256(markdown);
     const r2Key = `md/${id}.md`;
     const title = extractTitle(markdown);
@@ -611,9 +612,9 @@ app.post("/", async (c) => {
 
     // Store metadata in D1
     await c.env.DB.prepare(
-      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title) VALUES (?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, admin_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     )
-      .bind(id, r2Key, "text/markdown", markdown.length, now, hash, title)
+      .bind(id, r2Key, "text/markdown", markdown.length, now, hash, title, adminToken)
       .run();
 
     // Send Discord notification (optional, best-effort)
@@ -655,6 +656,7 @@ app.post("/", async (c) => {
       id,
       url: `${baseUrl}/v/${id}`,
       raw_url: `${baseUrl}/v/${id}/raw`,
+      admin_token: adminToken,
     });
   } catch (error) {
     console.error("Error creating document:", error);
@@ -803,6 +805,102 @@ app.get("/:id/raw", async (c) => {
   } catch (error) {
     console.error("Error fetching raw document:", error);
     return c.text("Failed to fetch document", 500);
+  }
+});
+
+// Helper: validate admin token
+async function validateAdminToken(env: Env, docId: string, token: string): Promise<DocRecord | null> {
+  if (!token) return null;
+  const doc = await env.DB.prepare("SELECT * FROM docs WHERE id = ? AND admin_token = ?")
+    .bind(docId, token)
+    .first<DocRecord>();
+  return doc || null;
+}
+
+// PUT /v/:id - Update document content
+app.put("/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const authHeader = c.req.header("authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+    if (!token) {
+      return c.json({ error: "Authorization required. Pass admin_token as Bearer token." }, 401);
+    }
+
+    const doc = await validateAdminToken(c.env, id, token);
+    if (!doc) {
+      return c.json({ error: "Invalid admin token or document not found." }, 403);
+    }
+
+    const body = await c.req.json<{ markdown?: string }>().catch(() => ({} as any));
+    const markdown = typeof body?.markdown === "string" ? body.markdown : "";
+
+    if (!markdown || markdown.trim().length === 0) {
+      return c.json({ error: "No markdown content provided" }, 400);
+    }
+    if (markdown.length > MAX_FILE_SIZE) {
+      return c.json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024} KB` }, 400);
+    }
+
+    const hash = await sha256(markdown);
+    const title = extractTitle(markdown);
+
+    // Update R2
+    await c.env.DOCS_BUCKET.put(doc.r2_key, markdown, {
+      httpMetadata: { contentType: "text/markdown" },
+      customMetadata: { updated_at: new Date().toISOString(), sha256: hash },
+    });
+
+    // Update D1 metadata
+    await c.env.DB.prepare(
+      "UPDATE docs SET bytes = ?, sha256 = ?, title = ? WHERE id = ?"
+    )
+      .bind(markdown.length, hash, title, id)
+      .run();
+
+    const baseUrl = new URL(c.req.url).origin;
+    return c.json({
+      id,
+      url: `${baseUrl}/v/${id}`,
+      raw_url: `${baseUrl}/v/${id}/raw`,
+      updated: true,
+    });
+  } catch (error) {
+    console.error("Error updating document:", error);
+    return c.json({ error: "Failed to update document" }, 500);
+  }
+});
+
+// DELETE /v/:id - Delete document
+app.delete("/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const authHeader = c.req.header("authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+    if (!token) {
+      return c.json({ error: "Authorization required. Pass admin_token as Bearer token." }, 401);
+    }
+
+    const doc = await validateAdminToken(c.env, id, token);
+    if (!doc) {
+      return c.json({ error: "Invalid admin token or document not found." }, 403);
+    }
+
+    // Delete from R2
+    await c.env.DOCS_BUCKET.delete(doc.r2_key);
+
+    // Delete comments
+    await c.env.DB.prepare("DELETE FROM comments WHERE doc_id = ?").bind(id).run();
+
+    // Delete from D1
+    await c.env.DB.prepare("DELETE FROM docs WHERE id = ?").bind(id).run();
+
+    return c.json({ id, deleted: true });
+  } catch (error) {
+    console.error("Error deleting document:", error);
+    return c.json({ error: "Failed to delete document" }, 500);
   }
 });
 
