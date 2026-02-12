@@ -59,6 +59,7 @@ export interface CommentRecord {
   created_at: string;
   ip_hash: string | null;
   flagged: number;
+  doc_version: number;
 }
 
 export interface DocRecord {
@@ -71,5 +72,6 @@ export interface DocRecord {
   title: string | null;
   view_count: number;
   admin_token: string | null;
+  doc_version: number;
 }
 

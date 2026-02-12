@@ -845,18 +845,30 @@ app.put("/:id", async (c) => {
 
     const hash = await sha256(markdown);
     const title = extractTitle(markdown);
+    const oldVersion = doc.doc_version ?? 1;
 
-    // Update R2
+    // Preserve previous markdown before overwrite
+    const currentObject = await c.env.DOCS_BUCKET.get(doc.r2_key);
+    if (!currentObject) {
+      return c.json({ error: "Document content not found in storage." }, 500);
+    }
+    const previousMarkdown = await currentObject.text();
+    await c.env.DOCS_BUCKET.put(`md/${id}_v${oldVersion}.md`, previousMarkdown, {
+      httpMetadata: { contentType: "text/markdown" },
+      customMetadata: { archived_at: new Date().toISOString(), doc_version: String(oldVersion) },
+    });
+
+    // Update latest markdown in R2
     await c.env.DOCS_BUCKET.put(doc.r2_key, markdown, {
       httpMetadata: { contentType: "text/markdown" },
       customMetadata: { updated_at: new Date().toISOString(), sha256: hash },
     });
 
-    // Update D1 metadata
+    // Update D1 metadata + increment doc version
     await c.env.DB.prepare(
-      "UPDATE docs SET bytes = ?, sha256 = ?, title = ? WHERE id = ?"
+      "UPDATE docs SET bytes = ?, sha256 = ?, title = ?, doc_version = ? WHERE id = ?"
     )
-      .bind(markdown.length, hash, title, id)
+      .bind(markdown.length, hash, title, oldVersion + 1, id)
       .run();
 
     const baseUrl = new URL(c.req.url).origin;

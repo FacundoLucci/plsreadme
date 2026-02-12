@@ -38,7 +38,9 @@ CREATE TABLE docs (
   created_at TEXT NOT NULL,
   sha256 TEXT,
   title TEXT,
-  view_count INTEGER NOT NULL DEFAULT 0
+  view_count INTEGER NOT NULL DEFAULT 0,
+  admin_token TEXT,
+  doc_version INTEGER NOT NULL DEFAULT 1
 );
 
 CREATE INDEX idx_docs_created_at ON docs(created_at);
@@ -54,6 +56,7 @@ CREATE TABLE IF NOT EXISTS comments (
   created_at TEXT NOT NULL,
   ip_hash TEXT,
   flagged INTEGER DEFAULT 0,
+  doc_version INTEGER NOT NULL DEFAULT 1,
   FOREIGN KEY (doc_id) REFERENCES docs(id)
 );
 CREATE INDEX IF NOT EXISTS idx_comments_doc_id ON comments(doc_id, created_at);

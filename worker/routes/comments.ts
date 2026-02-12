@@ -28,7 +28,7 @@ app.get("/:docId", async (c) => {
     }
 
     const { results } = await c.env.DB.prepare(
-      "SELECT id, doc_id, author_name, body, anchor_id, created_at FROM comments WHERE doc_id = ? AND flagged = 0 ORDER BY created_at ASC"
+      "SELECT id, doc_id, author_name, body, anchor_id, created_at, flagged, COALESCE(doc_version, 1) as doc_version FROM comments WHERE doc_id = ? AND flagged = 0 ORDER BY created_at ASC"
     )
       .bind(docId)
       .all();
@@ -45,7 +45,7 @@ app.post("/:docId", async (c) => {
   try {
     const docId = c.req.param("docId");
 
-    const doc = await c.env.DB.prepare("SELECT id FROM docs WHERE id = ?")
+    const doc = await c.env.DB.prepare("SELECT id, COALESCE(doc_version, 1) as doc_version FROM docs WHERE id = ?")
       .bind(docId)
       .first<DocRecord>();
 
@@ -90,10 +90,12 @@ app.post("/:docId", async (c) => {
     const id = nanoid(12);
     const now = new Date().toISOString();
 
+    const docVersion = doc.doc_version ?? 1;
+
     await c.env.DB.prepare(
-      "INSERT INTO comments (id, doc_id, author_name, body, anchor_id, created_at, ip_hash, flagged) VALUES (?, ?, ?, ?, ?, ?, ?, 0)"
+      "INSERT INTO comments (id, doc_id, author_name, body, anchor_id, created_at, ip_hash, flagged, doc_version) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)"
     )
-      .bind(id, docId, authorName, commentBody, anchorId, now, ipHash)
+      .bind(id, docId, authorName, commentBody, anchorId, now, ipHash, docVersion)
       .run();
 
     const comment: CommentRecord = {
@@ -105,6 +107,7 @@ app.post("/:docId", async (c) => {
       created_at: now,
       ip_hash: null, // don't expose
       flagged: 0,
+      doc_version: docVersion,
     };
 
     return c.json({ comment }, 201);
