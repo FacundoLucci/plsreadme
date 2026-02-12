@@ -23,20 +23,20 @@ Add soft versioning to plsreadme documents so that editing a doc doesn't break o
 
 ## Phases
 
-### Phase 1: Database & API Layer ⚪
+### Phase 1: Database & API Layer ✅ (0c2f92f)
 
 Add versioning to the data model and update API endpoints.
 
 **Primary code area:** `worker/routes/docs.ts`, `worker/types.ts`, `db/`
 **Out of scope:** Frontend rendering, comment display changes
 
-- [ ] Add `doc_version INTEGER NOT NULL DEFAULT 1` column to `docs` table (migration `003_doc_version.sql`)
-- [ ] Add `doc_version INTEGER NOT NULL DEFAULT 1` column to `comments` table (same migration)
-- [ ] Update `DocRecord` and `CommentRecord` types in `worker/types.ts`
-- [ ] On PUT `/v/:id` (edit): increment `doc_version`, store previous markdown in R2 as `md/{id}_v{old_version}.md` before overwriting
-- [ ] On POST `/api/comments/:docId`: stamp new comments with current `doc_version` from docs table
-- [ ] Ensure GET `/api/comments/:docId` returns `doc_version` field on each comment
-- [ ] Run migration against remote D1
+- [x] Add `doc_version INTEGER NOT NULL DEFAULT 1` column to `docs` table (migration `003_doc_version.sql`)
+- [x] Add `doc_version INTEGER NOT NULL DEFAULT 1` column to `comments` table (same migration)
+- [x] Update `DocRecord` and `CommentRecord` types in `worker/types.ts`
+- [x] On PUT `/v/:id` (edit): increment `doc_version`, store previous markdown in R2 as `md/{id}_v{old_version}.md` before overwriting
+- [x] On POST `/api/comments/:docId`: stamp new comments with current `doc_version` from docs table
+- [x] Ensure GET `/api/comments/:docId` returns `doc_version` field on each comment
+- [ ] Run migration against remote D1 (blocked: missing CLOUDFLARE_API_TOKEN in non-interactive environment)
 
 **Acceptance Criteria:**
 - Editing a doc increments version in DB
