@@ -151,7 +151,8 @@ function addStableAnchorIds(html: string): string {
 function generateHtmlTemplate(
   title: string | null,
   htmlContent: string,
-  docId: string
+  docId: string,
+  docVersion: number
 ): string {
   const pageTitle = title || "Untitled Document";
   const anchoredHtml = addStableAnchorIds(htmlContent);
@@ -212,7 +213,10 @@ function generateHtmlTemplate(
     .sidebar-comment:last-child { border-bottom: none; }
     .sidebar-comment .sc-author { font-weight: 600; color: #111827; }
     .sidebar-comment .sc-time { color: #9ca3af; font-size: 0.72rem; margin-left: 0.3rem; }
+    .sidebar-comment .sc-version { color: #9ca3af; font-size: 0.68rem; margin-left: 0.3rem; border: 1px solid #d1d5db; border-radius: 999px; padding: 0.02rem 0.32rem; }
     .sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4b5563; white-space: pre-wrap; }
+    .sidebar-comment-old { background: rgba(245, 158, 11, 0.08); border-radius: 6px; padding: 0.45rem 0.5rem; }
+    .sidebar-comment .sc-note { margin: 0.2rem 0 0; color: #92400e; font-size: 0.7rem; }
     .sidebar-empty { color: #6b7280; font-size: 0.85rem; padding: 1rem 0; }
     @keyframes flash-highlight { 0% { background: rgba(59,130,246,0.3); } 100% { background: transparent; } }
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
@@ -248,7 +252,10 @@ function generateHtmlTemplate(
       .comment-group-header:hover { background: #4b5563; }
       .sidebar-comment { border-color: #374151; }
       .sidebar-comment .sc-author { color: #f9fafb; }
+      .sidebar-comment .sc-version { color: #9ca3af; border-color: #4b5563; }
       .sidebar-comment .sc-body { color: #9ca3af; }
+      .sidebar-comment-old { background: rgba(251, 191, 36, 0.14); }
+      .sidebar-comment .sc-note { color: #fbbf24; }
       @keyframes flash-highlight { 0% { background: rgba(96,165,250,0.35); } 100% { background: transparent; } }
       .onboarding-tip { background: rgba(31,41,55,0.92); border-color: #374151; color: #d1d5db; box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
       .onboarding-tip .tip-dismiss { color: #6b7280; }
@@ -290,6 +297,7 @@ function generateHtmlTemplate(
     function copyLink() { navigator.clipboard.writeText(window.location.href); }
     (function() {
       var DOC_ID = '${docId}';
+      var CURRENT_DOC_VERSION = ${docVersion};
       var DOC_ROOT = 'doc-root';
       var selectedAnchor = DOC_ROOT;
       var selectedEl = null;
@@ -333,17 +341,35 @@ function generateHtmlTemplate(
           sidebarGroupsEl.innerHTML = '<p class="sidebar-empty">No comments yet.</p>';
           return;
         }
-        // Group by anchor_id
+
+        function commentVersion(c) {
+          var v = Number(c && c.doc_version);
+          return Number.isFinite(v) && v > 0 ? v : 1;
+        }
+
+        // Group by anchor_id, with orphan fallback to General
         var groups = {};
         var order = [];
         allComments.forEach(function(c) {
-          var aid = c.anchor_id || DOC_ROOT;
+          var originalAid = c.anchor_id || DOC_ROOT;
+          var hasAnchor = originalAid === DOC_ROOT || !!document.getElementById(originalAid);
+          var isOrphan = originalAid !== DOC_ROOT && !hasAnchor;
+          var aid = isOrphan ? DOC_ROOT : originalAid;
           if (!groups[aid]) { groups[aid] = []; order.push(aid); }
-          groups[aid].push(c);
+          groups[aid].push({
+            comment: c,
+            isOlder: commentVersion(c) < CURRENT_DOC_VERSION,
+            isOrphan: isOrphan,
+            originalAnchor: originalAid,
+            version: commentVersion(c)
+          });
         });
-        // Put doc-root first
+
+        // Put General first
         order.sort(function(a, b) { return a === DOC_ROOT ? -1 : b === DOC_ROOT ? 1 : 0; });
+
         order.forEach(function(aid) {
+          var entries = groups[aid];
           var section = document.createElement('div');
           section.className = 'comment-group';
           var header = document.createElement('button');
@@ -353,18 +379,32 @@ function generateHtmlTemplate(
             var targetEl = document.getElementById(aid);
             label = targetEl ? (targetEl.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 60) : aid;
           }
-          header.innerHTML = '<span>' + label.replace(/</g, '&lt;') + '</span><span class="group-count">' + groups[aid].length + '</span>';
+          var hasOlderInGroup = entries.some(function(e) { return e.isOlder; });
+          var groupLabel = hasOlderInGroup ? (label + ' (from earlier version)') : label;
+          header.innerHTML = '<span>' + groupLabel.replace(/</g, '&lt;') + '</span><span class="group-count">' + entries.length + '</span>';
           header.addEventListener('click', function() { scrollToAnchor(aid); });
           section.appendChild(header);
+
           var list = document.createElement('div');
           list.className = 'comment-group-comments';
-          groups[aid].forEach(function(c) {
+          entries.forEach(function(entry) {
+            var c = entry.comment;
             var item = document.createElement('div');
-            item.className = 'sidebar-comment';
-            item.innerHTML = '<div><span class="sc-author"></span><span class="sc-time"></span></div><p class="sc-body"></p>';
+            item.className = 'sidebar-comment' + (entry.isOlder ? ' sidebar-comment-old' : '');
+            item.innerHTML = '<div><span class="sc-author"></span><span class="sc-time"></span><span class="sc-version" style="display:none"></span></div><p class="sc-body"></p><p class="sc-note" style="display:none"></p>';
             item.querySelector('.sc-author').textContent = c.author_name;
             item.querySelector('.sc-time').textContent = relativeTime(c.created_at);
+            if (entry.isOlder) {
+              var versionEl = item.querySelector('.sc-version');
+              versionEl.style.display = 'inline-block';
+              versionEl.textContent = 'v' + entry.version;
+            }
             item.querySelector('.sc-body').textContent = c.body;
+            if (entry.isOrphan) {
+              var noteEl = item.querySelector('.sc-note');
+              noteEl.style.display = 'block';
+              noteEl.textContent = 'original paragraph was edited';
+            }
             list.appendChild(item);
           });
           section.appendChild(list);
@@ -742,7 +782,7 @@ app.get("/:id", async (c) => {
     const htmlContent = marked(markdown);
 
     // Generate and return the full HTML page
-    const html = generateHtmlTemplate(doc.title, htmlContent as string, id);
+    const html = generateHtmlTemplate(doc.title, htmlContent as string, id, doc.doc_version ?? 1);
     return c.html(html);
   } catch (error) {
     console.error("Error rendering document:", error);
