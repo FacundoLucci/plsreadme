@@ -218,7 +218,8 @@ function generateHtmlTemplate(
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .doc-toolbar { position: fixed; left: 1rem; bottom: 1rem; display: flex; gap: 0.5rem; }
-    .doc-toolbar-item { border: 1px solid #d1d5db; border-radius: 6px; background: rgba(255,255,255,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: #111827; text-decoration: none; }
+    .doc-toolbar-item { border: 1px solid #d1d5db; border-radius: 6px; background: rgba(255,255,255,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: #111827; text-decoration: none; cursor: pointer; }
+    .doc-toolbar-feature { border-color: #a78bfa; color: #7c3aed; }
     /* Onboarding tip */
     @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(12px); } }
@@ -236,6 +237,7 @@ function generateHtmlTemplate(
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
       .doc-content .anchor-selected { background: rgba(96,165,250,0.22); }
       .general-btn,.doc-toolbar-item { background: #111827; border-color: #4b5563; color: #e5e7eb; }
+      .doc-toolbar-feature { border-color: #7c3aed; color: #a78bfa; }
       .comment-author { color: #f9fafb; }
       #inline-comment-box { background: #1f2937; border-color: #374151; }
       #inline-comment-box input, #inline-comment-box textarea { background: #111827; border-color: #4b5563; color: #e5e7eb; }
@@ -282,6 +284,7 @@ function generateHtmlTemplate(
     <span class="doc-toolbar-item">Made readable with <a href="/">plsreadme</a></span>
     <button class="doc-toolbar-item" onclick="copyLink()">Copy link</button>
     <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
+    <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-feature">\u{1F4A1} Feature Request</a>
   </div>
   <script>
     function copyLink() { navigator.clipboard.writeText(window.location.href); }
