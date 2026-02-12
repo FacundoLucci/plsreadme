@@ -1,11 +1,11 @@
 {
-  "name": "outframer-mcp",
-  "version": "0.1.0",
-  "description": "Model Context Protocol server for Outframer - generate markdown preview links from Cursor",
+  "name": "plsreadme-mcp",
+  "version": "0.2.0",
+  "description": "MCP server for plsreadme.com — share markdown files and text as clean, readable web links. Works with Claude Desktop, Cursor, VS Code, Windsurf, and any MCP client.",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "outframer-mcp": "./dist/index.js"
+    "plsreadme-mcp": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -17,15 +17,25 @@
   "keywords": [
     "mcp",
     "model-context-protocol",
-    "outframer",
+    "plsreadme",
     "markdown",
+    "share",
+    "preview",
+    "readme",
+    "docs",
     "cursor",
-    "ai"
+    "claude",
+    "claude-desktop",
+    "vscode",
+    "windsurf",
+    "ai",
+    "llm",
+    "tools"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -36,6 +46,3 @@
     "node": ">=18.0.0"
   }
 }
-
-
-

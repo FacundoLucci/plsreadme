@@ -1,113 +1,143 @@
-# Outframer MCP Server
+# plsreadme-mcp
 
-Model Context Protocol server for [Outframer](https://outframer.com) - Generate shareable markdown preview links directly from Cursor.
+MCP server for [plsreadme.com](https://plsreadme.com) — share markdown files and text as clean, readable web links.
 
-## What is this?
+Turn any markdown file or text into a shareable link, right from your editor.
 
-This package lets you use Outframer as an MCP (Model Context Protocol) server in Cursor. You can ask Claude to generate preview links for your markdown files without leaving your editor.
+## Quick Install
 
-## Installation & Setup
+### Claude Code
 
-### Option 1: npx (Recommended - No Installation)
+```bash
+claude mcp add plsreadme -- npx -y plsreadme-mcp
+```
 
-Add this to your Cursor settings at `~/.cursor/mcp.json`:
+### Cursor
+
+Add to `~/.cursor/mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "outframer": {
+    "plsreadme": {
       "command": "npx",
-      "args": ["-y", "outframer-mcp"]
+      "args": ["-y", "plsreadme-mcp"]
     }
   }
 }
 ```
 
-**Requirements:** Node.js 18+
+### VS Code
 
-### Option 2: Remote (Zero Install)
+Add to your VS Code settings (`settings.json`):
 
-Add this to your Cursor settings at `~/.cursor/mcp.json`:
+```json
+{
+  "mcp": {
+    "servers": {
+      "plsreadme": {
+        "command": "npx",
+        "args": ["-y", "plsreadme-mcp"]
+      }
+    }
+  }
+}
+```
+
+### Claude Desktop
+
+Add to `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "outframer": {
-      "url": "https://outframer.com/mcp"
+    "plsreadme": {
+      "command": "npx",
+      "args": ["-y", "plsreadme-mcp"]
     }
   }
 }
 ```
 
-**Requirements:** None! Works out of the box.
+### Windsurf
 
-## Usage
+Add to your Windsurf MCP config:
 
-Once configured, you can ask Claude in Cursor:
+```json
+{
+  "mcpServers": {
+    "plsreadme": {
+      "command": "npx",
+      "args": ["-y", "plsreadme-mcp"]
+    }
+  }
+}
+```
 
-- *"Generate a preview link for README.md"*
-- *"Create an Outframer link for this markdown file"*
-- *"Share this document on Outframer"*
+### Remote MCP (no install needed)
 
-### Available Tools
-
-#### `generate_preview_link`
-
-Reads a markdown file and generates a shareable preview link.
-
-**Input:**
-- `file_path` (string): Path to the markdown file
-
-**Output:**
-- `url`: Rendered preview URL
-- `raw_url`: Raw markdown URL
-- `title`: Extracted title (or null)
-- `id`: Document ID
-
-#### `generate_from_text`
-
-Generates a preview link from markdown text (e.g., selected text).
-
-**Input:**
-- `markdown` (string): Markdown content
-
-**Output:**
-- `url`: Rendered preview URL
-- `raw_url`: Raw markdown URL
-- `title`: Extracted title (or null)
-- `id`: Document ID
-
-## Examples
+Some clients support remote MCP servers. Use the URL directly:
 
 ```
-You: Generate a preview link for docs/api.md
-
-Claude: I'll create a preview link for that file.
-[calls generate_preview_link with file_path: "docs/api.md"]
-
-✓ Preview link generated successfully!
-
-📄 **API Documentation**
-🔗 View: https://outframer.com/v/abc123xyz
-📝 Raw: https://outframer.com/v/abc123xyz/raw
+https://plsreadme.com/mcp
 ```
+
+### add-mcp
+
+```bash
+npx add-mcp plsreadme-mcp
+```
+
+## Tools
+
+### `plsreadme_share_file`
+
+Share a local markdown file as a readable web link.
+
+```
+"Share README.md as a link"
+"Generate a plsreadme link for docs/architecture.md"
+```
+
+**Parameters:**
+- `file_path` (string, required) — Path to the markdown file
+
+### `plsreadme_share_text`
+
+Share markdown text as a readable web link.
+
+```
+"Share this markdown as a plsreadme link"
+"Turn this PRD into a shareable link"
+```
+
+**Parameters:**
+- `markdown` (string, required) — Markdown content to share
+- `title` (string, optional) — Document title (auto-detected from first H1 if omitted)
+
+## Use Cases
+
+- **Share READMEs** — Send a colleague a nicely rendered README link
+- **Share PRDs & proposals** — Turn a doc into a link for stakeholders
+- **Share meeting notes** — Quick link to formatted notes
+- **Share code docs** — API docs, architecture decisions, changelogs
+
+## Limits
+
+- Maximum file size: 200KB
+- Links are permanent and publicly accessible
+
+## Requirements
+
+- Node.js 18+
 
 ## Development
 
 ```bash
-# Install dependencies
 npm install
-
-# Build
 npm run build
-
-# Test locally
-node dist/index.js
 ```
 
 ## License
 
 MIT
-
-
-
