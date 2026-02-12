@@ -77,7 +77,7 @@ function formatError(message: string) {
 // Create MCP server
 const server = new McpServer({
   name: 'plsreadme',
-  version: '0.2.0',
+  version: '0.3.0',
 });
 
 // Tool 1: Share a local markdown file as a readable web link
@@ -95,11 +95,17 @@ Returns the shareable URL. The link is permanent and publicly accessible.`,
         'Path to the markdown file to share. Can be relative (resolved from cwd) or absolute.'
       ),
   },
+  // Annotations
+  {
+    title: 'Share Markdown File',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   async ({ file_path }) => {
-    // Resolve path
     const absolutePath = resolve(process.cwd(), file_path);
 
-    // Read file
     let markdown: string;
     try {
       markdown = readFileSync(absolutePath, 'utf-8');
@@ -116,7 +122,6 @@ Returns the shareable URL. The link is permanent and publicly accessible.`,
       return formatError(`Could not read file: ${(err as Error).message}`);
     }
 
-    // Validate size
     if (markdown.length > MAX_FILE_SIZE) {
       return formatError(
         `File is too large (${Math.round(markdown.length / 1024)}KB). Maximum size is ${MAX_FILE_SIZE / 1024}KB. Try splitting the document or removing large embedded content.`
@@ -127,7 +132,6 @@ Returns the shareable URL. The link is permanent and publicly accessible.`,
       return formatError(`File is empty: ${file_path}`);
     }
 
-    // Upload
     try {
       const result = await uploadMarkdown(markdown);
       const title = extractTitle(markdown) || basename(file_path, '.md');
@@ -157,6 +161,14 @@ Accepts raw markdown as a string. Returns the shareable URL.`,
         'Optional title for the document. If omitted, the first H1 heading is used.'
       ),
   },
+  // Annotations
+  {
+    title: 'Share Markdown Text',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   async ({ markdown, title }) => {
     if (!markdown || markdown.trim().length === 0) {
       return formatError(
@@ -178,6 +190,68 @@ Accepts raw markdown as a string. Returns the shareable URL.`,
       return formatError((err as Error).message);
     }
   }
+);
+
+// Prompt: Share a document
+server.prompt(
+  'share-document',
+  'Share a markdown file or text as a readable web link',
+  {
+    content: z
+      .string()
+      .optional()
+      .describe('Markdown content or file path to share'),
+  },
+  ({ content }) => ({
+    messages: [
+      {
+        role: 'user',
+        content: {
+          type: 'text',
+          text: content
+            ? `Share this as a plsreadme link:\n\n${content}`
+            : 'Help me share a markdown document as a readable web link using plsreadme.',
+        },
+      },
+    ],
+  })
+);
+
+// Resource: API info
+server.resource(
+  'plsreadme-api',
+  'plsreadme://api-info',
+  {
+    description: 'plsreadme API information and limits',
+    mimeType: 'text/plain',
+  },
+  async () => ({
+    contents: [
+      {
+        uri: 'plsreadme://api-info',
+        mimeType: 'text/plain',
+        text: [
+          'plsreadme API',
+          '=============',
+          '',
+          'Endpoint: https://plsreadme.com/api/render',
+          'Method: POST',
+          'Content-Type: application/json',
+          'Body: { "markdown": "<markdown content>" }',
+          '',
+          'Limits:',
+          '- Max content size: 200KB',
+          '- Links are permanent and publicly accessible',
+          '- No authentication required',
+          '',
+          'Response: { "id": "...", "url": "https://plsrd.me/...", "raw_url": "https://plsreadme.com/v/..." }',
+          '',
+          'Website: https://plsreadme.com',
+          'MCP Setup: https://plsreadme.com/mcp-setup',
+        ].join('\n'),
+      },
+    ],
+  })
 );
 
 // Start
