@@ -90,6 +90,19 @@ npx add-mcp plsreadme-mcp
 clawhub install plsreadme
 ```
 
+## Docker
+
+Build and run the stdio MCP server in a clean container:
+
+```bash
+docker build -t plsreadme-mcp:local -f Dockerfile .
+docker run --rm -i plsreadme-mcp:local
+```
+
+Notes:
+- Run the command from the repository root (where `Dockerfile` lives).
+- The containerized MCP server uses stdio and does not require env vars.
+
 ## Tools
 
 ### `plsreadme_share_file`

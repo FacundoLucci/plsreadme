@@ -162,6 +162,16 @@ npx add-mcp plsreadme-mcp
 clawhub install plsreadme
 ```
 
+### Docker (for MCP registries / listing checks)
+Build and run the stdio MCP server in a clean container:
+
+```bash
+docker build -t plsreadme-mcp:local .
+docker run --rm -i plsreadme-mcp:local
+```
+
+The containerized server uses stdio (no ports, no env vars required).
+
 ## 🛠 MCP Tools
 
 | Tool | What it does |
@@ -246,6 +256,20 @@ npm run deploy
 
 # Database migrations
 npm run db:migrate
+```
+
+### MCP package release
+`plsreadme-mcp` is published from `packages/mcp` by pushing an `mcp-v*` tag (see `.github/workflows/publish-mcp.yml`).
+
+```bash
+cd packages/mcp
+npm version patch   # or minor/major
+cd ../..
+git add packages/mcp/package.json packages/mcp/package-lock.json
+VERSION=$(node -p "require('./packages/mcp/package.json').version")
+git commit -m "chore(mcp): release v${VERSION}"
+git tag "mcp-v${VERSION}"
+# push commit + tag from your machine to trigger npm publish workflow
 ```
 
 ### Environment Variables
