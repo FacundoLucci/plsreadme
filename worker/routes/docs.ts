@@ -2,12 +2,19 @@ import { Hono } from "hono";
 import { nanoid } from "nanoid";
 import { marked } from "marked";
 import type { Env, DocRecord } from "../types";
+import {
+  WRITE_RATE_LIMITS,
+  checkAndConsumeRateLimit,
+  failureToErrorPayload,
+  getClientIp,
+  logAbuseAttempt,
+  parseContentLength,
+  sha256,
+  validateContentLength,
+  validateMarkdown,
+} from "../security.ts";
 
 const app = new Hono<{ Bindings: Env }>();
-
-// Constants
-const MAX_FILE_SIZE = 200 * 1024; // 200 KB
-const RATE_LIMIT_PER_HOUR = 30;
 
 // Send Discord notification (link/doc creation)
 async function sendDiscordLinkCreatedNotification(
@@ -66,15 +73,6 @@ marked.setOptions({
   breaks: true,
 });
 
-// Helper: Simple SHA-256 hash
-async function sha256(text: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 // Helper: Extract title from markdown
 function extractTitle(markdown: string): string | null {
   const lines = markdown.split("\n");
@@ -85,20 +83,6 @@ function extractTitle(markdown: string): string | null {
     }
   }
   return null;
-}
-
-// Helper: Check rate limit (simple IP-based)
-async function checkRateLimit(env: Env, ip: string): Promise<boolean> {
-  const ipHash = await sha256(ip);
-  const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-
-  const result = await env.DB.prepare(
-    "SELECT COUNT(*) as count FROM docs WHERE sha256 = ? AND created_at > ?"
-  )
-    .bind(ipHash, hourAgo)
-    .first<{ count: number }>();
-
-  return (result?.count || 0) < RATE_LIMIT_PER_HOUR;
 }
 
 // Helper: Sanitize HTML (basic XSS prevention)
@@ -148,7 +132,7 @@ function addStableAnchorIds(html: string): string {
 }
 
 // Helper: Generate HTML template for rendered doc
-function generateHtmlTemplate(
+export function generateHtmlTemplate(
   title: string | null,
   htmlContent: string,
   docId: string,
@@ -176,7 +160,11 @@ function generateHtmlTemplate(
     html, body { margin: 0; padding: 0; background: #fafafa; }
     body { font-family: 'Instrument Sans', sans-serif; color: #1f2937; }
     .layout { max-width: 1240px; margin: 0 auto; padding: 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; }
-    .doc-content { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 2.2rem; line-height: 1.7; }
+    .doc-content { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 2.2rem; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
+    .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,td,th) { overflow-wrap: anywhere; word-break: break-word; }
+    .doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+    .doc-content pre code { white-space: inherit; word-break: inherit; }
+    .doc-content code { overflow-wrap: anywhere; word-break: break-word; }
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id] { position: relative; cursor: pointer; }
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(59,130,246,0.08); }
     .doc-content .anchor-selected { background: rgba(59,130,246,0.16); border-radius: 6px; }
@@ -191,7 +179,7 @@ function generateHtmlTemplate(
     .comment-item:last-child { border-bottom: none; }
     .comment-meta { font-size: 0.75rem; color: #6b7280; }
     .comment-author { font-weight: 600; color: #111827; margin-right: 0.5rem; }
-    .comment-body { margin: 0.3rem 0 0; white-space: pre-wrap; font-size: 0.88rem; }
+    .comment-body { margin: 0.3rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font-size: 0.88rem; }
     .comment-error { display: none; color: #dc2626; font-size: 0.8rem; }
     .comments-empty { color: #6b7280; font-size: 0.85rem; }
     /* Inline comment box */
@@ -214,7 +202,7 @@ function generateHtmlTemplate(
     .sidebar-comment .sc-author { font-weight: 600; color: #111827; }
     .sidebar-comment .sc-time { color: #9ca3af; font-size: 0.72rem; margin-left: 0.3rem; }
     .sidebar-comment .sc-version { color: #9ca3af; font-size: 0.68rem; margin-left: 0.3rem; border: 1px solid #d1d5db; border-radius: 999px; padding: 0.02rem 0.32rem; }
-    .sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4b5563; white-space: pre-wrap; }
+    .sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4b5563; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
     .sidebar-comment-old { background: rgba(245, 158, 11, 0.08); border-radius: 6px; padding: 0.45rem 0.5rem; }
     .sidebar-comment .sc-note { margin: 0.2rem 0 0; color: #92400e; font-size: 0.7rem; }
     .sidebar-comment .sc-context-link { margin-left: 0.45rem; font-size: 0.68rem; color: #2563eb; text-decoration: none; }
@@ -592,15 +580,65 @@ function generateHtmlTemplate(
 
 // POST /api/render - Create a new document
 app.post("/", async (c) => {
+  const endpoint = "/api/render";
+  const clientIp = getClientIp(c.req);
+  const ipHash = await sha256(clientIp);
+  const contentLength = parseContentLength(c.req.header("content-length"));
+
   try {
+    const contentLengthFailure = validateContentLength(contentLength);
+    if (contentLengthFailure) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: contentLengthFailure.reason,
+        contentLength,
+      });
+      return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
+    }
+
+    const rateLimit = await checkAndConsumeRateLimit(
+      c.env,
+      ipHash,
+      WRITE_RATE_LIMITS.renderCreate
+    );
+    if (!rateLimit.allowed) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: "rate_limit_exceeded",
+        contentLength,
+      });
+
+      return c.json(
+        {
+          error: `Rate limit exceeded. Maximum ${rateLimit.maxRequests} requests per hour.`,
+          reason: "rate_limit_exceeded",
+          limit: rateLimit.maxRequests,
+          actual: rateLimit.count,
+          retry_after_seconds: rateLimit.retryAfterSeconds ?? 3600,
+        },
+        429
+      );
+    }
+
     const contentType = c.req.header("content-type") || "";
     let markdown = "";
-    let clientIp = c.req.header("cf-connecting-ip") || "unknown";
 
     // Parse input - either JSON or multipart form data
     if (contentType.includes("application/json")) {
-      const body = await c.req.json();
-      markdown = body.markdown || "";
+      const body = await c.req
+        .json<{ markdown?: unknown }>()
+        .catch(() => null);
+
+      if (!body || typeof body.markdown !== "string") {
+        return c.json(
+          { error: "Invalid JSON body. Expected { markdown: string }" },
+          400
+        );
+      }
+
+      markdown = body.markdown;
     } else if (contentType.includes("multipart/form-data")) {
       const formData = await c.req.formData();
       const file = formData.get("file");
@@ -617,25 +655,19 @@ app.post("/", async (c) => {
       markdown = await c.req.text();
     }
 
-    // Validate input
-    if (!markdown || markdown.trim().length === 0) {
-      return c.json({ error: "No markdown content provided" }, 400);
-    }
+    const { metrics, failure } = validateMarkdown(markdown);
+    if (failure) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: failure.reason,
+        contentLength,
+        payloadBytes: metrics.payloadBytes,
+        totalChars: metrics.totalChars,
+        maxLineChars: metrics.maxLineChars,
+      });
 
-    if (markdown.length > MAX_FILE_SIZE) {
-      return c.json(
-        { error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024} KB` },
-        400
-      );
-    }
-
-    // Rate limiting
-    const allowed = await checkRateLimit(c.env, clientIp);
-    if (!allowed) {
-      return c.json(
-        { error: "Rate limit exceeded. Maximum 30 uploads per hour." },
-        429
-      );
+      return c.json(failureToErrorPayload(failure), failure.status);
     }
 
     // Generate ID, admin token, and hash
@@ -661,7 +693,16 @@ app.post("/", async (c) => {
     await c.env.DB.prepare(
       "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, admin_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     )
-      .bind(id, r2Key, "text/markdown", markdown.length, now, hash, title, adminToken)
+      .bind(
+        id,
+        r2Key,
+        "text/markdown",
+        metrics.payloadBytes,
+        now,
+        hash,
+        title,
+        adminToken
+      )
       .run();
 
     // Send Discord notification (optional, best-effort)
@@ -673,7 +714,7 @@ app.post("/", async (c) => {
         title,
         url: `${baseUrl}/v/${id}`,
         rawUrl: `${baseUrl}/v/${id}/raw`,
-        bytes: markdown.length,
+        bytes: metrics.payloadBytes,
       });
 
       const execCtx = (c as any).executionCtx as ExecutionContext | undefined;
@@ -689,7 +730,7 @@ app.post("/", async (c) => {
     try {
       await c.env.ANALYTICS.writeDataPoint({
         blobs: ["doc_create", id],
-        doubles: [markdown.length],
+        doubles: [metrics.payloadBytes],
         indexes: [clientIp],
       });
     } catch (e) {
@@ -876,8 +917,49 @@ async function validateAdminToken(env: Env, docId: string, token: string): Promi
 
 // PUT /v/:id - Update document content
 app.put("/:id", async (c) => {
+  const id = c.req.param("id");
+  const endpoint = `/api/render/${id}`;
+  const clientIp = getClientIp(c.req);
+  const ipHash = await sha256(clientIp);
+  const contentLength = parseContentLength(c.req.header("content-length"));
+
   try {
-    const id = c.req.param("id");
+    const contentLengthFailure = validateContentLength(contentLength);
+    if (contentLengthFailure) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: contentLengthFailure.reason,
+        contentLength,
+      });
+      return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
+    }
+
+    const rateLimit = await checkAndConsumeRateLimit(
+      c.env,
+      ipHash,
+      WRITE_RATE_LIMITS.renderUpdate
+    );
+    if (!rateLimit.allowed) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: "rate_limit_exceeded",
+        contentLength,
+      });
+
+      return c.json(
+        {
+          error: `Rate limit exceeded. Maximum ${rateLimit.maxRequests} updates per hour.`,
+          reason: "rate_limit_exceeded",
+          limit: rateLimit.maxRequests,
+          actual: rateLimit.count,
+          retry_after_seconds: rateLimit.retryAfterSeconds ?? 3600,
+        },
+        429
+      );
+    }
+
     const authHeader = c.req.header("authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
@@ -890,14 +972,28 @@ app.put("/:id", async (c) => {
       return c.json({ error: "Invalid admin token or document not found." }, 403);
     }
 
-    const body = await c.req.json<{ markdown?: string }>().catch(() => ({} as any));
-    const markdown = typeof body?.markdown === "string" ? body.markdown : "";
+    const body = await c.req
+      .json<{ markdown?: unknown }>()
+      .catch(() => null);
 
-    if (!markdown || markdown.trim().length === 0) {
-      return c.json({ error: "No markdown content provided" }, 400);
+    if (!body || typeof body.markdown !== "string") {
+      return c.json({ error: "Invalid JSON body. Expected { markdown: string }" }, 400);
     }
-    if (markdown.length > MAX_FILE_SIZE) {
-      return c.json({ error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024} KB` }, 400);
+
+    const markdown = body.markdown;
+    const { metrics, failure } = validateMarkdown(markdown);
+
+    if (failure) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: failure.reason,
+        contentLength,
+        payloadBytes: metrics.payloadBytes,
+        totalChars: metrics.totalChars,
+        maxLineChars: metrics.maxLineChars,
+      });
+      return c.json(failureToErrorPayload(failure), failure.status);
     }
 
     const hash = await sha256(markdown);
@@ -925,7 +1021,7 @@ app.put("/:id", async (c) => {
     await c.env.DB.prepare(
       "UPDATE docs SET bytes = ?, sha256 = ?, title = ?, doc_version = ? WHERE id = ?"
     )
-      .bind(markdown.length, hash, title, oldVersion + 1, id)
+      .bind(metrics.payloadBytes, hash, title, oldVersion + 1, id)
       .run();
 
     const baseUrl = new URL(c.req.url).origin;

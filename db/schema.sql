@@ -62,3 +62,26 @@ CREATE TABLE IF NOT EXISTS comments (
 CREATE INDEX IF NOT EXISTS idx_comments_doc_id ON comments(doc_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_doc_anchor ON comments(doc_id, anchor_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_ip_hash ON comments(ip_hash);
+
+-- Write endpoint rate limiting events
+CREATE TABLE IF NOT EXISTS request_rate_limits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  endpoint TEXT NOT NULL,
+  ip_hash TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_request_rate_limits_endpoint_ip_time ON request_rate_limits(endpoint, ip_hash, created_at);
+
+-- Abuse rejection audit log (no raw payload storage)
+CREATE TABLE IF NOT EXISTS abuse_audit_log (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  endpoint TEXT NOT NULL,
+  ip_hash TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  content_length INTEGER,
+  payload_bytes INTEGER,
+  total_chars INTEGER,
+  max_line_chars INTEGER,
+  created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_abuse_audit_log_created ON abuse_audit_log(created_at);

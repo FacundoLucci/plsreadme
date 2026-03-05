@@ -1,6 +1,17 @@
 import { Hono } from "hono";
 import { nanoid } from "nanoid";
 import type { Env } from "../types";
+import {
+  WRITE_RATE_LIMITS,
+  checkAndConsumeRateLimit,
+  failureToErrorPayload,
+  getClientIp,
+  logAbuseAttempt,
+  parseContentLength,
+  sha256,
+  validateContentLength,
+  validateMarkdown,
+} from "../security.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -55,15 +66,6 @@ async function sendDiscordLinkCreatedNotification(
   }
 }
 
-// Helper: Simple SHA-256 hash
-async function sha256(text: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
 // Helper: Extract title from markdown
 function extractTitle(markdown: string): string | null {
   const lines = markdown.split("\n");
@@ -78,13 +80,72 @@ function extractTitle(markdown: string): string | null {
 
 // POST /api/create-link
 app.post("/", async (c) => {
-  try {
-    const body = await c.req.json();
-    const markdown = body.markdown;
+  const endpoint = "/api/create-link";
+  const clientIp = getClientIp(c.req);
+  const ipHash = await sha256(clientIp);
+  const contentLength = parseContentLength(c.req.header("content-length"));
 
-    // Validate markdown length > 0
-    if (!markdown || markdown.trim().length === 0) {
-      return c.json({ error: "No markdown content provided" }, 400);
+  try {
+    const contentLengthFailure = validateContentLength(contentLength);
+    if (contentLengthFailure) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: contentLengthFailure.reason,
+        contentLength,
+      });
+      return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
+    }
+
+    const rateLimit = await checkAndConsumeRateLimit(
+      c.env,
+      ipHash,
+      WRITE_RATE_LIMITS.createLink
+    );
+    if (!rateLimit.allowed) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: "rate_limit_exceeded",
+        contentLength,
+      });
+      return c.json(
+        {
+          error: `Rate limit exceeded. Maximum ${rateLimit.maxRequests} requests per hour.`,
+          reason: "rate_limit_exceeded",
+          limit: rateLimit.maxRequests,
+          actual: rateLimit.count,
+          retry_after_seconds: rateLimit.retryAfterSeconds ?? 3600,
+        },
+        429
+      );
+    }
+
+    const body = await c.req
+      .json<{ markdown?: unknown }>()
+      .catch(() => null);
+
+    if (!body || typeof body.markdown !== "string") {
+      return c.json(
+        { error: "Invalid JSON body. Expected { markdown: string }" },
+        400
+      );
+    }
+
+    const markdown = body.markdown;
+    const { metrics, failure } = validateMarkdown(markdown);
+
+    if (failure) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: failure.reason,
+        contentLength,
+        payloadBytes: metrics.payloadBytes,
+        totalChars: metrics.totalChars,
+        maxLineChars: metrics.maxLineChars,
+      });
+      return c.json(failureToErrorPayload(failure), failure.status);
     }
 
     // Generate ID and hash
@@ -109,7 +170,7 @@ app.post("/", async (c) => {
     await c.env.DB.prepare(
       "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     )
-      .bind(id, r2Key, "text/markdown", markdown.length, now, hash, title, 0)
+      .bind(id, r2Key, "text/markdown", metrics.payloadBytes, now, hash, title, 0)
       .run();
 
     // Send Discord notification (optional, best-effort)
@@ -121,7 +182,7 @@ app.post("/", async (c) => {
         title,
         url: `${baseUrl}/v/${id}`,
         rawUrl: `${baseUrl}/v/${id}/raw`,
-        bytes: markdown.length,
+        bytes: metrics.payloadBytes,
       });
 
       const execCtx = (c as any).executionCtx as ExecutionContext | undefined;
