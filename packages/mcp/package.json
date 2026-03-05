@@ -1,6 +1,6 @@
 {
   "name": "plsreadme-mcp",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "MCP server for plsreadme.com — share markdown files and text as clean, readable web links. Works with Claude Desktop, Cursor, VS Code, Windsurf, and any MCP client.",
   "type": "module",
   "main": "./dist/index.js",
