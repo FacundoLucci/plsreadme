@@ -85,6 +85,66 @@
         align-items: center;
         justify-content: space-between;
       }
+      .app-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .auth-shell {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+      }
+      .auth-shell-inner {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .auth-shell-inner-signed-in {
+        gap: 0.5rem;
+      }
+      .auth-buttons {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      .auth-link-button {
+        padding: 0.4rem 0.62rem;
+        border: 1px solid var(--app-border-light);
+        border-radius: 6px;
+        background: var(--app-surface);
+        color: var(--app-text);
+        font-size: 0.78rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .auth-link-button-secondary {
+        color: var(--app-text-muted);
+      }
+      .auth-user-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.28rem 0.55rem;
+        border-radius: 999px;
+        border: 1px solid var(--app-border-light);
+        background: var(--app-file-bg);
+        color: var(--app-text);
+        font-size: 0.75rem;
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .auth-secondary-link {
+        color: var(--app-text-subtle);
+        text-decoration: none;
+        font-size: 0.75rem;
+        pointer-events: none;
+      }
+      .auth-status {
+        color: var(--app-text-subtle);
+        font-size: 0.75rem;
+      }
       .app-logo {
         display: flex;
         align-items: center;
@@ -403,6 +463,16 @@
         .upload-section {
           padding: 1.5rem;
         }
+        .app-header {
+          padding: 1rem;
+        }
+        .auth-link-button {
+          font-size: 0.72rem;
+          padding: 0.34rem 0.5rem;
+        }
+        .auth-user-chip {
+          max-width: 120px;
+        }
       }
     </style>
   </head>
@@ -414,6 +484,9 @@
             <i class="hgi-stroke hgi-file-01"></i>
             <span>plsreadme</span>
           </a>
+          <div class="app-header-actions">
+            <div class="auth-shell" data-auth-root></div>
+          </div>
         </div>
       </header>
 
@@ -510,6 +583,7 @@
       </main>
     </div>
 
+    <script src="/auth.js" defer></script>
     <script src="/app.js"></script>
   </body>
 </html>

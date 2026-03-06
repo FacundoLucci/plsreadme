@@ -21,7 +21,9 @@
   },
   "vars": {
     "OPENAI_MODEL": "gpt-4.1-2025-04-14",
-    "CF_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct"
+    "CF_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct",
+    "CLERK_SIGN_IN_URL": "/sign-in",
+    "CLERK_SIGN_UP_URL": "/sign-up"
   },
   "d1_databases": [
     {

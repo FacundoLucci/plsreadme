@@ -39,6 +39,7 @@ You wrote a README, a PRD, meeting notes, or an API doc in markdown. Now you nee
 - **OpenClaw skill** — Available on [ClawHub](https://clawhub.com) for AI agent workflows
 - **Short links** — Every doc gets a compact `plsrd.me/v/xxx` URL
 - **Raw access** — Download the original `.md` file from any shared link
+- **Clerk auth foundation** — GitHub/Google sign-in wiring + backend auth verification utilities
 - **Zero config** — No API keys needed for basic usage
 
 ## 🚀 Quick Start
@@ -222,7 +223,9 @@ Built on Cloudflare's edge stack for speed everywhere:
 plsreadme/
 ├── worker/
 │   ├── index.ts              # Main worker entry
+│   ├── auth.ts               # Clerk JWT verification utilities/middleware
 │   ├── routes/
+│   │   ├── auth.ts           # Auth config/session/protected identity endpoints
 │   │   ├── docs.ts           # Document creation & rendering
 │   │   ├── comments.ts       # Inline commenting system
 │   │   ├── convert.ts        # AI text→markdown conversion
@@ -237,6 +240,8 @@ plsreadme/
 ├── public/                   # Static assets & landing pages
 ├── db/
 │   └── schema.sql            # D1 database schema
+├── docs/
+│   └── auth-clerk.md         # Auth setup + environment checklist
 ├── skill/
 │   └── plsreadme/            # OpenClaw agent skill
 └── wrangler.jsonc             # Cloudflare Workers config
@@ -274,7 +279,9 @@ git tag "mcp-v${VERSION}"
 
 ### Environment Variables
 
-Set via `wrangler secret put`:
+Start from `.env.example` and set values in your local/dev/prod environment.
+
+> Cloudflare tip: non-sensitive values can live in `vars`; sensitive values should be set with `wrangler secret put`.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
@@ -283,8 +290,16 @@ Set via `wrangler secret put`:
 | `DISCORD_LINK_WEBHOOK_URL` | No | New link creation notifications |
 | `RESEND_API_KEY` | No | Email notifications |
 | `NOTIFICATION_EMAIL` | No | Email recipient for notifications |
+| `CLERK_PUBLISHABLE_KEY` | For auth | Clerk publishable key for frontend auth wiring |
+| `CLERK_JWT_ISSUER` | For auth | Clerk JWT issuer used by worker verification |
+| `CLERK_JWT_AUDIENCE` | Optional | Expected audience claim for Clerk JWTs |
+| `CLERK_SIGN_IN_URL` | Optional | Frontend sign-in URL hint (default `/sign-in`) |
+| `CLERK_SIGN_UP_URL` | Optional | Frontend sign-up URL hint (default `/sign-up`) |
+| `CLERK_SECRET_KEY` | Optional | Reserved for future server-side Clerk integrations |
 
-The core sharing functionality requires **zero configuration**. AI conversion and notifications are optional add-ons.
+The core sharing functionality still requires **zero configuration**. Clerk auth, AI conversion, and notifications are opt-in.
+
+For the full auth setup checklist, see [`docs/auth-clerk.md`](docs/auth-clerk.md).
 
 ## 📊 Limits
 

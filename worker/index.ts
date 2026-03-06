@@ -8,6 +8,7 @@ import { convertRoutes } from './routes/convert';
 import { linksRoutes } from './routes/links';
 import { adminRoutes } from './routes/admin';
 import { commentsRoutes } from './routes/comments';
+import { authRoutes } from './routes/auth';
 // Export the MCP Durable Object class for Cloudflare binding
 export { OutframerMCP } from './mcp-agent';
 import { OutframerMCP as MCPServer } from './mcp-agent';
@@ -18,7 +19,7 @@ const app = new Hono<{ Bindings: Env }>();
 app.use('/api/*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type'],
+  allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Mount routes
@@ -28,6 +29,7 @@ app.route('/api/convert', convertRoutes);
 app.route('/api/create-link', linksRoutes);
 app.route('/api/admin', adminRoutes);
 app.route('/api/comments', commentsRoutes);
+app.route('/api/auth', authRoutes);
 app.route('/t', analyticsRoutes);
 
 // Mount document viewer routes

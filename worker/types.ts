@@ -13,6 +13,12 @@ export interface Env {
   OPENAI_API_KEY?: string;       // Optional OpenAI API key for text->markdown conversion
   OPENAI_MODEL?: string;         // Optional OpenAI model override
   CF_AI_MODEL?: string;          // Optional Workers AI model override
+  CLERK_PUBLISHABLE_KEY?: string; // Optional Clerk publishable key for frontend auth
+  CLERK_SECRET_KEY?: string;      // Optional Clerk secret key (reserved for future server-side use)
+  CLERK_JWT_ISSUER?: string;      // Optional Clerk JWT issuer used for backend token verification
+  CLERK_JWT_AUDIENCE?: string;    // Optional expected Clerk JWT audience claim
+  CLERK_SIGN_IN_URL?: string;     // Optional Clerk sign-in route/path
+  CLERK_SIGN_UP_URL?: string;     // Optional Clerk sign-up route/path
 }
 
 export interface CloudflareAI {

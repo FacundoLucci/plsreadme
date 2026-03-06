@@ -109,6 +109,12 @@ body {
   box-sizing: border-box;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .logo {
   display: flex;
   align-items: center;
@@ -1228,6 +1234,23 @@ body {
     padding-top: calc(var(--header-height) + var(--space-2xl));
   }
 
+  .header {
+    padding: 0 var(--space-sm);
+  }
+
+  .header-actions {
+    gap: 0.35rem;
+  }
+
+  .auth-link-button {
+    padding: 0.38rem 0.5rem;
+    font-size: 0.68rem;
+  }
+
+  .auth-user-chip {
+    max-width: 120px;
+  }
+
   .section {
     padding: var(--space-2xl) var(--space-lg);
   }
@@ -1467,6 +1490,78 @@ body {
 
 .bottom-cta-button {
   margin-bottom: var(--space-md);
+}
+
+.auth-shell {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.auth-shell-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.auth-shell-inner-signed-in {
+  gap: 0.5rem;
+}
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.auth-link-button {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  padding: 0.42rem 0.62rem;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.auth-link-button:hover {
+  border-color: rgba(37, 99, 235, 0.8);
+  background: rgba(37, 99, 235, 0.15);
+}
+
+.auth-link-button-secondary {
+  color: var(--color-text-muted);
+}
+
+.auth-user-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.33rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.15);
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  color: #dbeafe;
+  font-size: 0.72rem;
+  font-weight: 600;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-secondary-link {
+  color: var(--color-text-subtle);
+  text-decoration: none;
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+
+.auth-status {
+  color: var(--color-text-subtle);
+  font-size: 0.75rem;
 }
 
 /* Hugeicons adjustments */
