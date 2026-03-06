@@ -101,7 +101,7 @@ test("SQLi-like markdown is handled as data and insert query stays parameterized
   assert.ok(docsInsert, "expected docs INSERT query to run");
   assert.match(
     docsInsert!.sql,
-    /VALUES \(\?, \?, \?, \?, \?, \?, \?, \?\)/,
+    /VALUES \(\?, \?, \?, \?, \?, \?, \?, \?, \?\)/,
     "docs insert should stay parameterized"
   );
   assert.ok(!docsInsert!.sql.includes("DROP TABLE"));

@@ -67,7 +67,7 @@ test("/api/auth/config reports auth enabled when clerk keys are configured", asy
 
   assert.equal(body.enabled, true);
   assert.equal(body.publishableKey, "pk_test_example");
-  assert.deepEqual(body.providers, ["github", "google"]);
+  assert.deepEqual(body.providers, ["github", "google", "email"]);
 });
 
 test("/api/auth/me returns 401 for unauthenticated requests", async () => {

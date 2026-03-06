@@ -40,11 +40,14 @@ CREATE TABLE docs (
   title TEXT,
   view_count INTEGER NOT NULL DEFAULT 0,
   admin_token TEXT,
-  doc_version INTEGER NOT NULL DEFAULT 1
+  doc_version INTEGER NOT NULL DEFAULT 1,
+  owner_user_id TEXT
 );
 
 CREATE INDEX idx_docs_created_at ON docs(created_at);
 CREATE INDEX idx_docs_sha256 ON docs(sha256);
+CREATE INDEX idx_docs_owner_user_id ON docs(owner_user_id);
+CREATE INDEX idx_docs_owner_created_at ON docs(owner_user_id, created_at DESC);
 
 -- Comments table
 CREATE TABLE IF NOT EXISTS comments (

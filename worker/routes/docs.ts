@@ -1,4 +1,4 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { nanoid } from "nanoid";
 import { marked } from "marked";
 import type { Env, DocRecord } from "../types";
@@ -13,6 +13,8 @@ import {
   validateContentLength,
   validateMarkdown,
 } from "../security.ts";
+import { getRequestAuth } from "../auth.ts";
+import { ensureOwnershipSchema } from "../ownership.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -678,6 +680,10 @@ app.post("/", async (c) => {
     const title = extractTitle(markdown);
     const now = new Date().toISOString();
 
+    await ensureOwnershipSchema(c.env);
+    const requestAuth = await getRequestAuth(c);
+    const ownerUserId = requestAuth.isAuthenticated ? requestAuth.userId : null;
+
     // Store in R2
     await c.env.DOCS_BUCKET.put(r2Key, markdown, {
       httpMetadata: {
@@ -691,7 +697,7 @@ app.post("/", async (c) => {
 
     // Store metadata in D1
     await c.env.DB.prepare(
-      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, admin_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, admin_token, owner_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
       .bind(
         id,
@@ -701,7 +707,8 @@ app.post("/", async (c) => {
         now,
         hash,
         title,
-        adminToken
+        adminToken,
+        ownerUserId
       )
       .run();
 
@@ -906,6 +913,14 @@ app.get("/:id/raw", async (c) => {
   }
 });
 
+function extractAdminToken(c: Context<{ Bindings: Env }>): string {
+  const customToken = c.req.header("x-admin-token")?.trim();
+  if (customToken) return customToken;
+
+  const authHeader = c.req.header("authorization") || "";
+  return authHeader.replace(/^Bearer\s+/i, "").trim();
+}
+
 // Helper: validate admin token
 async function validateAdminToken(env: Env, docId: string, token: string): Promise<DocRecord | null> {
   if (!token) return null;
@@ -913,6 +928,38 @@ async function validateAdminToken(env: Env, docId: string, token: string): Promi
     .bind(docId, token)
     .first<DocRecord>();
   return doc || null;
+}
+
+async function enforceOwnedDocMutationAuth(
+  c: Context<{ Bindings: Env }>,
+  doc: DocRecord
+): Promise<Response | null> {
+  if (!doc.owner_user_id) {
+    return null;
+  }
+
+  const requestAuth = await getRequestAuth(c);
+  if (!requestAuth.isAuthenticated || !requestAuth.userId) {
+    return c.json(
+      {
+        error: "Owned documents require an authenticated owner session.",
+        code: "owner_auth_required",
+      },
+      401
+    );
+  }
+
+  if (requestAuth.userId !== doc.owner_user_id) {
+    return c.json(
+      {
+        error: "You are not allowed to modify a document owned by another user.",
+        code: "owner_mismatch",
+      },
+      403
+    );
+  }
+
+  return null;
 }
 
 // PUT /v/:id - Update document content
@@ -960,9 +1007,9 @@ app.put("/:id", async (c) => {
       );
     }
 
-    const authHeader = c.req.header("authorization") || "";
-    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+    await ensureOwnershipSchema(c.env);
 
+    const token = extractAdminToken(c);
     if (!token) {
       return c.json({ error: "Authorization required. Pass admin_token as Bearer token." }, 401);
     }
@@ -971,6 +1018,13 @@ app.put("/:id", async (c) => {
     if (!doc) {
       return c.json({ error: "Invalid admin token or document not found." }, 403);
     }
+
+    const ownerAuthError = await enforceOwnedDocMutationAuth(c, doc);
+    if (ownerAuthError) {
+      return ownerAuthError;
+    }
+
+    const requestAuth = await getRequestAuth(c);
 
     const body = await c.req
       .json<{ markdown?: unknown }>()
@@ -1017,11 +1071,14 @@ app.put("/:id", async (c) => {
       customMetadata: { updated_at: new Date().toISOString(), sha256: hash },
     });
 
+    const ownerAssignmentUserId =
+      !doc.owner_user_id && requestAuth.isAuthenticated ? requestAuth.userId : null;
+
     // Update D1 metadata + increment doc version
     await c.env.DB.prepare(
-      "UPDATE docs SET bytes = ?, sha256 = ?, title = ?, doc_version = ? WHERE id = ?"
+      "UPDATE docs SET bytes = ?, sha256 = ?, title = ?, doc_version = ?, owner_user_id = COALESCE(owner_user_id, ?) WHERE id = ?"
     )
-      .bind(metrics.payloadBytes, hash, title, oldVersion + 1, id)
+      .bind(metrics.payloadBytes, hash, title, oldVersion + 1, ownerAssignmentUserId, id)
       .run();
 
     const baseUrl = new URL(c.req.url).origin;
@@ -1041,9 +1098,10 @@ app.put("/:id", async (c) => {
 app.delete("/:id", async (c) => {
   try {
     const id = c.req.param("id");
-    const authHeader = c.req.header("authorization") || "";
-    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
+    await ensureOwnershipSchema(c.env);
+
+    const token = extractAdminToken(c);
     if (!token) {
       return c.json({ error: "Authorization required. Pass admin_token as Bearer token." }, 401);
     }
@@ -1051,6 +1109,11 @@ app.delete("/:id", async (c) => {
     const doc = await validateAdminToken(c.env, id, token);
     if (!doc) {
       return c.json({ error: "Invalid admin token or document not found." }, 403);
+    }
+
+    const ownerAuthError = await enforceOwnedDocMutationAuth(c, doc);
+    if (ownerAuthError) {
+      return ownerAuthError;
     }
 
     // Delete from R2

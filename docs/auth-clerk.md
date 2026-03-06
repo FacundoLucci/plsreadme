@@ -1,7 +1,7 @@
 # Clerk Auth Setup (Phase 1 Foundation)
 
 This project now includes a **Clerk auth foundation** with:
-- frontend sign-in/sign-up wiring (GitHub + Google via Clerk UI)
+- frontend sign-in/sign-up wiring (GitHub + Google, plus Clerk-hosted email fallback)
 - backend JWT verification for protected worker endpoints
 - safe unauthenticated handling for public routes
 
@@ -33,9 +33,10 @@ This project now includes a **Clerk auth foundation** with:
 ## Local development checklist
 
 1. Create local env vars (for example in `.dev.vars` for Wrangler) based on `.env.example`.
-2. In Clerk Dashboard, enable social providers:
-   - GitHub
-   - Google
+2. In Clerk Dashboard, configure login methods:
+   - GitHub (optional during initial rollout)
+   - Google (optional during initial rollout)
+   - Email (recommended fallback so auth works immediately)
 3. Set your Clerk instance issuer in `CLERK_JWT_ISSUER`.
 4. Run locally:
    ```bash
@@ -43,12 +44,23 @@ This project now includes a **Clerk auth foundation** with:
    ```
 5. Open `/` or `/app.html` and use the header auth controls.
 
+## OAuth not configured yet? Use email fallback now
+
+If GitHub/Google OAuth credentials are still pending, users can still sign in immediately:
+
+1. Click **Sign in** (or **Use email instead**) in the site header.
+2. The client redirects to the **Clerk-hosted sign-in flow**.
+3. Choose email sign-in/sign-up (password or magic-link based on your Clerk settings).
+4. After auth, Clerk returns users back to the current page.
+
+This keeps auth usable from day one while social OAuth is being finalized.
+
 ## Production checklist
 
 1. Set vars/secrets in Cloudflare:
    - publishable key (var)
    - issuer (+ optional audience)
-2. Confirm Clerk app has production GitHub/Google OAuth credentials configured.
+2. Confirm Clerk app has production GitHub/Google OAuth credentials configured (email fallback can stay enabled for resilience).
 3. Deploy and verify:
    - `/api/auth/config` returns `enabled: true`
    - signed-in session returns authenticated data on `/api/auth/session`

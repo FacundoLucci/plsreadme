@@ -19,7 +19,7 @@ const app = new Hono<{ Bindings: Env }>();
 app.use('/api/*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token'],
 }));
 
 // Mount routes

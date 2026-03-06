@@ -79,5 +79,6 @@ export interface DocRecord {
   view_count: number;
   admin_token: string | null;
   doc_version: number;
+  owner_user_id: string | null;
 }
 

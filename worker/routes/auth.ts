@@ -15,7 +15,7 @@ app.get("/config", (c) => {
     publishableKey: publishableKey || null,
     signInUrl: c.env.CLERK_SIGN_IN_URL?.trim() || "/sign-in",
     signUpUrl: c.env.CLERK_SIGN_UP_URL?.trim() || "/sign-up",
-    providers: ["github", "google"],
+    providers: ["github", "google", "email"],
   });
 });
 

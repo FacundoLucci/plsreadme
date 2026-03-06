@@ -39,7 +39,8 @@ You wrote a README, a PRD, meeting notes, or an API doc in markdown. Now you nee
 - **OpenClaw skill** — Available on [ClawHub](https://clawhub.com) for AI agent workflows
 - **Short links** — Every doc gets a compact `plsrd.me/v/xxx` URL
 - **Raw access** — Download the original `.md` file from any shared link
-- **Clerk auth foundation** — GitHub/Google sign-in wiring + backend auth verification utilities
+- **Clerk auth foundation** — GitHub/Google sign-in wiring + Clerk-hosted email fallback + backend auth verification utilities
+- **Ownership model (Phase 2)** — docs can be linked to a Clerk user (`owner_user_id`) while preserving anonymous flows
 - **Zero config** — No API keys needed for basic usage
 
 ## 🚀 Quick Start
@@ -78,6 +79,8 @@ curl -X PUT https://plsreadme.com/v/abc123def456 \
 curl -X DELETE https://plsreadme.com/v/abc123def456 \
   -H "Authorization: Bearer sk_..."
 ```
+
+For docs owned by an authenticated Clerk user, update/delete also require that owner session (to prevent cross-user mutation), while anonymous docs continue to work with `admin_token` only.
 
 ### MCP (AI Editors)
 
@@ -263,6 +266,11 @@ npm run deploy
 npm run db:migrate
 ```
 
+Ownership phase migration notes:
+- Apply `db/migrations/004_owner_user_id.sql` in existing environments.
+- Legacy rows are intentionally backfilled as `owner_user_id = NULL` (anonymous/public behavior preserved).
+- Write routes also run a safe ownership schema ensure step (duplicate-column tolerant) so rollout stays resilient across mixed environments.
+
 ### MCP package release
 `plsreadme-mcp` is published from `packages/mcp` by pushing an `mcp-v*` tag (see `.github/workflows/publish-mcp.yml`).
 
@@ -290,12 +298,14 @@ Start from `.env.example` and set values in your local/dev/prod environment.
 | `DISCORD_LINK_WEBHOOK_URL` | No | New link creation notifications |
 | `RESEND_API_KEY` | No | Email notifications |
 | `NOTIFICATION_EMAIL` | No | Email recipient for notifications |
-| `CLERK_PUBLISHABLE_KEY` | For auth | Clerk publishable key for frontend auth wiring |
+| `CLERK_PUBLISHABLE_KEY` | For auth | Clerk publishable key for frontend auth wiring (social + email fallback) |
 | `CLERK_JWT_ISSUER` | For auth | Clerk JWT issuer used by worker verification |
 | `CLERK_JWT_AUDIENCE` | Optional | Expected audience claim for Clerk JWTs |
-| `CLERK_SIGN_IN_URL` | Optional | Frontend sign-in URL hint (default `/sign-in`) |
-| `CLERK_SIGN_UP_URL` | Optional | Frontend sign-up URL hint (default `/sign-up`) |
+| `CLERK_SIGN_IN_URL` | Optional | Clerk-hosted sign-in URL hint (default `/sign-in`) |
+| `CLERK_SIGN_UP_URL` | Optional | Clerk-hosted sign-up URL hint (default `/sign-up`) |
 | `CLERK_SECRET_KEY` | Optional | Reserved for future server-side Clerk integrations |
+
+If OAuth credentials are not configured yet, users can still click **Sign in** / **Use email instead** and complete auth through the Clerk-hosted email flow immediately.
 
 The core sharing functionality still requires **zero configuration**. Clerk auth, AI conversion, and notifications are opt-in.
 

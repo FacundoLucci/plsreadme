@@ -61,24 +61,55 @@
     return response.json();
   }
 
-  function attachSignedOutHandlers(clerk) {
+  async function redirectToHostedSignIn(clerk, config) {
+    try {
+      await clerk.redirectToSignIn({
+        returnBackUrl: window.location.href,
+        signInUrl: config?.signInUrl || undefined,
+      });
+    } catch (error) {
+      console.warn("Hosted sign-in redirect failed, falling back to modal", error);
+      clerk.openSignIn({
+        afterSignInUrl: window.location.href,
+        afterSignUpUrl: window.location.href,
+      });
+    }
+  }
+
+  async function redirectToHostedSignUp(clerk, config) {
+    try {
+      await clerk.redirectToSignUp({
+        returnBackUrl: window.location.href,
+        signUpUrl: config?.signUpUrl || undefined,
+      });
+    } catch (error) {
+      console.warn("Hosted sign-up redirect failed, falling back to modal", error);
+      clerk.openSignUp({
+        afterSignInUrl: window.location.href,
+        afterSignUpUrl: window.location.href,
+      });
+    }
+  }
+
+  function attachSignedOutHandlers(clerk, config) {
     const signInButtons = document.querySelectorAll("[data-auth-action='sign-in']");
     for (const button of signInButtons) {
       button.addEventListener("click", () => {
-        clerk.openSignIn({
-          afterSignInUrl: window.location.href,
-          afterSignUpUrl: window.location.href,
-        });
+        void redirectToHostedSignIn(clerk, config);
       });
     }
 
     const signUpButtons = document.querySelectorAll("[data-auth-action='sign-up']");
     for (const button of signUpButtons) {
       button.addEventListener("click", () => {
-        clerk.openSignUp({
-          afterSignInUrl: window.location.href,
-          afterSignUpUrl: window.location.href,
-        });
+        void redirectToHostedSignUp(clerk, config);
+      });
+    }
+
+    const emailFallbackButtons = document.querySelectorAll("[data-auth-action='email-fallback']");
+    for (const button of emailFallbackButtons) {
+      button.addEventListener("click", () => {
+        void redirectToHostedSignIn(clerk, config);
       });
     }
   }
@@ -157,12 +188,13 @@
         renderAll(`
           <div class="auth-shell-inner">
             <div class="auth-buttons">
-              <button type="button" class="auth-link-button" data-auth-action="sign-in">Sign in (GitHub / Google)</button>
+              <button type="button" class="auth-link-button" data-auth-action="sign-in">Sign in</button>
               <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-up">Create account</button>
+              <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="email-fallback">Use email instead</button>
             </div>
           </div>
         `);
-        attachSignedOutHandlers(clerk);
+        attachSignedOutHandlers(clerk, config);
         return;
       }
 

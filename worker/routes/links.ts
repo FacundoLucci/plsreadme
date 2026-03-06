@@ -12,6 +12,8 @@ import {
   validateContentLength,
   validateMarkdown,
 } from "../security.ts";
+import { getRequestAuth } from "../auth.ts";
+import { ensureOwnershipSchema } from "../ownership.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -155,6 +157,10 @@ app.post("/", async (c) => {
     const title = extractTitle(markdown);
     const now = new Date().toISOString();
 
+    await ensureOwnershipSchema(c.env);
+    const requestAuth = await getRequestAuth(c);
+    const ownerUserId = requestAuth.isAuthenticated ? requestAuth.userId : null;
+
     // Store in R2
     await c.env.DOCS_BUCKET.put(r2Key, markdown, {
       httpMetadata: {
@@ -168,9 +174,9 @@ app.post("/", async (c) => {
 
     // Store metadata in D1 docs table
     await c.env.DB.prepare(
-      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, view_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, view_count, owner_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
-      .bind(id, r2Key, "text/markdown", metrics.payloadBytes, now, hash, title, 0)
+      .bind(id, r2Key, "text/markdown", metrics.payloadBytes, now, hash, title, 0, ownerUserId)
       .run();
 
     // Send Discord notification (optional, best-effort)

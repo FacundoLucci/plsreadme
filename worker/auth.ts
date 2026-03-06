@@ -90,21 +90,34 @@ function parseCookieValue(cookieHeader: string, cookieName: string): string | nu
   return null;
 }
 
+function looksLikeJwt(token: string): boolean {
+  const parts = token.split(".");
+  return parts.length === 3 && parts.every((part) => part.length > 0);
+}
+
 function getRequestToken(c: Context<{ Bindings: Env }>): {
   token: string | null;
   source: TokenSource;
 } {
   const authHeader = c.req.header("authorization")?.trim() ?? "";
+  const cookieHeader = c.req.header("cookie") ?? "";
+  const sessionCookie = parseCookieValue(cookieHeader, "__session");
 
   if (authHeader.toLowerCase().startsWith("bearer ")) {
     const token = authHeader.slice("bearer ".length).trim();
     if (token) {
-      return { token, source: "authorization" };
+      if (looksLikeJwt(token)) {
+        return { token, source: "authorization" };
+      }
+
+      if (sessionCookie) {
+        return { token: sessionCookie, source: "cookie" };
+      }
+
+      return { token: null, source: "none" };
     }
   }
 
-  const cookieHeader = c.req.header("cookie") ?? "";
-  const sessionCookie = parseCookieValue(cookieHeader, "__session");
   if (sessionCookie) {
     return { token: sessionCookie, source: "cookie" };
   }
