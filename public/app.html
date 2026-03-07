@@ -139,7 +139,10 @@
         color: var(--app-text-subtle);
         text-decoration: none;
         font-size: 0.75rem;
-        pointer-events: none;
+      }
+      .auth-secondary-link:hover {
+        color: var(--app-accent);
+        text-decoration: underline;
       }
       .auth-status {
         color: var(--app-text-subtle);
@@ -575,6 +578,9 @@
             <a href="#" target="_blank" class="result-action" id="view-link">
               <i class="hgi-stroke hgi-view"></i> View document
             </a>
+            <a href="/my-links" class="result-action" id="my-links-action">
+              <i class="hgi-stroke hgi-link-square-02"></i> Go to My Links
+            </a>
             <a href="#" class="result-action" id="create-another">
               <i class="hgi-stroke hgi-add-01"></i> Create another
             </a>
@@ -584,6 +590,7 @@
     </div>
 
     <script src="/auth.js" defer></script>
+    <script src="/track.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

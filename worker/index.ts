@@ -48,6 +48,12 @@ app.get('/', (c) => {
   return c.env.ASSETS.fetch(c.req.raw);
 });
 
+app.get('/my-links', async (c) => {
+  const url = new URL(c.req.url);
+  url.pathname = '/my-links.html';
+  return c.env.ASSETS.fetch(new Request(url.toString(), { method: 'GET', headers: c.req.raw.headers }));
+});
+
 // MCP setup page (served as static asset: mcp-setup.html)
 
 // Fallback to static assets for all other routes

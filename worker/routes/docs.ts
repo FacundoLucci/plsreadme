@@ -684,6 +684,16 @@ app.post("/", async (c) => {
     const requestAuth = await getRequestAuth(c);
     const ownerUserId = requestAuth.isAuthenticated ? requestAuth.userId : null;
 
+    let isFirstSavedLink = false;
+    if (ownerUserId) {
+      const existingCount = await c.env.DB.prepare(
+        "SELECT COUNT(*) as count FROM docs WHERE owner_user_id = ?"
+      )
+        .bind(ownerUserId)
+        .first<{ count: number | string | null }>();
+      isFirstSavedLink = (Number(existingCount?.count ?? 0) || 0) === 0;
+    }
+
     // Store in R2
     await c.env.DOCS_BUCKET.put(r2Key, markdown, {
       httpMetadata: {
@@ -740,6 +750,14 @@ app.post("/", async (c) => {
         doubles: [metrics.payloadBytes],
         indexes: [clientIp],
       });
+
+      if (ownerUserId && isFirstSavedLink) {
+        await c.env.ANALYTICS.writeDataPoint({
+          blobs: ["first_saved_link", ownerUserId, id],
+          doubles: [Date.now()],
+          indexes: [ownerUserId.slice(0, 32)],
+        });
+      }
     } catch (e) {
       // Silent fail on analytics
       console.error("Analytics error:", e);

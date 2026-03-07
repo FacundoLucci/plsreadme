@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Links – plsreadme</title>
+    <meta
+      name="description"
+      content="View and manage your saved plsreadme links"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="https://use.hugeicons.com/font/icons.css" />
+    <style>
+      :root {
+        --ml-bg: #fafafa;
+        --ml-surface: #fff;
+        --ml-border: #e5e5e5;
+        --ml-border-strong: #d4d4d4;
+        --ml-text: #1a1a1a;
+        --ml-text-muted: #666;
+        --ml-accent: #1d4ed8;
+        --ml-accent-hover: #1e40af;
+        --ml-button-bg: #f5f5f5;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ml-bg: #0a0a0b;
+          --ml-surface: #18181b;
+          --ml-border: #27272a;
+          --ml-border-strong: #3f3f46;
+          --ml-text: #fafafa;
+          --ml-text-muted: #a1a1aa;
+          --ml-accent: #60a5fa;
+          --ml-accent-hover: #93c5fd;
+          --ml-button-bg: #27272a;
+        }
+      }
+
+      body {
+        margin: 0;
+        background: var(--ml-bg);
+        color: var(--ml-text);
+        font-family: "Instrument Sans", sans-serif;
+      }
+
+      .ml-header {
+        border-bottom: 1px solid var(--ml-border);
+        background: var(--ml-surface);
+      }
+
+      .ml-header-inner {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 1rem 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .ml-logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        color: var(--ml-text);
+        font-weight: 700;
+      }
+
+      .ml-auth-shell {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+      }
+
+      .ml-page {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+
+      .ml-title {
+        margin: 0;
+        font-size: 2rem;
+        line-height: 1.2;
+      }
+
+      .ml-subtitle {
+        margin: 0.5rem 0 1.5rem;
+        color: var(--ml-text-muted);
+      }
+
+      .ml-controls {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .ml-input,
+      .ml-select {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid var(--ml-border-strong);
+        border-radius: 8px;
+        padding: 0.66rem 0.75rem;
+        background: var(--ml-surface);
+        color: var(--ml-text);
+        font: inherit;
+      }
+
+      .ml-panel {
+        border: 1px solid var(--ml-border);
+        border-radius: 12px;
+        background: var(--ml-surface);
+        overflow: hidden;
+      }
+
+      .ml-status {
+        padding: 1rem;
+        color: var(--ml-text-muted);
+        border-bottom: 1px solid var(--ml-border);
+      }
+
+      .ml-status[hidden] {
+        display: none;
+      }
+
+      .ml-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .ml-table th,
+      .ml-table td {
+        text-align: left;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--ml-border);
+        vertical-align: middle;
+      }
+
+      .ml-table th {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ml-text-muted);
+      }
+
+      .ml-table td {
+        font-size: 0.92rem;
+      }
+
+      .ml-title-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      .ml-title-main {
+        font-weight: 600;
+        color: var(--ml-text);
+      }
+
+      .ml-title-meta {
+        color: var(--ml-text-muted);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.74rem;
+      }
+
+      .ml-actions {
+        display: inline-flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+      }
+
+      .ml-action-btn {
+        border: 1px solid var(--ml-border-strong);
+        border-radius: 7px;
+        background: var(--ml-button-bg);
+        color: var(--ml-text);
+        text-decoration: none;
+        font-size: 0.76rem;
+        font-weight: 600;
+        padding: 0.42rem 0.62rem;
+        cursor: pointer;
+      }
+
+      .ml-action-btn:hover {
+        border-color: var(--ml-accent);
+        color: var(--ml-accent-hover);
+      }
+
+      .ml-pagination {
+        padding: 0.9rem 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--ml-text-muted);
+        font-size: 0.82rem;
+      }
+
+      .ml-pagination-buttons {
+        display: inline-flex;
+        gap: 0.5rem;
+      }
+
+      .ml-pagination button {
+        border: 1px solid var(--ml-border-strong);
+        background: var(--ml-surface);
+        color: var(--ml-text);
+        border-radius: 7px;
+        padding: 0.4rem 0.72rem;
+        font-size: 0.78rem;
+        cursor: pointer;
+      }
+
+      .ml-pagination button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      .ml-empty,
+      .ml-auth-required {
+        padding: 2rem 1rem;
+        text-align: center;
+        color: var(--ml-text-muted);
+      }
+
+      .ml-auth-required a {
+        color: var(--ml-accent);
+      }
+
+      @media (max-width: 780px) {
+        .ml-controls {
+          grid-template-columns: 1fr;
+        }
+
+        .ml-table thead {
+          display: none;
+        }
+
+        .ml-table,
+        .ml-table tbody,
+        .ml-table tr,
+        .ml-table td {
+          display: block;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .ml-table tr {
+          border-bottom: 1px solid var(--ml-border);
+          padding: 0.4rem 0;
+        }
+
+        .ml-table td {
+          border: none;
+          padding: 0.35rem 1rem;
+        }
+
+        .ml-pagination {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="ml-header">
+      <div class="ml-header-inner">
+        <a href="/" class="ml-logo">
+          <i class="hgi-stroke hgi-file-01"></i>
+          <span>plsreadme</span>
+        </a>
+        <div class="ml-auth-shell" data-auth-root></div>
+      </div>
+    </header>
+
+    <main class="ml-page">
+      <h1 class="ml-title">My Links</h1>
+      <p class="ml-subtitle">
+        Your saved links. Search by title, slug, or ID. Copy or open in one click.
+      </p>
+
+      <div class="ml-controls">
+        <input
+          id="my-links-search"
+          class="ml-input"
+          type="search"
+          placeholder="Search title, slug, or ID"
+          autocomplete="off"
+        />
+        <select id="my-links-sort" class="ml-select">
+          <option value="created_desc">Newest first</option>
+          <option value="created_asc">Oldest first</option>
+          <option value="title_asc">Title A → Z</option>
+          <option value="title_desc">Title Z → A</option>
+          <option value="views_desc">Most viewed</option>
+          <option value="views_asc">Least viewed</option>
+        </select>
+      </div>
+
+      <section class="ml-panel" aria-live="polite">
+        <div id="my-links-status" class="ml-status">Loading your links…</div>
+
+        <div id="my-links-auth-required" class="ml-auth-required" hidden>
+          Sign in to view your links. Use the auth controls in the top-right.
+        </div>
+
+        <div id="my-links-empty" class="ml-empty" hidden>
+          You have no saved links yet. <a href="/app.html">Create your first link</a>.
+        </div>
+
+        <table id="my-links-table" class="ml-table" hidden>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Created</th>
+              <th>Views</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="my-links-body"></tbody>
+        </table>
+
+        <div id="my-links-pagination" class="ml-pagination" hidden>
+          <span id="my-links-page-label">Page 1</span>
+          <div class="ml-pagination-buttons">
+            <button id="my-links-prev" type="button">Previous</button>
+            <button id="my-links-next" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/auth.js" defer></script>
+    <script src="/track.js"></script>
+    <script src="/my-links.js"></script>
+  </body>
+</html>

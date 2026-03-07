@@ -1,4 +1,8 @@
 (function () {
+  if (typeof window.plsreadmeGetAuthToken !== "function") {
+    window.plsreadmeGetAuthToken = async () => null;
+  }
+
   const AUTH_ROOT_SELECTOR = "[data-auth-root]";
   const CLERK_BROWSER_SDK_URL =
     "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js";
@@ -20,6 +24,53 @@
     const roots = getAuthRoots();
     for (const root of roots) {
       root.innerHTML = markup;
+    }
+  }
+
+  function setTokenGetter(fn) {
+    try {
+      window.plsreadmeGetAuthToken = fn;
+    } catch {
+      window.plsreadmeGetAuthToken = async () => null;
+    }
+  }
+
+  function publishAuthState(state) {
+    window.plsreadmeAuthState = state;
+    window.dispatchEvent(
+      new CustomEvent("plsreadme:auth-state", {
+        detail: state,
+      })
+    );
+  }
+
+  function trackLoginSuccess(backendSession, clerk) {
+    if (typeof window.track !== "function") return;
+
+    const identity =
+      backendSession?.sessionId ||
+      backendSession?.userId ||
+      clerk?.session?.id ||
+      clerk?.user?.id;
+
+    if (!identity) return;
+
+    const dedupeKey = `plsreadme_login_success:${identity}`;
+
+    try {
+      if (sessionStorage.getItem(dedupeKey)) {
+        return;
+      }
+
+      window.track("login_success", {
+        token_source: backendSession?.tokenSource || "clerk",
+      });
+
+      sessionStorage.setItem(dedupeKey, "1");
+    } catch {
+      window.track("login_success", {
+        token_source: backendSession?.tokenSource || "clerk",
+      });
     }
   }
 
@@ -161,6 +212,8 @@
     }
 
     renderAll('<span class="auth-status">Loading auth…</span>');
+    publishAuthState({ authenticated: false, reason: "loading" });
+    setTokenGetter(async () => null);
 
     let config;
     try {
@@ -168,11 +221,15 @@
     } catch (error) {
       console.error("Failed to load auth config", error);
       renderAll("");
+      publishAuthState({ authenticated: false, reason: "config_failed" });
+      setTokenGetter(async () => null);
       return;
     }
 
     if (!config?.enabled || !config?.publishableKey) {
       renderAll("");
+      publishAuthState({ authenticated: false, reason: "disabled" });
+      setTokenGetter(async () => null);
       return;
     }
 
@@ -194,6 +251,14 @@
             </div>
           </div>
         `);
+
+        publishAuthState({
+          authenticated: false,
+          reason: "signed_out",
+          clerkReady: true,
+        });
+        setTokenGetter(async () => null);
+
         attachSignedOutHandlers(clerk, config);
         return;
       }
@@ -208,14 +273,37 @@
       renderAll(`
         <div class="auth-shell-inner auth-shell-inner-signed-in">
           <span class="auth-user-chip">${escapeHtml(displayName)}</span>
-          <a href="#" class="auth-secondary-link" aria-disabled="true">My links (soon)</a>
+          <a href="/my-links" class="auth-secondary-link">My links</a>
           <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-out">Sign out</button>
         </div>
       `);
+
+      publishAuthState({
+        authenticated: true,
+        userId: backendSession?.userId || clerk.user?.id || null,
+        sessionId: backendSession?.sessionId || clerk.session?.id || null,
+        email:
+          backendSession?.email ||
+          clerk.user?.primaryEmailAddress?.emailAddress ||
+          null,
+        tokenSource: backendSession?.tokenSource || null,
+      });
+
+      setTokenGetter(async () => {
+        try {
+          return (await clerk.session?.getToken?.()) || null;
+        } catch {
+          return null;
+        }
+      });
+
+      trackLoginSuccess(backendSession, clerk);
       attachSignedInHandlers(clerk);
     } catch (error) {
       console.error("Failed to initialize Clerk auth", error);
       renderAll('<span class="auth-status">Auth unavailable</span>');
+      publishAuthState({ authenticated: false, reason: "init_failed" });
+      setTokenGetter(async () => null);
     }
   }
 

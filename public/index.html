@@ -140,6 +140,13 @@
                   <i class="hgi-stroke hgi-view"></i> View document
                 </a>
                 <a
+                  href="/my-links"
+                  class="inline-result-action"
+                  id="inline-my-links"
+                >
+                  <i class="hgi-stroke hgi-link-square-02"></i> Go to My Links
+                </a>
+                <a
                   href="#"
                   class="inline-result-action"
                   id="inline-create-another"
@@ -185,6 +192,7 @@
       const inlineResult = document.getElementById("inline-result");
       const inlineResultUrl = document.getElementById("inline-result-url");
       const inlineViewLink = document.getElementById("inline-view-link");
+      const inlineMyLinks = document.getElementById("inline-my-links");
       const inlineCopyButton = document.getElementById("inline-copy-button");
       const inlineCreateAnother = document.getElementById(
         "inline-create-another"
@@ -234,6 +242,11 @@
           // Show result
           inlineResultUrl.value = data.url;
           inlineViewLink.href = data.url;
+          if (inlineMyLinks) {
+            inlineMyLinks.href = data.id
+              ? `/my-links?created=${encodeURIComponent(data.id)}`
+              : "/my-links";
+          }
           inlineResult.style.display = "block";
 
           // Automatically copy the URL to clipboard
@@ -276,6 +289,9 @@
         e.preventDefault();
         inlineMarkdownInput.value = "";
         inlineResult.style.display = "none";
+        if (inlineMyLinks) {
+          inlineMyLinks.href = "/my-links";
+        }
         inlineMarkdownInput.focus();
       });
 

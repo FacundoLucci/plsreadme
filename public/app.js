@@ -205,6 +205,7 @@ pasteActions = convertButton?.closest?.(".paste-actions") || null;
 const resultSection = document.getElementById("result-section");
 const resultUrl = document.getElementById("result-url");
 const viewLink = document.getElementById("view-link");
+const myLinksAction = document.getElementById("my-links-action");
 const errorSection = document.getElementById("error-section");
 
 markdownInput.addEventListener("paste", (e) => {
@@ -326,6 +327,11 @@ createButton.addEventListener("click", async () => {
     // Show result
     resultUrl.value = data.url;
     viewLink.href = data.url;
+    if (myLinksAction) {
+      myLinksAction.href = data.id
+        ? `/my-links?created=${encodeURIComponent(data.id)}`
+        : "/my-links";
+    }
     resultSection.classList.add("show");
 
     // Automatically copy the URL to clipboard
@@ -371,6 +377,9 @@ createAnotherBtn.addEventListener("click", (e) => {
   fileSelected.style.display = "none";
   fileUploadZone.style.display = "block";
   resultSection.classList.remove("show");
+  if (myLinksAction) {
+    myLinksAction.href = "/my-links";
+  }
   pasteLooksRichText = false;
   isConverting = false;
   setConvertButtonState({ disabled: false, text: "Convert to Markdown" });

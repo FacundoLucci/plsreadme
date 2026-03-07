@@ -41,6 +41,7 @@ You wrote a README, a PRD, meeting notes, or an API doc in markdown. Now you nee
 - **Raw access** — Download the original `.md` file from any shared link
 - **Clerk auth foundation** — GitHub/Google sign-in wiring + Clerk-hosted email fallback + backend auth verification utilities
 - **Ownership model (Phase 2)** — docs can be linked to a Clerk user (`owner_user_id`) while preserving anonymous flows
+- **My Links dashboard (Phase 3)** — authenticated `/my-links` page with search/sort/pagination and quick copy/open actions
 - **Zero config** — No API keys needed for basic usage
 
 ## 🚀 Quick Start
@@ -262,14 +263,23 @@ npm run dev
 # Deploy
 npm run deploy
 
-# Database migrations
-npm run db:migrate
+# Bootstrap schema (fresh local DB)
+npm run db:migrate:local
+
+# Audit unapplied migrations (remote + local)
+npm run db:migrations:status
+
+# Apply migration files explicitly
+npm run db:migrations:apply        # remote
+npm run db:migrations:apply:local  # local
 ```
 
 Ownership phase migration notes:
-- Apply `db/migrations/004_owner_user_id.sql` in existing environments.
+- `wrangler.jsonc` points `migrations_dir` to `db/migrations`, so migration status is auditable with explicit list/apply commands.
+- Apply `db/migrations/004_owner_user_id.sql` in existing environments before relying on ownership filters.
 - Legacy rows are intentionally backfilled as `owner_user_id = NULL` (anonymous/public behavior preserved).
-- Write routes also run a safe ownership schema ensure step (duplicate-column tolerant) so rollout stays resilient across mixed environments.
+- Write routes still run a safe ownership schema ensure step (duplicate-column tolerant) for mixed-env rollout safety.
+- See [`docs/migrations.md`](docs/migrations.md) for the explicit audit/apply workflow.
 
 ### MCP package release
 `plsreadme-mcp` is published from `packages/mcp` by pushing an `mcp-v*` tag (see `.github/workflows/publish-mcp.yml`).

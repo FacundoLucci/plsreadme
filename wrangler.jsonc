@@ -29,7 +29,8 @@
     {
       "binding": "DB",
       "database_name": "outframer-waitlist",
-      "database_id": "b977c6e1-b40e-4fd1-bbe1-f38a881593c3"
+      "database_id": "b977c6e1-b40e-4fd1-bbe1-f38a881593c3",
+      "migrations_dir": "db/migrations"
     }
   ],
   "analytics_engine_datasets": [

@@ -13,7 +13,12 @@ const VALID_EVENTS = new Set([
   'waitlist_error',
   'scroll_50',
   'scroll_90',
-  'origin_answer'
+  'origin_answer',
+  'app_view',
+  'inline_doc_create',
+  'login_success',
+  'my_links_view',
+  'first_saved_link',
 ]);
 
 // POST /t - Track event

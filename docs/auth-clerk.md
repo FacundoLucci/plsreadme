@@ -13,10 +13,14 @@ This project now includes a **Clerk auth foundation** with:
 - `PUT /v/:id` and `DELETE /v/:id` still use `admin_token` bearer auth (unchanged)
 - all existing anonymous create flows remain available
 
+### Authenticated web route
+- `GET /my-links` — signed-in dashboard for owner-scoped links/docs (shows sign-in prompt when unauthenticated)
+
 ### Auth endpoints
 - `GET /api/auth/config` — returns frontend auth config (`enabled`, publishable key, sign-in/up URLs)
 - `GET /api/auth/session` — optional auth status (`authenticated: true/false`)
 - `GET /api/auth/me` — **protected**, returns authenticated user identity
+- `GET /api/auth/my-links` — **protected**, owner-scoped list endpoint with pagination/sort/search (`title`/slug/id)
 
 ## Required environment variables (auth)
 
