@@ -22,6 +22,11 @@ export const WRITE_RATE_LIMITS = {
     maxRequests: 60,
     windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
   },
+  claimLink: {
+    endpointKey: "claim-link",
+    maxRequests: 40,
+    windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
+  },
 } as const;
 
 export interface MarkdownMetrics {

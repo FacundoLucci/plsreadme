@@ -1,7 +1,17 @@
 import { Hono } from "hono";
 import { attachRequestAuth, getRequestAuth, requireAuth } from "../auth.ts";
 import { ensureOwnershipSchema } from "../ownership.ts";
-import type { Env } from "../types";
+import {
+  WRITE_RATE_LIMITS,
+  checkAndConsumeRateLimit,
+  failureToErrorPayload,
+  getClientIp,
+  logAbuseAttempt,
+  parseContentLength,
+  sha256,
+  validateContentLength,
+} from "../security.ts";
+import type { DocRecord, Env } from "../types";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -68,6 +78,31 @@ function slugifyTitle(title: string | null, id: string): string {
     .replace(/^-|-$/g, "");
 
   return base || id.toLowerCase();
+}
+
+type ClaimLinkBody = {
+  id?: unknown;
+  adminToken?: unknown;
+  admin_token?: unknown;
+  token?: unknown;
+};
+
+function normalizeDocId(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!/^[A-Za-z0-9_-]{6,64}$/.test(trimmed)) {
+    return null;
+  }
+  return trimmed;
+}
+
+function normalizeAdminToken(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  if (!/^sk_[A-Za-z0-9_-]{8,160}$/.test(trimmed)) {
+    return null;
+  }
+  return trimmed;
 }
 
 app.use("*", attachRequestAuth);
@@ -190,6 +225,188 @@ app.get("/my-links", async (c) => {
     },
     sort,
     search,
+  });
+});
+
+app.post("/claim-link", async (c) => {
+  const endpoint = "/api/auth/claim-link";
+  const clientIp = getClientIp(c.req);
+  const ipHash = await sha256(clientIp);
+  const contentLength = parseContentLength(c.req.header("content-length"));
+
+  const authOrResponse = await requireAuth(c);
+  if (authOrResponse instanceof Response) {
+    return authOrResponse;
+  }
+
+  const userId = authOrResponse.userId;
+  if (!userId) {
+    return c.json(
+      {
+        error: "Authentication required",
+        code: "auth_required",
+      },
+      401
+    );
+  }
+
+  const contentLengthFailure = validateContentLength(contentLength);
+  if (contentLengthFailure) {
+    await logAbuseAttempt(c.env, {
+      endpoint,
+      ipHash,
+      reason: contentLengthFailure.reason,
+      contentLength,
+    });
+    return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
+  }
+
+  const rateLimit = await checkAndConsumeRateLimit(c.env, ipHash, WRITE_RATE_LIMITS.claimLink);
+  if (!rateLimit.allowed) {
+    await logAbuseAttempt(c.env, {
+      endpoint,
+      ipHash,
+      reason: "rate_limit_exceeded",
+      contentLength,
+    });
+
+    return c.json(
+      {
+        error: `Rate limit exceeded. Maximum ${rateLimit.maxRequests} claim attempts per hour.`,
+        code: "rate_limit_exceeded",
+        limit: rateLimit.maxRequests,
+        actual: rateLimit.count,
+        retry_after_seconds: rateLimit.retryAfterSeconds ?? 3600,
+      },
+      429
+    );
+  }
+
+  await ensureOwnershipSchema(c.env);
+
+  const body = await c.req.json<ClaimLinkBody>().catch(() => null);
+  const docId = normalizeDocId(body?.id);
+  const adminToken = normalizeAdminToken(body?.adminToken ?? body?.admin_token ?? body?.token);
+
+  if (!docId || !adminToken) {
+    await logAbuseAttempt(c.env, {
+      endpoint,
+      ipHash,
+      reason: "invalid_claim_payload",
+      contentLength,
+    });
+
+    return c.json(
+      {
+        error: "Invalid claim payload. Provide a valid document ID and admin token.",
+        code: "invalid_claim_payload",
+      },
+      400
+    );
+  }
+
+  const doc = await c.env.DB.prepare(
+    "SELECT id, title, owner_user_id, admin_token FROM docs WHERE id = ?"
+  )
+    .bind(docId)
+    .first<Pick<DocRecord, "id" | "title" | "owner_user_id" | "admin_token">>();
+
+  if (!doc) {
+    return c.json(
+      {
+        error: "Document not found.",
+        code: "doc_not_found",
+      },
+      404
+    );
+  }
+
+  if (doc.owner_user_id && doc.owner_user_id !== userId) {
+    await logAbuseAttempt(c.env, {
+      endpoint,
+      ipHash,
+      reason: "claim_owner_mismatch",
+      contentLength,
+    });
+
+    return c.json(
+      {
+        error: "This link is already owned by another account.",
+        code: "owner_mismatch",
+      },
+      403
+    );
+  }
+
+  if (!doc.admin_token || doc.admin_token !== adminToken) {
+    await logAbuseAttempt(c.env, {
+      endpoint,
+      ipHash,
+      reason: "invalid_claim_proof",
+      contentLength,
+    });
+
+    return c.json(
+      {
+        error: "Invalid claim proof. Use the original edit/admin token for this link.",
+        code: "invalid_claim_proof",
+      },
+      403
+    );
+  }
+
+  const origin = new URL(c.req.url).origin;
+
+  if (doc.owner_user_id === userId) {
+    return c.json({
+      id: doc.id,
+      title: doc.title,
+      claimed: false,
+      code: "already_owned",
+      message: "This link is already in your account.",
+      url: `${origin}/v/${doc.id}`,
+      rawUrl: `${origin}/v/${doc.id}/raw`,
+    });
+  }
+
+  await c.env.DB.prepare(
+    "UPDATE docs SET owner_user_id = ? WHERE id = ? AND owner_user_id IS NULL"
+  )
+    .bind(userId, doc.id)
+    .run();
+
+  const ownershipResult = await c.env.DB.prepare("SELECT owner_user_id FROM docs WHERE id = ?")
+    .bind(doc.id)
+    .first<{ owner_user_id: string | null }>();
+
+  if (ownershipResult?.owner_user_id !== userId) {
+    return c.json(
+      {
+        error: "This link was claimed by another account.",
+        code: "owner_mismatch",
+      },
+      403
+    );
+  }
+
+  try {
+    await c.env.ANALYTICS.writeDataPoint({
+      blobs: ["legacy_link_claimed", userId, doc.id],
+      doubles: [Date.now()],
+      indexes: [userId.slice(0, 32)],
+    });
+  } catch (analyticsError) {
+    console.error("legacy_link_claimed analytics error:", analyticsError);
+  }
+
+  return c.json({
+    id: doc.id,
+    title: doc.title,
+    claimed: true,
+    code: "claimed",
+    message: "Link claimed successfully.",
+    url: `${origin}/v/${doc.id}`,
+    rawUrl: `${origin}/v/${doc.id}/raw`,
   });
 });
 

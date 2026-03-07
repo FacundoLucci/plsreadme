@@ -97,6 +97,67 @@
         color: var(--ml-text-muted);
       }
 
+      .ml-legacy-claim {
+        border: 1px solid var(--ml-border);
+        border-radius: 12px;
+        background: var(--ml-surface);
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .ml-legacy-claim h2 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .ml-legacy-claim-copy {
+        margin: 0.5rem 0 0.9rem;
+        color: var(--ml-text-muted);
+        font-size: 0.88rem;
+      }
+
+      .ml-legacy-claim-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 0.55rem;
+        align-items: end;
+      }
+
+      .ml-legacy-claim-label {
+        display: block;
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: var(--ml-text-muted);
+        margin-bottom: 0.3rem;
+      }
+
+      .ml-legacy-claim-status {
+        margin-top: 0.65rem;
+        font-size: 0.82rem;
+        color: var(--ml-text-muted);
+      }
+
+      .ml-legacy-claim-status[data-kind="success"] {
+        color: #059669;
+      }
+
+      .ml-legacy-claim-status[data-kind="error"] {
+        color: #dc2626;
+      }
+
+      .ml-legacy-support {
+        margin-top: 0.8rem;
+        padding-top: 0.8rem;
+        border-top: 1px dashed var(--ml-border-strong);
+        font-size: 0.8rem;
+        color: var(--ml-text-muted);
+      }
+
+      .ml-legacy-support ul {
+        margin: 0.45rem 0 0;
+        padding-left: 1.1rem;
+      }
+
       .ml-controls {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 220px;
@@ -243,6 +304,14 @@
           grid-template-columns: 1fr;
         }
 
+        .ml-legacy-claim-form {
+          grid-template-columns: 1fr;
+        }
+
+        .ml-legacy-claim-form .ml-action-btn {
+          width: 100%;
+        }
+
         .ml-table thead {
           display: none;
         }
@@ -289,6 +358,50 @@
       <p class="ml-subtitle">
         Your saved links. Search by title, slug, or ID. Copy or open in one click.
       </p>
+
+      <section class="ml-legacy-claim" aria-labelledby="legacy-claim-title">
+        <h2 id="legacy-claim-title">Claim a legacy link</h2>
+        <p class="ml-legacy-claim-copy">
+          If you created links before signing in, claim them with the original edit token.
+          Claiming keeps the same URL and adds the link to this account.
+        </p>
+        <form id="legacy-claim-form" class="ml-legacy-claim-form">
+          <label>
+            <span class="ml-legacy-claim-label">Link URL or Doc ID</span>
+            <input
+              id="legacy-claim-link-input"
+              class="ml-input"
+              type="text"
+              autocomplete="off"
+              placeholder="https://plsrd.me/v/abc123 or abc123"
+              required
+            />
+          </label>
+          <label>
+            <span class="ml-legacy-claim-label">Edit token</span>
+            <input
+              id="legacy-claim-token-input"
+              class="ml-input"
+              type="password"
+              autocomplete="off"
+              placeholder="sk_..."
+              required
+            />
+          </label>
+          <button id="legacy-claim-submit" class="ml-action-btn" type="submit">
+            Claim link
+          </button>
+        </form>
+        <div id="legacy-claim-status" class="ml-legacy-claim-status" aria-live="polite"></div>
+        <div class="ml-legacy-support">
+          Need help? Keep this info ready for support:
+          <ul>
+            <li>Link URL + approximate creation date</li>
+            <li>Whether you still have the original <code>sk_...</code> token</li>
+            <li>The account email you want as owner</li>
+          </ul>
+        </div>
+      </section>
 
       <div class="ml-controls">
         <input

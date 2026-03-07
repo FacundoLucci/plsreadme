@@ -42,6 +42,7 @@ You wrote a README, a PRD, meeting notes, or an API doc in markdown. Now you nee
 - **Clerk auth foundation** — GitHub/Google sign-in wiring + Clerk-hosted email fallback + backend auth verification utilities
 - **Ownership model (Phase 2)** — docs can be linked to a Clerk user (`owner_user_id`) while preserving anonymous flows
 - **My Links dashboard (Phase 3)** — authenticated `/my-links` page with search/sort/pagination and quick copy/open actions
+- **Legacy link claiming (Phase 4)** — signed-in users can claim older anonymous links by proving the original `admin_token`
 - **Zero config** — No API keys needed for basic usage
 
 ## 🚀 Quick Start
@@ -82,6 +83,15 @@ curl -X DELETE https://plsreadme.com/v/abc123def456 \
 ```
 
 For docs owned by an authenticated Clerk user, update/delete also require that owner session (to prevent cross-user mutation), while anonymous docs continue to work with `admin_token` only.
+
+To claim a legacy anonymous link into your signed-in account:
+
+```bash
+curl -X POST https://plsreadme.com/api/auth/claim-link \
+  -H "Authorization: Bearer <clerk-session-jwt>" \
+  -H "Content-Type: application/json" \
+  -d '{"id":"abc123def456","adminToken":"sk_..."}'
+```
 
 ### MCP (AI Editors)
 
@@ -245,7 +255,9 @@ plsreadme/
 ├── db/
 │   └── schema.sql            # D1 database schema
 ├── docs/
-│   └── auth-clerk.md         # Auth setup + environment checklist
+│   ├── auth-clerk.md         # Auth setup + environment checklist
+│   └── runbooks/
+│       └── legacy-link-claim-rollout.md
 ├── skill/
 │   └── plsreadme/            # OpenClaw agent skill
 └── wrangler.jsonc             # Cloudflare Workers config

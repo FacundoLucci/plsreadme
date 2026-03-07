@@ -12,6 +12,11 @@
   const pageLabelEl = document.getElementById("my-links-page-label");
   const prevBtn = document.getElementById("my-links-prev");
   const nextBtn = document.getElementById("my-links-next");
+  const legacyClaimForm = document.getElementById("legacy-claim-form");
+  const legacyClaimLinkInput = document.getElementById("legacy-claim-link-input");
+  const legacyClaimTokenInput = document.getElementById("legacy-claim-token-input");
+  const legacyClaimSubmitBtn = document.getElementById("legacy-claim-submit");
+  const legacyClaimStatusEl = document.getElementById("legacy-claim-status");
 
   let page = 1;
   let search = "";
@@ -21,8 +26,8 @@
   let trackedView = false;
 
   const urlForHighlight = new URL(window.location.href);
-  const createdHighlightId = urlForHighlight.searchParams.get("created");
-  if (createdHighlightId) {
+  let highlightedDocId = urlForHighlight.searchParams.get("created");
+  if (highlightedDocId) {
     urlForHighlight.searchParams.delete("created");
     try {
       window.history.replaceState({}, document.title, urlForHighlight.toString());
@@ -65,6 +70,47 @@
       .replace(/'/g, "&#039;");
   }
 
+  function setLegacyClaimStatus(message, kind = "") {
+    if (!legacyClaimStatusEl) return;
+    legacyClaimStatusEl.textContent = message || "";
+    if (kind) {
+      legacyClaimStatusEl.setAttribute("data-kind", kind);
+    } else {
+      legacyClaimStatusEl.removeAttribute("data-kind");
+    }
+  }
+
+  function normalizeLegacyDocId(rawValue) {
+    const value = (rawValue || "").trim();
+    if (!value) return null;
+
+    const directMatch = value.match(/^[A-Za-z0-9_-]{6,64}$/);
+    if (directMatch) {
+      return directMatch[0];
+    }
+
+    try {
+      const parsed = new URL(value, window.location.origin);
+      const parts = parsed.pathname.split("/").filter(Boolean);
+
+      if (parts[0] === "v" && /^[A-Za-z0-9_-]{6,64}$/.test(parts[1] || "")) {
+        return parts[1];
+      }
+
+      if (
+        parts[0] === "api" &&
+        parts[1] === "render" &&
+        /^[A-Za-z0-9_-]{6,64}$/.test(parts[2] || "")
+      ) {
+        return parts[2];
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  }
+
   async function getAuthToken() {
     try {
       const getter = window.plsreadmeGetAuthToken;
@@ -84,7 +130,7 @@
     bodyEl.innerHTML = items
       .map((item) => {
         const title = item.title || "Untitled";
-        const isCreatedTarget = createdHighlightId && createdHighlightId === item.id;
+        const isCreatedTarget = highlightedDocId && highlightedDocId === item.id;
         const rowStyle = isCreatedTarget
           ? ' style="background: rgba(37,99,235,0.12);"'
           : "";
@@ -265,6 +311,94 @@
       if (page >= totalPages || isLoading) return;
       page += 1;
       void fetchMyLinks();
+    });
+  }
+
+  if (legacyClaimForm) {
+    legacyClaimForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const docId = normalizeLegacyDocId(legacyClaimLinkInput?.value || "");
+      const adminToken = (legacyClaimTokenInput?.value || "").trim();
+
+      if (!docId) {
+        setLegacyClaimStatus("Enter a valid link URL or document ID.", "error");
+        return;
+      }
+
+      if (!/^sk_[A-Za-z0-9_-]{8,160}$/.test(adminToken)) {
+        setLegacyClaimStatus("Enter a valid edit token (starts with sk_).", "error");
+        return;
+      }
+
+      const authToken = await getAuthToken();
+      if (!authToken) {
+        setLegacyClaimStatus("Sign in first, then try claiming again.", "error");
+        return;
+      }
+
+      if (legacyClaimSubmitBtn) {
+        legacyClaimSubmitBtn.disabled = true;
+        legacyClaimSubmitBtn.textContent = "Claiming…";
+      }
+      setLegacyClaimStatus("Verifying token and claiming link…");
+
+      try {
+        const response = await fetch("/api/auth/claim-link", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            id: docId,
+            adminToken,
+          }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || `Claim failed (${response.status})`);
+        }
+
+        highlightedDocId = docId;
+        page = 1;
+        search = docId;
+        if (searchInput) {
+          searchInput.value = docId;
+        }
+
+        const statusMessage = data.claimed
+          ? "Link claimed successfully. It now appears in your account."
+          : "This link is already in your account.";
+        setLegacyClaimStatus(statusMessage, "success");
+
+        if (legacyClaimTokenInput) {
+          legacyClaimTokenInput.value = "";
+        }
+
+        if (typeof window.track === "function") {
+          window.track("legacy_link_claim", {
+            claimed: Boolean(data.claimed),
+            result_code: data.code || "unknown",
+          });
+        }
+
+        await fetchMyLinks();
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to claim link.";
+        setLegacyClaimStatus(message, "error");
+        if (typeof window.track === "function") {
+          window.track("legacy_link_claim_error", {
+            message,
+          });
+        }
+      } finally {
+        if (legacyClaimSubmitBtn) {
+          legacyClaimSubmitBtn.disabled = false;
+          legacyClaimSubmitBtn.textContent = "Claim link";
+        }
+      }
     });
   }
 

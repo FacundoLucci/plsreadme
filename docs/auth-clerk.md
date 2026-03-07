@@ -21,6 +21,7 @@ This project now includes a **Clerk auth foundation** with:
 - `GET /api/auth/session` — optional auth status (`authenticated: true/false`)
 - `GET /api/auth/me` — **protected**, returns authenticated user identity
 - `GET /api/auth/my-links` — **protected**, owner-scoped list endpoint with pagination/sort/search (`title`/slug/id)
+- `POST /api/auth/claim-link` — **protected**, claim a legacy anonymous link by proving control of that link’s existing `admin_token`
 
 ## Required environment variables (auth)
 
@@ -59,6 +60,32 @@ If GitHub/Google OAuth credentials are still pending, users can still sign in im
 
 This keeps auth usable from day one while social OAuth is being finalized.
 
+## Legacy link claim flow (Phase 4)
+
+Use this when a user has an older anonymous link and still has the edit/admin token.
+
+```http
+POST /api/auth/claim-link
+Authorization: Bearer <clerk-session-jwt>
+Content-Type: application/json
+
+{
+  "id": "<doc-id>",
+  "adminToken": "sk_..."
+}
+```
+
+Notes:
+- Claiming **does not change** the link URL (`/v/:id` stays the same).
+- Claim is allowed only when token proof matches the same doc id.
+- Already-owned links remain protected by owner checks (`owner_mismatch` on other accounts).
+- The endpoint is rate-limited and abuse-attempts are logged.
+
+Support triage guidance:
+- If user has URL + token → use claim flow.
+- If user has URL but lost token → link still works publicly, but ownership cannot be reassigned without valid proof.
+- If claim returns `owner_mismatch` → verify user is signed into the correct account and escalate only with clear ownership evidence.
+
 ## Production checklist
 
 1. Set vars/secrets in Cloudflare:
@@ -69,9 +96,13 @@ This keeps auth usable from day one while social OAuth is being finalized.
    - `/api/auth/config` returns `enabled: true`
    - signed-in session returns authenticated data on `/api/auth/session`
    - `/api/auth/me` returns `401` when unauthenticated and `200` when authenticated
+   - `/api/auth/claim-link` returns:
+     - `200` for valid token proof on unowned/owned-by-self docs
+     - `403` for invalid proof or owner mismatch
 
 ## Security notes
 
 - Worker verifies Clerk session JWTs against Clerk JWKS (`/.well-known/jwks.json`).
 - Expired, invalid, misissued, or mismatched audience tokens are treated as unauthenticated.
 - Public creation routes are intentionally not forced to require auth in Phase 1.
+- Claim endpoint requires both authenticated session + legacy token proof (defense-in-depth).
