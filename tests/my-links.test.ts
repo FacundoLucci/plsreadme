@@ -159,7 +159,7 @@ test("/api/auth/my-links returns owner rows with search + pagination", async () 
 
   const db = new MockDB({ count: 7, rows });
   const env = createEnv(db, issuer);
-  const url = "http://local/my-links?page=2&page_size=5&sort=title_asc&search=alpha";
+  const url = "http://local/my-links?page=2&page_size=5&sort=title_asc&search=alpha-spec";
 
   const response = await withMockedJwks(issuer, jwk, () =>
     authRoutes.request(
@@ -194,9 +194,12 @@ test("/api/auth/my-links returns owner rows with search + pagination", async () 
 
   const countQuery = db.firsts.find((entry) => /COUNT\(\*\)/i.test(entry.sql));
   assert.ok(countQuery, "expected count query to run");
-  assert.deepEqual(countQuery?.params, ["user_123", "%alpha%", "%alpha%", "%alpha%"]);
+  assert.match(countQuery?.sql ?? "", /owner_user_id = \?/i);
+  assert.deepEqual(countQuery?.params, ["user_123", "%alpha-spec%", "%alpha-spec%", "%alpha-spec%"]);
 
   const listQuery = db.alls[0];
   assert.ok(listQuery, "expected list query to run");
-  assert.deepEqual(listQuery.params, ["user_123", "%alpha%", "%alpha%", "%alpha%", 5, 5]);
+  assert.match(listQuery.sql, /LOWER\(REPLACE\(REPLACE\(REPLACE\(COALESCE\(title, ''\), ' ', '-'\), '_', '-'\), '--', '-'\)\) LIKE \?/);
+  assert.match(listQuery.sql, /ORDER BY COALESCE\(title, ''\) COLLATE NOCASE ASC, created_at DESC, id DESC/);
+  assert.deepEqual(listQuery.params, ["user_123", "%alpha-spec%", "%alpha-spec%", "%alpha-spec%", 5, 5]);
 });

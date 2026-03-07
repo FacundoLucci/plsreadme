@@ -23,12 +23,12 @@ interface MyLinkRow {
 }
 
 const SORT_TO_SQL: Record<MyLinksSort, string> = {
-  created_desc: "created_at DESC",
-  created_asc: "created_at ASC",
-  title_asc: "COALESCE(title, '') COLLATE NOCASE ASC, created_at DESC",
-  title_desc: "COALESCE(title, '') COLLATE NOCASE DESC, created_at DESC",
-  views_desc: "view_count DESC, created_at DESC",
-  views_asc: "view_count ASC, created_at DESC",
+  created_desc: "created_at DESC, id DESC",
+  created_asc: "created_at ASC, id ASC",
+  title_asc: "COALESCE(title, '') COLLATE NOCASE ASC, created_at DESC, id DESC",
+  title_desc: "COALESCE(title, '') COLLATE NOCASE DESC, created_at DESC, id DESC",
+  views_desc: "view_count DESC, created_at DESC, id DESC",
+  views_asc: "view_count ASC, created_at DESC, id DESC",
 };
 
 const DEFAULT_PAGE = 1;
