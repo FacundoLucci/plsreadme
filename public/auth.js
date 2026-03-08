@@ -236,8 +236,17 @@
     try {
       await loadClerkScript();
 
-      const clerk = new window.Clerk(config.publishableKey);
-      await clerk.load();
+      let clerk;
+      // Support both Clerk v5 (constructor) and Clerk v6 (global singleton load)
+      if (typeof window.Clerk === "function") {
+        clerk = new window.Clerk(config.publishableKey);
+        await clerk.load();
+      } else if (window.Clerk && typeof window.Clerk.load === "function") {
+        await window.Clerk.load({ publishableKey: config.publishableKey });
+        clerk = window.Clerk;
+      } else {
+        throw new Error("Clerk SDK API not available");
+      }
 
       const backendSession = await getBackendSession(clerk);
 
