@@ -3,12 +3,22 @@
   "name": "outframer",
   "main": "worker/index.ts",
   "compatibility_date": "2025-01-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "preview_urls": true,
   "account_id": "78aa716d1c2ddac7dab1162d38998f53",
   "routes": [
-    { "pattern": "plsreadme.com", "zone_name": "plsreadme.com", "custom_domain": true },
-    { "pattern": "plsrd.me", "zone_name": "plsrd.me", "custom_domain": true }
+    {
+      "pattern": "plsreadme.com",
+      "zone_name": "plsreadme.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "plsrd.me",
+      "zone_name": "plsrd.me",
+      "custom_domain": true
+    }
   ],
   "ai": {
     "binding": "AI",
@@ -17,7 +27,14 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/t", "/v/*", "/sse", "/sse/*", "/mcp"]
+    "run_worker_first": [
+      "/api/*",
+      "/t",
+      "/v/*",
+      "/sse",
+      "/sse/*",
+      "/mcp"
+    ]
   },
   "vars": {
     "OPENAI_MODEL": "gpt-4.1-2025-04-14",
@@ -48,15 +65,17 @@
   "durable_objects": {
     "bindings": [
       {
-        "class_name": "OutframerMCP",
+        "class_name": "OutframerMCPv2",
         "name": "MCP_OBJECT"
       }
     ]
   },
   "migrations": [
     {
-      "tag": "v1",
-      "new_sqlite_classes": ["OutframerMCP"]
+      "tag": "v2",
+      "new_sqlite_classes": [
+        "OutframerMCPv2"
+      ]
     }
   ],
   "observability": {
@@ -66,4 +85,3 @@
     }
   }
 }
-

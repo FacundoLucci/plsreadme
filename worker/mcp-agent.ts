@@ -179,3 +179,7 @@ Pass the markdown content directly. If sharing a file, read it first and pass th
     );
   }
 }
+
+// v2 class alias to force a fresh Durable Object namespace migration when
+// legacy namespace names are already reserved in the account.
+export class OutframerMCPv2 extends OutframerMCP {}

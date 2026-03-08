@@ -10,8 +10,8 @@ import { adminRoutes } from './routes/admin';
 import { commentsRoutes } from './routes/comments';
 import { authRoutes } from './routes/auth';
 // Export the MCP Durable Object class for Cloudflare binding
-export { OutframerMCP } from './mcp-agent';
-import { OutframerMCP as MCPServer } from './mcp-agent';
+export { OutframerMCPv2 } from './mcp-agent';
+import { OutframerMCPv2 as MCPServer } from './mcp-agent';
 
 const app = new Hono<{ Bindings: Env }>();
 
