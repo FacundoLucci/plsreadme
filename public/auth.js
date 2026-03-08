@@ -74,8 +74,12 @@
     }
   }
 
-  async function loadClerkScript() {
+  async function loadClerkScript(publishableKey) {
     if (window.Clerk) return;
+
+    if (publishableKey) {
+      window.__clerk_publishable_key = publishableKey;
+    }
 
     await new Promise((resolve, reject) => {
       const existing = document.querySelector(`script[src=\"${CLERK_BROWSER_SDK_URL}\"]`);
@@ -91,6 +95,9 @@
       script.src = CLERK_BROWSER_SDK_URL;
       script.async = true;
       script.crossOrigin = "anonymous";
+      if (publishableKey) {
+        script.setAttribute("data-clerk-publishable-key", publishableKey);
+      }
       script.addEventListener("load", () => resolve(), { once: true });
       script.addEventListener("error", () => reject(new Error("Failed to load Clerk SDK")), {
         once: true,
@@ -234,7 +241,7 @@
     }
 
     try {
-      await loadClerkScript();
+      await loadClerkScript(config.publishableKey);
 
       let clerk;
       // Support both Clerk v5 (constructor) and Clerk v6 (global singleton load)
