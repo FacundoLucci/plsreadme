@@ -9,8 +9,8 @@ import { linksRoutes } from './routes/links';
 import { adminRoutes } from './routes/admin';
 import { commentsRoutes } from './routes/comments';
 import { authRoutes } from './routes/auth';
-// Export the MCP Durable Object class for Cloudflare binding
-export { OutframerMCPv2 } from './mcp-agent';
+// Export MCP Durable Object classes for Cloudflare bindings/migrations
+export { OutframerMCP, OutframerMCPv2 } from './mcp-agent';
 import { OutframerMCPv2 as MCPServer } from './mcp-agent';
 
 const app = new Hono<{ Bindings: Env }>();
