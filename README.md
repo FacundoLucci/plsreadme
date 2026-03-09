@@ -329,6 +329,10 @@ Start from `.env.example` and set values in your local/dev/prod environment.
 
 If OAuth credentials are not configured yet, users can still click **Sign in** / **Use email instead** and complete auth through the Clerk-hosted email flow immediately.
 
+Frontend auth shell notes:
+- `/app.html` and `/my-links` use `public/clerk-auth-shell.js` (Clerk-native browser SDK wiring).
+- Authenticated frontend API calls should read bearer tokens through `window.plsreadmeGetAuthToken()`.
+
 The core sharing functionality still requires **zero configuration**. Clerk auth, AI conversion, and notifications are opt-in.
 
 For the full auth setup checklist, see [`docs/auth-clerk.md`](docs/auth-clerk.md).

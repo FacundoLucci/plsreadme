@@ -23,6 +23,17 @@ This project now includes a **Clerk auth foundation** with:
 - `GET /api/auth/my-links` — **protected**, owner-scoped list endpoint with pagination/sort/search (`title`/slug/id)
 - `POST /api/auth/claim-link` — **protected**, claim a legacy anonymous link by proving control of that link’s existing `admin_token`
 
+## Frontend auth architecture
+
+- `/app.html` and `/my-links` now load `public/clerk-auth-shell.js` (instead of `public/auth.js`).
+- The shell uses Clerk Browser SDK directly (`window.Clerk.load(...)`) and renders:
+  - signed-out controls (sign in / sign up / email fallback)
+  - signed-in user chip + `My links` shortcut + sign out
+- The shell publishes auth state via `window.plsreadmeAuthState` and `plsreadme:auth-state` events.
+- API calls that need auth (for example `/api/auth/my-links` and `/api/auth/claim-link`) should keep using `window.plsreadmeGetAuthToken()` to fetch the current Clerk bearer token.
+
+`public/auth.js` is left in place for legacy entrypoints while migration continues, but app/my-links auth UI is now Clerk-native shell first.
+
 ## Required environment variables (auth)
 
 ### Minimum required for Clerk auth to be enabled
