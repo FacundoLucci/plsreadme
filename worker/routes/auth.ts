@@ -8,6 +8,7 @@ import {
   getClientIp,
   logAbuseAttempt,
   parseContentLength,
+  resolveRateLimitActorKey,
   sha256,
   validateContentLength,
 } from "../security.ts";
@@ -261,7 +262,11 @@ app.post("/claim-link", async (c) => {
     return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
   }
 
-  const rateLimit = await checkAndConsumeRateLimit(c.env, ipHash, WRITE_RATE_LIMITS.claimLink);
+  const rateLimitActorKey = await resolveRateLimitActorKey({
+    ipHash,
+    userId,
+  });
+  const rateLimit = await checkAndConsumeRateLimit(c.env, rateLimitActorKey, WRITE_RATE_LIMITS.claimLink);
   if (!rateLimit.allowed) {
     await logAbuseAttempt(c.env, {
       endpoint,

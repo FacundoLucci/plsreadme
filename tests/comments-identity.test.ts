@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createSign, generateKeyPairSync } from "node:crypto";
+import { createHash, createSign, generateKeyPairSync } from "node:crypto";
 import test from "node:test";
 import { commentsRoutes } from "../worker/routes/comments.ts";
 
@@ -195,6 +195,17 @@ test("authenticated comment stores user identity and notification metadata", asy
   assert.equal(commentInsert?.params[4], "commenter@example.com");
   assert.equal(commentInsert?.params[5], "Casey");
 
+  const expectedIpHash = createHash("sha256").update("203.0.113.10").digest("hex");
+  const storedRateActorKey = String(commentInsert?.params[9] ?? "");
+  assert.match(storedRateActorKey, /^auth:[a-f0-9]{64}$/);
+  assert.notEqual(storedRateActorKey, expectedIpHash);
+
+  const rateCheckQuery = db.firsts.find((entry) =>
+    entry.sql.includes("SELECT COUNT(*) as count FROM comments WHERE ip_hash = ?")
+  );
+  assert.ok(rateCheckQuery, "expected rate limit query");
+  assert.equal(rateCheckQuery?.params[0], storedRateActorKey);
+
   const notificationInsert = db.runs.find((entry) =>
     entry.sql.includes("INSERT INTO comment_notifications")
   );
@@ -244,6 +255,15 @@ test("anonymous comment remains anonymous while still stashing notification cont
   assert.equal(commentInsert?.params[3], null);
   assert.equal(commentInsert?.params[4], null);
   assert.equal(commentInsert?.params[5], null);
+
+  const expectedIpHash = createHash("sha256").update("203.0.113.11").digest("hex");
+  assert.equal(commentInsert?.params[9], expectedIpHash);
+
+  const rateCheckQuery = db.firsts.find((entry) =>
+    entry.sql.includes("SELECT COUNT(*) as count FROM comments WHERE ip_hash = ?")
+  );
+  assert.ok(rateCheckQuery, "expected rate limit query");
+  assert.equal(rateCheckQuery?.params[0], expectedIpHash);
 
   const notificationInsert = db.runs.find((entry) =>
     entry.sql.includes("INSERT INTO comment_notifications")

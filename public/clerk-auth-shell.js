@@ -252,7 +252,7 @@
         <div class="auth-shell-inner auth-shell-inner-signed-in auth-shell-inner-read-link-signed-in">
           <span class="auth-avatar" aria-hidden="true">${avatarMarkup}</span>
           <span class="auth-user-chip" title="${escapeHtml(email || displayName)}">${escapeHtml(displayName)}</span>
-          <a href="/my-links" class="auth-secondary-link">My links</a>
+          <a href="/my-links" class="auth-secondary-link">My Links</a>
           <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-out">Sign out</button>
         </div>
       `;
@@ -262,7 +262,7 @@
       <div class="auth-shell-inner auth-shell-inner-signed-in">
         <span class="auth-avatar" aria-hidden="true">${avatarMarkup}</span>
         <span class="auth-user-chip">${escapeHtml(displayName)}</span>
-        <a href="/my-links" class="auth-secondary-link">My links</a>
+        <a href="/my-links" class="auth-secondary-link">My Links</a>
         <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-out">Sign out</button>
       </div>
     `;

@@ -9,6 +9,7 @@ import {
   getClientIp,
   logAbuseAttempt,
   parseContentLength,
+  resolveRateLimitActorKey,
   sha256,
   validateContentLength,
   validateMarkdown,
@@ -726,9 +727,15 @@ app.post("/", async (c) => {
       return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
     }
 
+    const requestAuth = await getRequestAuth(c);
+    const rateLimitActorKey = await resolveRateLimitActorKey({
+      ipHash,
+      userId: requestAuth.isAuthenticated ? requestAuth.userId : null,
+    });
+
     const rateLimit = await checkAndConsumeRateLimit(
       c.env,
-      ipHash,
+      rateLimitActorKey,
       WRITE_RATE_LIMITS.renderCreate
     );
     if (!rateLimit.allowed) {
@@ -808,7 +815,6 @@ app.post("/", async (c) => {
     const now = new Date().toISOString();
 
     await ensureOwnershipSchema(c.env);
-    const requestAuth = await getRequestAuth(c);
     const ownerUserId = requestAuth.isAuthenticated ? requestAuth.userId : null;
 
     let isFirstSavedLink = false;
@@ -1127,9 +1133,15 @@ app.put("/:id", async (c) => {
       return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
     }
 
+    const requestAuth = await getRequestAuth(c);
+    const rateLimitActorKey = await resolveRateLimitActorKey({
+      ipHash,
+      userId: requestAuth.isAuthenticated ? requestAuth.userId : null,
+    });
+
     const rateLimit = await checkAndConsumeRateLimit(
       c.env,
-      ipHash,
+      rateLimitActorKey,
       WRITE_RATE_LIMITS.renderUpdate
     );
     if (!rateLimit.allowed) {
@@ -1168,8 +1180,6 @@ app.put("/:id", async (c) => {
     if (ownerAuthError) {
       return ownerAuthError;
     }
-
-    const requestAuth = await getRequestAuth(c);
 
     const body = await c.req
       .json<{ markdown?: unknown }>()

@@ -225,9 +225,25 @@ export async function sha256(text: string): Promise<string> {
   return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+export async function resolveRateLimitActorKey({
+  ipHash,
+  userId,
+}: {
+  ipHash: string;
+  userId?: string | null;
+}): Promise<string> {
+  if (userId && userId.trim()) {
+    const userHash = await sha256(`uid:${userId}`);
+    return `auth:${userHash}`;
+  }
+
+  // Keep anonymous behavior stable by preserving the existing pure IP hash key.
+  return ipHash;
+}
+
 export async function checkAndConsumeRateLimit(
   env: Env,
-  ipHash: string,
+  actorKey: string,
   policy: RateLimitPolicy
 ): Promise<RateLimitCheckResult> {
   await ensureSecurityTables(env);
@@ -240,7 +256,7 @@ export async function checkAndConsumeRateLimit(
   const result = await env.DB.prepare(
     "SELECT COUNT(*) as count FROM request_rate_limits WHERE endpoint = ? AND ip_hash = ? AND created_at > ?"
   )
-    .bind(policy.endpointKey, ipHash, windowStartIso)
+    .bind(policy.endpointKey, actorKey, windowStartIso)
     .first<{ count: number }>();
 
   const count = Number(result?.count ?? 0);
@@ -257,7 +273,7 @@ export async function checkAndConsumeRateLimit(
   await env.DB.prepare(
     "INSERT INTO request_rate_limits (endpoint, ip_hash, created_at) VALUES (?, ?, ?)"
   )
-    .bind(policy.endpointKey, ipHash, nowIso)
+    .bind(policy.endpointKey, actorKey, nowIso)
     .run();
 
   return {

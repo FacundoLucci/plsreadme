@@ -3,19 +3,12 @@ import { nanoid } from "nanoid";
 import type { Env, CommentRecord, DocRecord } from "../types";
 import { getRequestAuth } from "../auth.ts";
 import { ensureCommentIdentitySchema } from "../comment-identity.ts";
+import { getClientIp, resolveRateLimitActorKey, sha256 } from "../security.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
 const RATE_LIMIT_PER_HOUR = 10;
 const MAX_DISPLAY_NAME_LENGTH = 80;
-
-async function sha256(text: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(text);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-}
 
 function normalizeOptionalString(value: unknown, maxLength: number): string | null {
   if (typeof value !== "string") return null;
@@ -192,15 +185,19 @@ app.post("/:docId", async (c) => {
       return c.json({ error: "anchor_id must be 1-120 characters" }, 400);
     }
 
-    // Rate limiting
-    const clientIp = c.req.header("cf-connecting-ip") || "unknown";
+    // Rate limiting (auth-aware actor key to avoid penalizing signed-in users sharing an IP)
+    const clientIp = getClientIp(c.req);
     const ipHash = await sha256(clientIp);
+    const rateLimitActorKey = await resolveRateLimitActorKey({
+      ipHash,
+      userId: isAuthenticated ? requestAuth.userId : null,
+    });
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
     const rateCheck = await c.env.DB.prepare(
       "SELECT COUNT(*) as count FROM comments WHERE ip_hash = ? AND created_at > ?"
     )
-      .bind(ipHash, hourAgo)
+      .bind(rateLimitActorKey, hourAgo)
       .first<{ count: number }>();
 
     if ((rateCheck?.count || 0) >= RATE_LIMIT_PER_HOUR) {
@@ -225,7 +222,7 @@ app.post("/:docId", async (c) => {
         commentBody,
         anchorId,
         now,
-        ipHash,
+        rateLimitActorKey,
         docVersion
       )
       .run();

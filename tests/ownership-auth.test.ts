@@ -208,6 +208,12 @@ test("authenticated create-link assigns owner_user_id", async () => {
 
   assert.ok(docsInsert, "expected docs insert query");
   assert.equal(docsInsert?.params[8], "user_link_owner");
+
+  const rateLimitQuery = db.firsts.find((entry) =>
+    entry.sql.includes("SELECT COUNT(*) as count FROM request_rate_limits")
+  );
+  assert.ok(rateLimitQuery, "expected request_rate_limits query");
+  assert.match(String(rateLimitQuery?.params[1] ?? ""), /^auth:[a-f0-9]{64}$/);
 });
 
 test("authenticated update of legacy anonymous doc backfills owner_user_id", async () => {

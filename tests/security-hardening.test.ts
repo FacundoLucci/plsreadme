@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import { linksRoutes } from "../worker/routes/links.ts";
 import { docsRoutes, generateHtmlTemplate } from "../worker/routes/docs.ts";
@@ -105,6 +106,13 @@ test("SQLi-like markdown is handled as data and insert query stays parameterized
     "docs insert should stay parameterized"
   );
   assert.ok(!docsInsert!.sql.includes("DROP TABLE"));
+
+  const rateLimitQuery = db.firsts.find((entry) =>
+    entry.sql.includes("SELECT COUNT(*) as count FROM request_rate_limits")
+  );
+  assert.ok(rateLimitQuery, "expected request_rate_limits count query");
+  const expectedAnonymousIpHash = createHash("sha256").update("unknown").digest("hex");
+  assert.equal(rateLimitQuery?.params[1], expectedAnonymousIpHash);
 });
 
 test("oversized payloads are rejected early via Content-Length", async () => {
