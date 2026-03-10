@@ -20,9 +20,13 @@
       .replace(/'/g, "&#039;");
   }
 
-  function renderAll(markup) {
+  function getVariant(root) {
+    return root.getAttribute("data-auth-variant") || "default";
+  }
+
+  function renderRoots(renderer) {
     for (const root of getRoots()) {
-      root.innerHTML = markup;
+      root.innerHTML = renderer(root);
     }
   }
 
@@ -218,12 +222,60 @@
     }
   }
 
+  function renderSignedOut(variant) {
+    if (variant === "read-link") {
+      return `
+        <div class="auth-shell-inner auth-shell-inner-read-link">
+          <button type="button" class="auth-link-button" data-auth-action="sign-in">Sign in</button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="auth-shell-inner">
+        <div class="auth-buttons">
+          <button type="button" class="auth-link-button" data-auth-action="sign-in">Sign in</button>
+          <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-up">Create account</button>
+          <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="email-fallback">Use email instead</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSignedIn(variant, displayName, avatarUrl, email) {
+    const fallbackInitial = (displayName || "U").trim().charAt(0).toUpperCase() || "U";
+    const safeAvatar = avatarUrl ? escapeHtml(avatarUrl) : "";
+    const avatarMarkup = safeAvatar
+      ? `<img src="${safeAvatar}" alt="" class="auth-avatar-img" loading="lazy" referrerpolicy="no-referrer" />`
+      : `<span class="auth-avatar-fallback">${escapeHtml(fallbackInitial)}</span>`;
+
+    if (variant === "read-link") {
+      return `
+        <div class="auth-shell-inner auth-shell-inner-signed-in auth-shell-inner-read-link-signed-in">
+          <span class="auth-avatar" aria-hidden="true">${avatarMarkup}</span>
+          <span class="auth-user-chip" title="${escapeHtml(email || displayName)}">${escapeHtml(displayName)}</span>
+          <a href="/my-links" class="auth-secondary-link">My links</a>
+          <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-out">Sign out</button>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="auth-shell-inner auth-shell-inner-signed-in">
+        <span class="auth-avatar" aria-hidden="true">${avatarMarkup}</span>
+        <span class="auth-user-chip">${escapeHtml(displayName)}</span>
+        <a href="/my-links" class="auth-secondary-link">My links</a>
+        <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-out">Sign out</button>
+      </div>
+    `;
+  }
+
   async function boot() {
     if (!getRoots().length) {
       return;
     }
 
-    renderAll('<span class="auth-status">Loading auth…</span>');
+    renderRoots(() => '<span class="auth-status">Loading auth…</span>');
     publishAuthState({ authenticated: false, reason: "loading" });
     setTokenGetter(async () => null);
 
@@ -233,13 +285,13 @@
       config = await fetchAuthConfig();
     } catch (error) {
       console.error("Failed to load auth config", error);
-      renderAll("");
+      renderRoots(() => "");
       publishAuthState({ authenticated: false, reason: "config_failed" });
       return;
     }
 
     if (!config?.enabled || !config?.publishableKey) {
-      renderAll("");
+      renderRoots(() => "");
       publishAuthState({ authenticated: false, reason: "disabled" });
       return;
     }
@@ -249,15 +301,7 @@
       const backendSession = await getBackendSession(clerk);
 
       if (!clerk.isSignedIn) {
-        renderAll(`
-          <div class="auth-shell-inner">
-            <div class="auth-buttons">
-              <button type="button" class="auth-link-button" data-auth-action="sign-in">Sign in</button>
-              <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-up">Create account</button>
-              <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="email-fallback">Use email instead</button>
-            </div>
-          </div>
-        `);
+        renderRoots((root) => renderSignedOut(getVariant(root)));
 
         publishAuthState({
           authenticated: false,
@@ -276,20 +320,16 @@
         clerk.user?.primaryEmailAddress?.emailAddress ||
         backendSession?.email ||
         "Signed in";
+      const avatarUrl = clerk.user?.imageUrl || "";
+      const email = backendSession?.email || clerk.user?.primaryEmailAddress?.emailAddress || "";
 
-      renderAll(`
-        <div class="auth-shell-inner auth-shell-inner-signed-in">
-          <span class="auth-user-chip">${escapeHtml(displayName)}</span>
-          <a href="/my-links" class="auth-secondary-link">My links</a>
-          <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-out">Sign out</button>
-        </div>
-      `);
+      renderRoots((root) => renderSignedIn(getVariant(root), displayName, avatarUrl, email));
 
       publishAuthState({
         authenticated: true,
         userId: backendSession?.userId || clerk.user?.id || null,
         sessionId: backendSession?.sessionId || clerk.session?.id || null,
-        email: backendSession?.email || clerk.user?.primaryEmailAddress?.emailAddress || null,
+        email: email || null,
         tokenSource: backendSession?.tokenSource || "clerk",
       });
 
@@ -306,16 +346,20 @@
       bindSignedInActions(clerk);
     } catch (error) {
       console.error("Failed to initialize Clerk auth shell", error);
-      renderAll('<span class="auth-status">Auth unavailable</span>');
+      renderRoots(() => '<span class="auth-status">Auth unavailable</span>');
       publishAuthState({ authenticated: false, reason: "init_failed" });
       setTokenGetter(async () => null);
     }
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", () => {
-      void boot();
-    }, { once: true });
+    document.addEventListener(
+      "DOMContentLoaded",
+      () => {
+        void boot();
+      },
+      { once: true }
+    );
   } else {
     void boot();
   }

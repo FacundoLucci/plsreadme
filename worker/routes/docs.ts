@@ -161,6 +161,22 @@ export function generateHtmlTemplate(
     :root { color-scheme: light dark; }
     html, body { margin: 0; padding: 0; background: #fafafa; }
     body { font-family: 'Instrument Sans', sans-serif; color: #1f2937; }
+    .viewer-header { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid #e5e7eb; background: rgba(250,250,250,0.96); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    .viewer-header-inner { max-width: 1240px; margin: 0 auto; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; }
+    .viewer-brand { display: inline-flex; align-items: center; gap: 0.45rem; color: #111827; text-decoration: none; font-weight: 700; font-size: 0.96rem; }
+    .viewer-brand:hover { color: #2563eb; }
+    .viewer-auth-shell { min-height: 34px; display: flex; align-items: center; }
+    .auth-shell-inner { display: flex; align-items: center; gap: 0.45rem; }
+    .auth-link-button { border: 1px solid #cbd5e1; border-radius: 999px; background: #ffffff; color: #111827; padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    .auth-link-button:hover { border-color: #93c5fd; background: #eff6ff; }
+    .auth-link-button-secondary { background: transparent; color: #475569; }
+    .auth-avatar { width: 1.5rem; height: 1.5rem; border-radius: 999px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #bfdbfe; background: #dbeafe; color: #1e3a8a; flex: 0 0 auto; }
+    .auth-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+    .auth-avatar-fallback { font-size: 0.72rem; font-weight: 700; }
+    .auth-user-chip { display: inline-flex; align-items: center; padding: 0.28rem 0.56rem; border-radius: 999px; border: 1px solid #dbeafe; background: #eff6ff; color: #1e3a8a; font-size: 0.72rem; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .auth-secondary-link { color: #2563eb; text-decoration: none; font-size: 0.75rem; font-weight: 600; }
+    .auth-secondary-link:hover { text-decoration: underline; }
+    .auth-status { color: #6b7280; font-size: 0.75rem; }
     .layout { max-width: 1240px; margin: 0 auto; padding: 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; }
     .doc-content { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 2.2rem; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,td,th) { overflow-wrap: anywhere; word-break: break-word; }
@@ -224,9 +240,19 @@ export function generateHtmlTemplate(
     .onboarding-tip .tip-dismiss { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; padding: 0 0.15rem; line-height: 1; }
     .onboarding-tip .tip-dismiss:hover { color: #6b7280; }
     @media (max-width: 640px) { .onboarding-tip { left: 1rem; right: 1rem; transform: none; white-space: normal; } }
-    @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .side-panel { position: static; max-height: none; } .anchor-dot { left: -10px; } }
+    @media (max-width: 980px) { .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; } .layout { grid-template-columns: 1fr; } .side-panel { position: static; max-height: none; } .anchor-dot { left: -10px; } }
     @media (prefers-color-scheme: dark) {
       html, body { background: #111827; color: #e5e7eb; }
+      .viewer-header { border-color: #374151; background: rgba(17,24,39,0.92); }
+      .viewer-brand { color: #f9fafb; }
+      .viewer-brand:hover { color: #93c5fd; }
+      .auth-link-button { border-color: #4b5563; background: #1f2937; color: #e5e7eb; }
+      .auth-link-button:hover { border-color: #60a5fa; background: #1e293b; }
+      .auth-link-button-secondary { color: #9ca3af; }
+      .auth-avatar { border-color: #1d4ed8; background: #1e3a8a; color: #dbeafe; }
+      .auth-user-chip { border-color: #1e40af; background: rgba(30, 64, 175, 0.25); color: #bfdbfe; }
+      .auth-secondary-link { color: #93c5fd; }
+      .auth-status { color: #9ca3af; }
       .doc-content,.side-panel { background: #1f2937; border-color: #374151; }
       .doc-content :is(p,li,blockquote) { color: #d1d5db; }
       .doc-content :is(h1,h2,h3,h4,h5,h6) { color: #f9fabf; }
@@ -257,6 +283,12 @@ export function generateHtmlTemplate(
   </style>
 </head>
 <body>
+  <header class="viewer-header">
+    <div class="viewer-header-inner">
+      <a href="/" class="viewer-brand">plsreadme</a>
+      <div class="viewer-auth-shell" data-auth-root data-auth-variant="read-link"></div>
+    </div>
+  </header>
   <div class="layout">
     <article class="doc-content" id="doc-content">${sanitizedHtml}
       <div id="inline-comment-box">
@@ -286,6 +318,7 @@ export function generateHtmlTemplate(
     <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
     <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-feature">\u{1F4A1} Feature Request</a>
   </div>
+  <script src="/clerk-auth-shell.js" defer></script>
   <script>
     function copyLink() { navigator.clipboard.writeText(window.location.href); }
     (function() {

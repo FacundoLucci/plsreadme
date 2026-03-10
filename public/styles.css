@@ -1508,6 +1508,40 @@ body {
   gap: 0.5rem;
 }
 
+.auth-avatar {
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 999px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.2);
+  color: #dbeafe;
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  flex: 0 0 auto;
+}
+
+.auth-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.auth-avatar-fallback {
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.auth-shell-inner-read-link {
+  gap: 0.45rem;
+}
+
+.auth-shell-inner-read-link .auth-link-button {
+  padding-inline: 0.9rem;
+}
+
 .auth-buttons {
   display: flex;
   align-items: center;
