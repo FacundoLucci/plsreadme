@@ -190,7 +190,7 @@ export function generateHtmlTemplate(
     .auth-secondary-link:hover { text-decoration: underline; }
     .auth-status { color: var(--text-muted); font-size: 0.75rem; }
     .layout { max-width: 1240px; margin: 0 auto; padding: 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; }
-    .doc-content { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 2.2rem; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
+    .doc-content { background: transparent; border: none; border-radius: 0; padding: 2.2rem 1.8rem; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,td,th) { overflow-wrap: anywhere; word-break: break-word; }
     .doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
     .doc-content pre code { white-space: inherit; word-break: inherit; }
@@ -278,7 +278,8 @@ export function generateHtmlTemplate(
       .auth-user-chip { border-color: #1e40af; background: rgba(30, 64, 175, 0.25); color: #bfdbfe; }
       .auth-secondary-link { color: #93c5fd; }
       .auth-status { color: var(--text-muted); }
-      .doc-content,.side-panel { background: var(--surface); border-color: var(--border); }
+      .doc-content { background: transparent; border: none; }
+      .side-panel { background: var(--surface); border-color: var(--border); }
       .doc-content :is(p,li,blockquote) { color: #cfd4de; }
       .doc-content :is(h1,h2,h3,h4,h5,h6) { color: #edf1f8; }
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
