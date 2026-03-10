@@ -2,6 +2,9 @@ CREATE TABLE IF NOT EXISTS comments (
   id TEXT PRIMARY KEY,
   doc_id TEXT NOT NULL,
   author_name TEXT NOT NULL,
+  author_user_id TEXT,
+  author_email TEXT,
+  author_display_name TEXT,
   body TEXT NOT NULL,
   created_at TEXT NOT NULL,
   ip_hash TEXT,
@@ -10,3 +13,4 @@ CREATE TABLE IF NOT EXISTS comments (
 );
 CREATE INDEX IF NOT EXISTS idx_comments_doc_id ON comments(doc_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_ip_hash ON comments(ip_hash);
+CREATE INDEX IF NOT EXISTS idx_comments_author_user_id ON comments(author_user_id, created_at DESC);

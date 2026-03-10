@@ -60,6 +60,9 @@ export interface CommentRecord {
   id: string;
   doc_id: string;
   author_name: string;
+  author_user_id: string | null;
+  author_email: string | null;
+  author_display_name: string | null;
   body: string;
   anchor_id: string;
   created_at: string;

@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS comments (
   id TEXT PRIMARY KEY,
   doc_id TEXT NOT NULL,
   author_name TEXT NOT NULL,
+  author_user_id TEXT,
+  author_email TEXT,
+  author_display_name TEXT,
   body TEXT NOT NULL,
   anchor_id TEXT NOT NULL DEFAULT 'doc-root',
   created_at TEXT NOT NULL,
@@ -65,6 +68,22 @@ CREATE TABLE IF NOT EXISTS comments (
 CREATE INDEX IF NOT EXISTS idx_comments_doc_id ON comments(doc_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_doc_anchor ON comments(doc_id, anchor_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_comments_ip_hash ON comments(ip_hash);
+CREATE INDEX IF NOT EXISTS idx_comments_author_user_id ON comments(author_user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS comment_notifications (
+  id TEXT PRIMARY KEY,
+  comment_id TEXT NOT NULL,
+  doc_id TEXT NOT NULL,
+  doc_owner_user_id TEXT,
+  commenter_user_id TEXT,
+  commenter_email TEXT,
+  commenter_display_name TEXT,
+  commenter_author_name TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending'
+);
+CREATE INDEX IF NOT EXISTS idx_comment_notifications_doc_created ON comment_notifications(doc_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comment_notifications_owner_created ON comment_notifications(doc_owner_user_id, created_at DESC);
 
 -- Write endpoint rate limiting events
 CREATE TABLE IF NOT EXISTS request_rate_limits (

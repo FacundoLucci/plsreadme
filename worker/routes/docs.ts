@@ -209,6 +209,7 @@ export function generateHtmlTemplate(
     #inline-comment-box .btn-post { background: #111827; color: #fff; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
     #inline-comment-box .btn-cancel { background: transparent; color: #6b7280; border: 1px solid #d1d5db; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
     #inline-comment-box .inline-error { display: none; color: #dc2626; font-size: 0.8rem; margin-top: 0.25rem; }
+    #inline-comment-box .comment-auth-hint { font-size: 0.72rem; color: #6b7280; margin-top: 0.1rem; }
     /* Sidebar grouped comments */
     .comment-group { margin-bottom: 1rem; }
     .comment-group-header { display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.6rem; background: #f3f4f6; border-radius: 6px; cursor: pointer; font-size: 0.82rem; color: #374151; font-weight: 500; border: none; width: 100%; text-align: left; }
@@ -218,6 +219,7 @@ export function generateHtmlTemplate(
     .sidebar-comment { border-bottom: 1px solid #f3f4f6; padding: 0.4rem 0; font-size: 0.82rem; }
     .sidebar-comment:last-child { border-bottom: none; }
     .sidebar-comment .sc-author { font-weight: 600; color: #111827; }
+    .sidebar-comment .sc-auth-badge { margin-left: 0.35rem; color: #1d4ed8; border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 999px; padding: 0.02rem 0.35rem; font-size: 0.62rem; font-weight: 600; vertical-align: middle; }
     .sidebar-comment .sc-time { color: #9ca3af; font-size: 0.72rem; margin-left: 0.3rem; }
     .sidebar-comment .sc-version { color: #9ca3af; font-size: 0.68rem; margin-left: 0.3rem; border: 1px solid #d1d5db; border-radius: 999px; padding: 0.02rem 0.32rem; }
     .sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4b5563; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
@@ -265,11 +267,13 @@ export function generateHtmlTemplate(
       #inline-comment-box input, #inline-comment-box textarea { background: #111827; border-color: #4b5563; color: #e5e7eb; }
       #inline-comment-box .btn-post { background: #f9fafb; color: #111827; }
       #inline-comment-box .btn-cancel { background: transparent; color: #9ca3af; border-color: #4b5563; }
+      #inline-comment-box .comment-auth-hint { color: #9ca3af; }
       .comment-badge { background: #60a5fa; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
       .comment-group-header { background: #374151; color: #d1d5db; }
       .comment-group-header:hover { background: #4b5563; }
       .sidebar-comment { border-color: #374151; }
       .sidebar-comment .sc-author { color: #f9fafb; }
+      .sidebar-comment .sc-auth-badge { color: #93c5fd; border-color: #1d4ed8; background: rgba(30,64,175,0.28); }
       .sidebar-comment .sc-version { color: #9ca3af; border-color: #4b5563; }
       .sidebar-comment .sc-body { color: #9ca3af; }
       .sidebar-comment-old { background: rgba(251, 191, 36, 0.14); }
@@ -294,6 +298,7 @@ export function generateHtmlTemplate(
       <div id="inline-comment-box">
         <div class="inline-form">
           <input type="text" id="comment-name" placeholder="Your name" required maxlength="50" />
+          <div class="comment-auth-hint" id="comment-auth-hint" style="display:none"></div>
           <textarea id="comment-body" placeholder="Write a comment…" required maxlength="2000"></textarea>
           <div class="inline-error" id="comment-error"></div>
           <div class="inline-btn-row">
@@ -332,6 +337,7 @@ export function generateHtmlTemplate(
       var contentEl = document.getElementById('doc-content');
       var countEl = document.getElementById('comment-count');
       var nameInput = document.getElementById('comment-name');
+      var authHintEl = document.getElementById('comment-auth-hint');
       var bodyInput = document.getElementById('comment-body');
       var errorEl = document.getElementById('comment-error');
       var generalBtn = document.getElementById('general-btn');
@@ -339,10 +345,15 @@ export function generateHtmlTemplate(
       var inlineBox = document.getElementById('inline-comment-box');
       var postBtn = document.getElementById('inline-post-btn');
       var cancelBtn = document.getElementById('inline-cancel-btn');
+      var authState = (window && window.plsreadmeAuthState) || { authenticated: false };
 
       var saved = localStorage.getItem('plsreadme_author_name');
       if (saved) nameInput.value = saved;
-      nameInput.addEventListener('input', function() { localStorage.setItem('plsreadme_author_name', this.value.trim()); });
+      nameInput.addEventListener('input', function() {
+        if (!authState || !authState.authenticated) {
+          localStorage.setItem('plsreadme_author_name', this.value.trim());
+        }
+      });
 
       function relativeTime(dateStr) {
         var diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -350,6 +361,63 @@ export function generateHtmlTemplate(
         if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
         if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
         return Math.floor(diff / 86400) + 'd ago';
+      }
+
+      function displayNameFromAuth(state) {
+        if (!state || !state.authenticated) return '';
+        return (state.displayName || state.email || state.userId || 'Signed-in user') + '';
+      }
+
+      function applyAuthState(nextState) {
+        authState = nextState || { authenticated: false };
+
+        if (authState.authenticated) {
+          var identityLabel = displayNameFromAuth(authState);
+          nameInput.value = identityLabel;
+          nameInput.disabled = true;
+          nameInput.required = false;
+          nameInput.placeholder = 'Signed in';
+          if (authHintEl) {
+            authHintEl.style.display = 'block';
+            authHintEl.textContent = 'Commenting as ' + identityLabel;
+          }
+          return;
+        }
+
+        nameInput.disabled = false;
+        nameInput.required = true;
+        nameInput.placeholder = 'Your name';
+        if (saved) {
+          nameInput.value = saved;
+        }
+        if (authHintEl) {
+          authHintEl.style.display = 'none';
+          authHintEl.textContent = '';
+        }
+      }
+
+      async function getAuthToken() {
+        try {
+          if (typeof window.plsreadmeGetAuthToken === 'function') {
+            var token = await window.plsreadmeGetAuthToken();
+            return typeof token === 'string' && token ? token : null;
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      function resolveCommentAuthor(comment) {
+        if (!comment) return 'Anonymous';
+        if (typeof comment.author_display_name === 'string' && comment.author_display_name.trim()) {
+          return comment.author_display_name.trim();
+        }
+        if (typeof comment.author_name === 'string' && comment.author_name.trim()) {
+          return comment.author_name.trim();
+        }
+        if (typeof comment.author_email === 'string' && comment.author_email.trim()) {
+          return comment.author_email.trim();
+        }
+        return 'Anonymous';
       }
 
       function scrollToAnchor(anchorId) {
@@ -417,8 +485,11 @@ export function generateHtmlTemplate(
             var c = entry.comment;
             var item = document.createElement('div');
             item.className = 'sidebar-comment' + (entry.isOlder ? ' sidebar-comment-old' : '');
-            item.innerHTML = '<div><span class="sc-author"></span><span class="sc-time"></span><span class="sc-version" style="display:none"></span><a class="sc-context-link" style="display:none" target="_blank" rel="noopener">view original context</a></div><p class="sc-body"></p><p class="sc-note" style="display:none"></p>';
-            item.querySelector('.sc-author').textContent = c.author_name;
+            item.innerHTML = '<div><span class="sc-author"></span><span class="sc-auth-badge" style="display:none">Signed in</span><span class="sc-time"></span><span class="sc-version" style="display:none"></span><a class="sc-context-link" style="display:none" target="_blank" rel="noopener">view original context</a></div><p class="sc-body"></p><p class="sc-note" style="display:none"></p>';
+            item.querySelector('.sc-author').textContent = resolveCommentAuthor(c);
+            if (c.author_user_id) {
+              item.querySelector('.sc-auth-badge').style.display = 'inline-block';
+            }
             item.querySelector('.sc-time').textContent = relativeTime(c.created_at);
             if (entry.isOlder) {
               var versionEl = item.querySelector('.sc-version');
@@ -551,21 +622,37 @@ export function generateHtmlTemplate(
           .catch(function() {});
       }
 
-      function postComment() {
+      async function postComment() {
         errorEl.style.display = 'none';
         var name = nameInput.value.trim();
         var body = bodyInput.value.trim();
-        if (!name || !body) {
-          errorEl.textContent = 'Name and comment are required.';
+        var isSignedIn = !!(authState && authState.authenticated);
+
+        if ((!isSignedIn && !name) || !body) {
+          errorEl.textContent = isSignedIn ? 'Comment body is required.' : 'Name and comment are required.';
           errorEl.style.display = 'block';
           return;
         }
+
         postBtn.disabled = true;
+
+        var token = await getAuthToken();
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers.Authorization = 'Bearer ' + token;
+        }
+
+        var payload = {
+          author_name: name,
+          author_display_name: isSignedIn ? displayNameFromAuth(authState) : null,
+          body: body,
+          anchor_id: selectedAnchor
+        };
 
         fetch('/api/comments/' + DOC_ID, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ author_name: name, body: body, anchor_id: selectedAnchor })
+          headers: headers,
+          body: JSON.stringify(payload)
         })
           .then(function(r) {
             if (!r.ok) return r.json().then(function(d) { throw new Error(d.error || 'Failed'); });
@@ -574,7 +661,9 @@ export function generateHtmlTemplate(
           .then(function(data) {
             allComments.push(data.comment);
             bodyInput.value = '';
-            localStorage.setItem('plsreadme_author_name', name);
+            if (!isSignedIn) {
+              localStorage.setItem('plsreadme_author_name', name);
+            }
             renderComments();
             renderBadges();
           })
@@ -585,9 +674,14 @@ export function generateHtmlTemplate(
           .finally(function() { postBtn.disabled = false; });
       }
 
-      postBtn.addEventListener('click', postComment);
+      postBtn.addEventListener('click', function() { void postComment(); });
       bodyInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) postComment();
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void postComment();
+      });
+
+      applyAuthState(authState);
+      window.addEventListener('plsreadme:auth-state', function(event) {
+        applyAuthState((event && event.detail) || { authenticated: false });
       });
 
       loadComments();

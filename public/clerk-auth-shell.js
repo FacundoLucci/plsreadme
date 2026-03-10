@@ -330,6 +330,7 @@
         userId: backendSession?.userId || clerk.user?.id || null,
         sessionId: backendSession?.sessionId || clerk.session?.id || null,
         email: email || null,
+        displayName,
         tokenSource: backendSession?.tokenSource || "clerk",
       });
 
