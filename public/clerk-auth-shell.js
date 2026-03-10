@@ -235,8 +235,6 @@
       <div class="auth-shell-inner">
         <div class="auth-buttons">
           <button type="button" class="auth-link-button" data-auth-action="sign-in">Sign in</button>
-          <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-up">Create account</button>
-          <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="email-fallback">Use email instead</button>
         </div>
       </div>
     `;
