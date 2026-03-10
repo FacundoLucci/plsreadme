@@ -203,5 +203,5 @@ test("rendered HTML includes wrap-safe CSS for markdown, comments, and code bloc
   assert.ok(html.includes("overflow-wrap: anywhere;"));
   assert.ok(html.includes(".doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
   assert.ok(html.includes(".comment-body { margin: 0.3rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font-size: 0.88rem; }"));
-  assert.ok(html.includes(".sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4b5563; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
+  assert.ok(html.includes(".sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4f5663; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
 });
