@@ -22,7 +22,7 @@
 
 ## Phases
 
-### Phase 1 — Timeline Discovery Surface ✅ (`a33905d`)
+### Phase 1 — Timeline Discovery Surface ✅ (`c393be0`)
 **Context Scope:** `worker/routes/docs.ts` viewer/API route layer + targeted tests for version timeline behavior.
 **Out of Scope (for this phase):** mutation/restore logic, schema changes, complex modal UI.
 - [x] Add `GET /v/:id/versions` JSON timeline endpoint (descending versions, current marker, raw links).
