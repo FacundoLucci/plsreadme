@@ -10,12 +10,26 @@ class MockDB {
   public runs: QueryRecord[] = [];
   public firsts: QueryRecord[] = [];
   public alls: QueryRecord[] = [];
-  public count: number;
-  public rows: Array<Record<string, unknown>>;
+  public createdCount: number;
+  public savedCount: number;
+  public createdRows: Array<Record<string, unknown>>;
+  public savedRows: Array<Record<string, unknown>>;
 
-  constructor({ count, rows }: { count: number; rows: Array<Record<string, unknown>> }) {
-    this.count = count;
-    this.rows = rows;
+  constructor({
+    createdCount,
+    savedCount,
+    createdRows,
+    savedRows,
+  }: {
+    createdCount: number;
+    savedCount: number;
+    createdRows: Array<Record<string, unknown>>;
+    savedRows: Array<Record<string, unknown>>;
+  }) {
+    this.createdCount = createdCount;
+    this.savedCount = savedCount;
+    this.createdRows = createdRows;
+    this.savedRows = savedRows;
   }
 
   prepare(sql: string) {
@@ -32,14 +46,29 @@ class MockDB {
       },
       async first<T>() {
         db.firsts.push({ sql, params: this.params });
-        if (/COUNT\(\*\)/i.test(sql)) {
-          return { count: db.count } as T;
+
+        if (/COUNT\(\*\) as count FROM docs d/i.test(sql)) {
+          return { count: db.createdCount } as T;
         }
+
+        if (/COUNT\(\*\) as count\s+FROM saved_links sl/i.test(sql)) {
+          return { count: db.savedCount } as T;
+        }
+
         return null;
       },
       async all<T>() {
         db.alls.push({ sql, params: this.params });
-        return { results: db.rows as T };
+
+        if (/FROM docs d/i.test(sql) && /WHERE d\.owner_user_id = \?/i.test(sql)) {
+          return { results: db.createdRows as T };
+        }
+
+        if (/FROM saved_links sl/i.test(sql)) {
+          return { results: db.savedRows as T };
+        }
+
+        return { results: [] as T };
       },
     };
 
@@ -132,7 +161,7 @@ async function withMockedJwks<T>(issuer: string, jwk: Record<string, unknown>, f
 }
 
 test("/api/auth/my-links requires authentication", async () => {
-  const db = new MockDB({ count: 0, rows: [] });
+  const db = new MockDB({ createdCount: 0, savedCount: 0, createdRows: [], savedRows: [] });
   const env = createEnv(db, "https://clerk.example.dev/my-links");
 
   const response = await authRoutes.request("http://local/my-links", { method: "GET" }, env);
@@ -142,13 +171,13 @@ test("/api/auth/my-links requires authentication", async () => {
   assert.equal(payload.code, "auth_required");
 });
 
-test("/api/auth/my-links returns owner rows with search + pagination", async () => {
+test("/api/auth/my-links returns separated created and saved rows with shared search/sort", async () => {
   const issuer = "https://clerk.example.dev/my-links";
   const { token, jwk } = createSignedJwt({ issuer, subject: "user_123", expiresInSeconds: 600 });
 
-  const rows = [
+  const createdRows = [
     {
-      id: "doc_alpha",
+      id: "doc_created",
       title: "Alpha Spec",
       created_at: "2025-01-02T00:00:00.000Z",
       bytes: 2048,
@@ -157,7 +186,24 @@ test("/api/auth/my-links returns owner rows with search + pagination", async () 
     },
   ];
 
-  const db = new MockDB({ count: 7, rows });
+  const savedRows = [
+    {
+      id: "doc_saved",
+      title: "Beta Notes",
+      created_at: "2025-01-01T00:00:00.000Z",
+      bytes: 1024,
+      view_count: 7,
+      doc_version: 1,
+      saved_at: "2025-01-03T00:00:00.000Z",
+    },
+  ];
+
+  const db = new MockDB({
+    createdCount: 7,
+    savedCount: 2,
+    createdRows,
+    savedRows,
+  });
   const env = createEnv(db, issuer);
   const url = "http://local/my-links?page=2&page_size=5&sort=title_asc&search=alpha-spec";
 
@@ -177,13 +223,15 @@ test("/api/auth/my-links returns owner rows with search + pagination", async () 
   assert.equal(response.status, 200);
   const payload = (await response.json()) as Record<string, any>;
 
-  assert.equal(Array.isArray(payload.items), true);
-  assert.equal(payload.items.length, 1);
-  assert.equal(payload.items[0].id, "doc_alpha");
-  assert.equal(payload.items[0].slug, "alpha-spec");
-  assert.equal(payload.items[0].url.endsWith("/v/doc_alpha"), true);
+  assert.equal(payload.created.items.length, 1);
+  assert.equal(payload.created.items[0].id, "doc_created");
+  assert.equal(payload.created.items[0].relationship, "created");
 
-  assert.deepEqual(payload.pagination, {
+  assert.equal(payload.saved.items.length, 1);
+  assert.equal(payload.saved.items[0].id, "doc_saved");
+  assert.equal(payload.saved.items[0].relationship, "saved");
+
+  assert.deepEqual(payload.created.pagination, {
     page: 2,
     pageSize: 5,
     total: 7,
@@ -192,14 +240,29 @@ test("/api/auth/my-links returns owner rows with search + pagination", async () 
     hasPrevPage: true,
   });
 
-  const countQuery = db.firsts.find((entry) => /COUNT\(\*\)/i.test(entry.sql));
-  assert.ok(countQuery, "expected count query to run");
-  assert.match(countQuery?.sql ?? "", /owner_user_id = \?/i);
-  assert.deepEqual(countQuery?.params, ["user_123", "%alpha-spec%", "%alpha-spec%", "%alpha-spec%"]);
+  assert.deepEqual(payload.saved.pagination, {
+    page: 2,
+    pageSize: 5,
+    total: 2,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: true,
+  });
 
-  const listQuery = db.alls[0];
-  assert.ok(listQuery, "expected list query to run");
-  assert.match(listQuery.sql, /LOWER\(REPLACE\(REPLACE\(REPLACE\(COALESCE\(title, ''\), ' ', '-'\), '_', '-'\), '--', '-'\)\) LIKE \?/);
-  assert.match(listQuery.sql, /ORDER BY COALESCE\(title, ''\) COLLATE NOCASE ASC, created_at DESC, id DESC/);
-  assert.deepEqual(listQuery.params, ["user_123", "%alpha-spec%", "%alpha-spec%", "%alpha-spec%", 5, 5]);
+  assert.deepEqual(payload.totals, {
+    created: 7,
+    saved: 2,
+    all: 9,
+  });
+
+  const createdListQuery = db.alls.find((entry) => /FROM docs d/i.test(entry.sql));
+  assert.ok(createdListQuery, "expected created links query");
+  assert.match(createdListQuery?.sql ?? "", /WHERE d\.owner_user_id = \?/i);
+  assert.match(createdListQuery?.sql ?? "", /ORDER BY COALESCE\(d\.title, ''\) COLLATE NOCASE ASC/i);
+
+  const savedListQuery = db.alls.find((entry) => /FROM saved_links sl/i.test(entry.sql));
+  assert.ok(savedListQuery, "expected saved links query");
+  assert.match(savedListQuery?.sql ?? "", /sl\.user_id = \?/i);
+  assert.match(savedListQuery?.sql ?? "", /d\.owner_user_id IS NULL OR d\.owner_user_id <> \?/i);
+  assert.match(savedListQuery?.sql ?? "", /ORDER BY COALESCE\(d\.title, ''\) COLLATE NOCASE ASC/i);
 });

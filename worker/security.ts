@@ -27,6 +27,11 @@ export const WRITE_RATE_LIMITS = {
     maxRequests: 40,
     windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
   },
+  saveLink: {
+    endpointKey: "save-link",
+    maxRequests: 120,
+    windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
+  },
 } as const;
 
 export interface MarkdownMetrics {

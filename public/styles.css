@@ -1514,6 +1514,76 @@ select {
   gap: 0.5rem;
 }
 
+.auth-menu {
+  position: relative;
+}
+
+.auth-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.12);
+  color: var(--color-text);
+  padding: 0.18rem 0.3rem 0.18rem 0.2rem;
+  cursor: pointer;
+}
+
+.auth-menu-trigger:hover {
+  border-color: rgba(37, 99, 235, 0.7);
+  background: rgba(37, 99, 235, 0.2);
+}
+
+.auth-menu-caret {
+  font-size: 0.72rem;
+  color: var(--color-text-subtle);
+  line-height: 1;
+  margin-right: 0.12rem;
+}
+
+.auth-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  min-width: 160px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: #111827;
+  padding: 0.3rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32);
+  display: none;
+  z-index: 80;
+}
+
+.auth-menu.is-open .auth-menu-dropdown {
+  display: block;
+}
+
+.auth-menu-item {
+  width: 100%;
+  display: block;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 7px;
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+}
+
+.auth-menu-item:hover {
+  background: rgba(37, 99, 235, 0.22);
+  color: #dbeafe;
+}
+
+.auth-menu-item-button {
+  font-family: var(--font-sans);
+}
+
 .auth-avatar {
   width: 1.6rem;
   height: 1.6rem;

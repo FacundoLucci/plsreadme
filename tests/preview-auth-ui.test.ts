@@ -34,16 +34,36 @@ test("signed-out read-link auth UI exposes a single Sign in CTA", async () => {
   assert.doesNotMatch(template, /sign-up|email-fallback/);
 });
 
-test("signed-in read-link auth UI includes avatar identity and My Links access", async () => {
+test("signed-in read-link auth UI uses dropdown with My Links + Sign out", async () => {
   const script = await loadAuthShellScript();
   const fnBlock = script.match(/function renderSignedIn\(variant, displayName, avatarUrl, email\) \{([\s\S]*?)\n  \}\n\n  async function boot/);
   assert.ok(fnBlock, "could not locate renderSignedIn function");
 
-  const readLinkBranch = fnBlock[1].match(/if \(variant === "read-link"\) \{\s*return `([\s\S]*?)`;\s*\}/);
-  assert.ok(readLinkBranch, "could not locate read-link signed-in branch");
+  const readLinkBranch = fnBlock[1].match(/return `([\s\S]*?)`;/);
+  assert.ok(readLinkBranch, "could not locate signed-in template");
 
   const template = readLinkBranch[1];
+  assert.match(template, /class="auth-menu"/);
+  assert.match(template, /data-auth-action="toggle-menu"/);
   assert.match(template, /class="auth-avatar"/);
   assert.match(template, /class="auth-user-chip"/);
-  assert.match(template, /href="\/my-links" class="auth-secondary-link">My Links<\/a>/);
+  assert.match(template, /href="\/my-links" class="auth-menu-item"/);
+  assert.match(template, /data-auth-action="sign-out"/);
+});
+
+test("preview template includes save button and logged-out comment login CTA", () => {
+  const html = generateHtmlTemplate("Preview", "<p>Hello</p>", "doc_preview", 1);
+
+  assert.match(html, /id="preview-save-btn"/);
+  assert.match(html, /id="comment-login-cta"/);
+  assert.match(html, /Sign in for account-linked comments/);
+  assert.match(html, /\/api\/auth\/save-link/);
+});
+
+test("auth redirects preserve returnBackUrl from preview actions", async () => {
+  const script = await loadAuthShellScript();
+
+  assert.match(script, /redirectToSignIn\(\{\s*returnBackUrl: window\.location\.href,/);
+  assert.match(script, /redirectToSignUp\(\{\s*returnBackUrl: window\.location\.href,/);
+  assert.match(script, /searchParams\.set\("redirect_url", returnTo\)/);
 });

@@ -160,6 +160,26 @@
     }
   }
 
+  function fallbackAuthUrl(pathOrUrl) {
+    if (!pathOrUrl) return "";
+
+    try {
+      const target = new URL(pathOrUrl, window.location.origin);
+      const returnTo = window.location.href;
+
+      if (!target.searchParams.has("returnBackUrl")) {
+        target.searchParams.set("returnBackUrl", returnTo);
+      }
+      if (!target.searchParams.has("redirect_url")) {
+        target.searchParams.set("redirect_url", returnTo);
+      }
+
+      return target.toString();
+    } catch {
+      return pathOrUrl;
+    }
+  }
+
   async function goToSignIn(clerk, config) {
     try {
       await clerk.redirectToSignIn({
@@ -169,7 +189,7 @@
     } catch (error) {
       console.warn("Clerk sign-in redirect failed", error);
       if (config?.signInUrl) {
-        window.location.href = config.signInUrl;
+        window.location.href = fallbackAuthUrl(config.signInUrl);
       }
     }
   }
@@ -183,7 +203,7 @@
     } catch (error) {
       console.warn("Clerk sign-up redirect failed", error);
       if (config?.signUpUrl) {
-        window.location.href = config.signUpUrl;
+        window.location.href = fallbackAuthUrl(config.signUpUrl);
       }
     }
   }
@@ -208,7 +228,57 @@
     }
   }
 
+  function closeAllAuthMenus() {
+    for (const menu of document.querySelectorAll("[data-auth-menu]")) {
+      const trigger = menu.querySelector("[data-auth-action='toggle-menu']");
+      menu.classList.remove("is-open");
+      if (trigger) {
+        trigger.setAttribute("aria-expanded", "false");
+      }
+    }
+  }
+
+  function bindAuthMenus() {
+    for (const menu of document.querySelectorAll("[data-auth-menu]")) {
+      const trigger = menu.querySelector("[data-auth-action='toggle-menu']");
+      if (!trigger) continue;
+
+      trigger.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const isOpen = menu.classList.contains("is-open");
+        closeAllAuthMenus();
+
+        if (!isOpen) {
+          menu.classList.add("is-open");
+          trigger.setAttribute("aria-expanded", "true");
+        }
+      });
+    }
+
+    if (!window.__plsreadmeAuthMenuBound) {
+      document.addEventListener("click", (event) => {
+        const target = event && event.target;
+        if (target && target.closest && target.closest("[data-auth-menu]")) {
+          return;
+        }
+        closeAllAuthMenus();
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeAllAuthMenus();
+        }
+      });
+
+      window.__plsreadmeAuthMenuBound = true;
+    }
+  }
+
   function bindSignedInActions(clerk) {
+    bindAuthMenus();
+
     for (const button of document.querySelectorAll("[data-auth-action='sign-out']")) {
       button.addEventListener("click", async () => {
         button.setAttribute("disabled", "disabled");
@@ -247,23 +317,30 @@
       ? `<img src="${safeAvatar}" alt="" class="auth-avatar-img" loading="lazy" referrerpolicy="no-referrer" />`
       : `<span class="auth-avatar-fallback">${escapeHtml(fallbackInitial)}</span>`;
 
-    if (variant === "read-link") {
-      return `
-        <div class="auth-shell-inner auth-shell-inner-signed-in auth-shell-inner-read-link-signed-in">
-          <span class="auth-avatar" aria-hidden="true">${avatarMarkup}</span>
-          <span class="auth-user-chip" title="${escapeHtml(email || displayName)}">${escapeHtml(displayName)}</span>
-          <a href="/my-links" class="auth-secondary-link">My Links</a>
-          <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-out">Sign out</button>
-        </div>
-      `;
-    }
+    const shellClass =
+      variant === "read-link"
+        ? "auth-shell-inner auth-shell-inner-signed-in auth-shell-inner-read-link-signed-in"
+        : "auth-shell-inner auth-shell-inner-signed-in";
 
     return `
-      <div class="auth-shell-inner auth-shell-inner-signed-in">
-        <span class="auth-avatar" aria-hidden="true">${avatarMarkup}</span>
-        <span class="auth-user-chip">${escapeHtml(displayName)}</span>
-        <a href="/my-links" class="auth-secondary-link">My Links</a>
-        <button type="button" class="auth-link-button auth-link-button-secondary" data-auth-action="sign-out">Sign out</button>
+      <div class="${shellClass}">
+        <div class="auth-menu" data-auth-menu>
+          <button
+            type="button"
+            class="auth-menu-trigger"
+            data-auth-action="toggle-menu"
+            aria-haspopup="menu"
+            aria-expanded="false"
+          >
+            <span class="auth-avatar" aria-hidden="true">${avatarMarkup}</span>
+            <span class="auth-user-chip" title="${escapeHtml(email || displayName)}">${escapeHtml(displayName)}</span>
+            <span class="auth-menu-caret" aria-hidden="true">▾</span>
+          </button>
+          <div class="auth-menu-dropdown" role="menu">
+            <a href="/my-links" class="auth-menu-item" role="menuitem">My Links</a>
+            <button type="button" class="auth-menu-item auth-menu-item-button" data-auth-action="sign-out" role="menuitem">Sign out</button>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -340,7 +417,8 @@
         }
       });
 
-      const identity = backendSession?.sessionId || backendSession?.userId || clerk.session?.id || clerk.user?.id;
+      const identity =
+        backendSession?.sessionId || backendSession?.userId || clerk.session?.id || clerk.user?.id;
       trackLoginSuccess(identity, backendSession?.tokenSource || "clerk");
       bindSignedInActions(clerk);
     } catch (error) {

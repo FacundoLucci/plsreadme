@@ -1,9 +1,11 @@
 import type { Env } from "./types";
 
 const OWNERSHIP_SCHEMA_PROMISE = Symbol.for("plsreadme.ownershipSchemaPromise");
+const SAVED_LINKS_SCHEMA_PROMISE = Symbol.for("plsreadme.savedLinksSchemaPromise");
 
 type EnvWithOwnershipCache = Env & {
   [OWNERSHIP_SCHEMA_PROMISE]?: Promise<void>;
+  [SAVED_LINKS_SCHEMA_PROMISE]?: Promise<void>;
 };
 
 function isDuplicateColumnError(error: unknown): boolean {
@@ -29,6 +31,25 @@ async function ensureOwnershipSchemaUncached(env: Env): Promise<void> {
   ).run();
 }
 
+async function ensureSavedLinksSchemaUncached(env: Env): Promise<void> {
+  await env.DB.prepare(
+    `CREATE TABLE IF NOT EXISTS saved_links (
+      user_id TEXT NOT NULL,
+      doc_id TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      PRIMARY KEY (user_id, doc_id)
+    )`
+  ).run();
+
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_saved_links_user_created_at ON saved_links(user_id, created_at DESC)"
+  ).run();
+
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_saved_links_doc_user ON saved_links(doc_id, user_id)"
+  ).run();
+}
+
 export async function ensureOwnershipSchema(env: Env): Promise<void> {
   const envWithCache = env as EnvWithOwnershipCache;
 
@@ -40,6 +61,21 @@ export async function ensureOwnershipSchema(env: Env): Promise<void> {
     await envWithCache[OWNERSHIP_SCHEMA_PROMISE];
   } catch (error) {
     delete envWithCache[OWNERSHIP_SCHEMA_PROMISE];
+    throw error;
+  }
+}
+
+export async function ensureSavedLinksSchema(env: Env): Promise<void> {
+  const envWithCache = env as EnvWithOwnershipCache;
+
+  if (!envWithCache[SAVED_LINKS_SCHEMA_PROMISE]) {
+    envWithCache[SAVED_LINKS_SCHEMA_PROMISE] = ensureSavedLinksSchemaUncached(env);
+  }
+
+  try {
+    await envWithCache[SAVED_LINKS_SCHEMA_PROMISE];
+  } catch (error) {
+    delete envWithCache[SAVED_LINKS_SCHEMA_PROMISE];
     throw error;
   }
 }

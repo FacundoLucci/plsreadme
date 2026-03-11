@@ -177,11 +177,27 @@ export function generateHtmlTemplate(
     .viewer-header-inner { max-width: 1240px; margin: 0 auto; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; }
     .viewer-brand { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 0.96rem; }
     .viewer-brand:hover { color: #2563eb; }
+    .viewer-header-actions { display: inline-flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; justify-content: flex-end; }
     .viewer-auth-shell { min-height: 34px; display: flex; align-items: center; }
+    .preview-save-btn { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-main); padding: 0.36rem 0.72rem; font-size: 0.74rem; font-weight: 600; cursor: pointer; }
+    .preview-save-btn:hover { border-color: #93c5fd; background: #eff6ff; }
+    .preview-save-btn[data-state="saved"] { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+    .preview-save-btn[data-state="created"] { border-color: #86efac; color: #166534; background: #f0fdf4; cursor: default; }
+    .preview-save-status { font-size: 0.72rem; color: var(--text-muted); }
+    .preview-save-status button { margin-left: 0.35rem; border: none; background: none; color: #2563eb; font-weight: 600; cursor: pointer; padding: 0; }
     .auth-shell-inner { display: flex; align-items: center; gap: 0.45rem; }
     .auth-link-button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-main); padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .auth-link-button:hover { border-color: #93c5fd; background: #eff6ff; }
     .auth-link-button-secondary { background: transparent; color: var(--text-muted); }
+    .auth-menu { position: relative; }
+    .auth-menu-trigger { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid #dbeafe; border-radius: 999px; background: #eff6ff; color: #1e3a8a; padding: 0.16rem 0.26rem 0.16rem 0.2rem; cursor: pointer; }
+    .auth-menu-trigger:hover { border-color: #93c5fd; background: #dbeafe; }
+    .auth-menu-caret { font-size: 0.68rem; color: #1d4ed8; }
+    .auth-menu-dropdown { position: absolute; right: 0; top: calc(100% + 0.35rem); min-width: 150px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: var(--panel-shadow); display: none; padding: 0.22rem; z-index: 40; }
+    .auth-menu.is-open .auth-menu-dropdown { display: block; }
+    .auth-menu-item { display: block; width: 100%; border: none; border-radius: 6px; background: transparent; color: var(--text-main); text-decoration: none; text-align: left; font-size: 0.75rem; font-weight: 600; padding: 0.4rem 0.52rem; cursor: pointer; }
+    .auth-menu-item:hover { background: var(--surface-muted); }
+    .auth-menu-item-button { font-family: inherit; }
     .auth-avatar { width: 1.5rem; height: 1.5rem; border-radius: 999px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #bfdbfe; background: #dbeafe; color: #1e3a8a; flex: 0 0 auto; }
     .auth-avatar-img { width: 100%; height: 100%; object-fit: cover; }
     .auth-avatar-fallback { font-size: 0.72rem; font-weight: 700; }
@@ -222,6 +238,8 @@ export function generateHtmlTemplate(
     #inline-comment-box .btn-cancel { background: transparent; color: var(--text-muted); border: 1px solid var(--border); border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
     #inline-comment-box .inline-error { display: none; color: #dc2626; font-size: 0.8rem; margin-top: 0.25rem; }
     #inline-comment-box .comment-auth-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem; }
+    #inline-comment-box .comment-login-cta { display: none; align-items: center; justify-content: space-between; gap: 0.45rem; border: 1px dashed var(--border); border-radius: 7px; background: var(--surface-muted); padding: 0.45rem 0.55rem; font-size: 0.74rem; color: var(--text-muted); }
+    #inline-comment-box .comment-login-cta button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-main); padding: 0.25rem 0.65rem; font-size: 0.72rem; font-weight: 600; cursor: pointer; }
     /* Sidebar grouped comments */
     .comment-group { margin-bottom: 1rem; }
     .comment-group-header { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.5rem; background: transparent; border-radius: 6px; cursor: pointer; font-size: 0.82rem; color: var(--text-main); font-weight: 500; border: none; width: 100%; text-align: left; }
@@ -254,7 +272,7 @@ export function generateHtmlTemplate(
     .onboarding-tip .tip-dismiss { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; padding: 0 0.15rem; line-height: 1; }
     .onboarding-tip .tip-dismiss:hover { color: #6b7280; }
     @media (max-width: 640px) { .onboarding-tip { left: 1rem; right: 1rem; transform: none; white-space: normal; } }
-    @media (max-width: 980px) { .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; } .layout { grid-template-columns: 1fr; padding: 1rem 1rem 1.75rem; gap: 1rem; } .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; } .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; } .anchor-dot { left: -10px; } }
+    @media (max-width: 980px) { .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; } .viewer-header-actions { width: 100%; justify-content: space-between; } .layout { grid-template-columns: 1fr; padding: 1rem 1rem 1.75rem; gap: 1rem; } .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; } .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; } .anchor-dot { left: -10px; } }
     @media (prefers-color-scheme: dark) {
       :root {
         --page-bg: #13151a;
@@ -271,9 +289,20 @@ export function generateHtmlTemplate(
       .viewer-header { border-color: var(--border); background: var(--header-bg); }
       .viewer-brand { color: #f2f4f8; }
       .viewer-brand:hover { color: #93c5fd; }
+      .preview-save-btn { border-color: var(--border); background: var(--surface); color: var(--text-main); }
+      .preview-save-btn:hover { border-color: #60a5fa; background: #222732; }
+      .preview-save-btn[data-state="saved"] { border-color: #fbbf24; color: #fde68a; background: rgba(217, 119, 6, 0.2); }
+      .preview-save-btn[data-state="created"] { border-color: #22c55e; color: #bbf7d0; background: rgba(22, 163, 74, 0.2); }
+      .preview-save-status button { color: #93c5fd; }
       .auth-link-button { border-color: var(--border); background: var(--surface); color: var(--text-main); }
       .auth-link-button:hover { border-color: #60a5fa; background: #222732; }
       .auth-link-button-secondary { color: var(--text-muted); }
+      .auth-menu-trigger { border-color: #1e40af; background: rgba(30, 64, 175, 0.25); color: #bfdbfe; }
+      .auth-menu-trigger:hover { border-color: #2563eb; background: rgba(37, 99, 235, 0.32); }
+      .auth-menu-caret { color: #93c5fd; }
+      .auth-menu-dropdown { background: #151923; border-color: var(--border); }
+      .auth-menu-item { color: var(--text-main); }
+      .auth-menu-item:hover { background: #262d3a; }
       .auth-avatar { border-color: #1d4ed8; background: #1e3a8a; color: #dbeafe; }
       .auth-user-chip { border-color: #1e40af; background: rgba(30, 64, 175, 0.25); color: #bfdbfe; }
       .auth-secondary-link { color: #93c5fd; }
@@ -292,6 +321,8 @@ export function generateHtmlTemplate(
       #inline-comment-box .btn-post { background: #f9fafb; color: #111827; }
       #inline-comment-box .btn-cancel { background: transparent; color: var(--text-muted); border-color: var(--border); }
       #inline-comment-box .comment-auth-hint { color: var(--text-muted); }
+      #inline-comment-box .comment-login-cta { border-color: var(--border); background: #1a1f2a; }
+      #inline-comment-box .comment-login-cta button { border-color: var(--border); background: #202634; color: var(--text-main); }
       .comment-badge { background: #60a5fa; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
       .comment-group-header { background: var(--surface-muted); color: var(--text-main); }
       .comment-group-header:hover { background: #2b303c; }
@@ -314,13 +345,21 @@ export function generateHtmlTemplate(
   <header class="viewer-header">
     <div class="viewer-header-inner">
       <a href="/" class="viewer-brand">plsreadme</a>
-      <div class="viewer-auth-shell" data-auth-root data-auth-variant="read-link"></div>
+      <div class="viewer-header-actions">
+        <button type="button" class="preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save</button>
+        <span class="preview-save-status" id="preview-save-status" aria-live="polite"></span>
+        <div class="viewer-auth-shell" data-auth-root data-auth-variant="read-link"></div>
+      </div>
     </div>
   </header>
   <div class="layout">
     <article class="doc-content" id="doc-content">${sanitizedHtml}
       <div id="inline-comment-box">
         <div class="inline-form">
+          <div class="comment-login-cta" id="comment-login-cta" style="display:none">
+            <span>Sign in for account-linked comments. Guest comments still work.</span>
+            <button type="button" id="comment-login-btn">Sign in</button>
+          </div>
           <input type="text" id="comment-name" placeholder="Your name" required maxlength="50" />
           <div class="comment-auth-hint" id="comment-auth-hint" style="display:none"></div>
           <textarea id="comment-body" placeholder="Write a comment…" required maxlength="2000"></textarea>
@@ -362,14 +401,19 @@ export function generateHtmlTemplate(
       var countEl = document.getElementById('comment-count');
       var nameInput = document.getElementById('comment-name');
       var authHintEl = document.getElementById('comment-auth-hint');
+      var loginCtaEl = document.getElementById('comment-login-cta');
+      var loginBtn = document.getElementById('comment-login-btn');
       var bodyInput = document.getElementById('comment-body');
       var errorEl = document.getElementById('comment-error');
+      var saveBtn = document.getElementById('preview-save-btn');
+      var saveStatusEl = document.getElementById('preview-save-status');
       var generalBtn = document.getElementById('general-btn');
       var sidebarGroupsEl = document.getElementById('sidebar-groups');
       var inlineBox = document.getElementById('inline-comment-box');
       var postBtn = document.getElementById('inline-post-btn');
       var cancelBtn = document.getElementById('inline-cancel-btn');
       var authState = (window && window.plsreadmeAuthState) || { authenticated: false };
+      var saveState = { loading: false, saved: false, createdByUser: false };
 
       var saved = localStorage.getItem('plsreadme_author_name');
       if (saved) nameInput.value = saved;
@@ -392,6 +436,189 @@ export function generateHtmlTemplate(
         return (state.displayName || state.email || state.userId || 'Signed-in user') + '';
       }
 
+      function triggerSignInFlow() {
+        var signInBtn = document.querySelector("[data-auth-action='sign-in']");
+        if (signInBtn && typeof signInBtn.click === 'function') {
+          signInBtn.click();
+          return;
+        }
+
+        try {
+          window.location.href = '/sign-in?redirect_url=' + encodeURIComponent(window.location.href);
+        } catch (e) {
+          window.location.href = '/sign-in';
+        }
+      }
+
+      function setSaveStatus(message, canSignIn) {
+        if (!saveStatusEl) return;
+        if (!message) {
+          saveStatusEl.textContent = '';
+          return;
+        }
+
+        if (canSignIn) {
+          saveStatusEl.innerHTML = 'Sign in to save this link. <button type="button" id="save-login-btn">Sign in</button>';
+          var loginActionBtn = document.getElementById('save-login-btn');
+          if (loginActionBtn) {
+            loginActionBtn.addEventListener('click', triggerSignInFlow);
+          }
+          return;
+        }
+
+        saveStatusEl.textContent = message;
+      }
+
+      function renderSaveButton() {
+        if (!saveBtn) return;
+
+        if (saveState.loading) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = 'Saving…';
+          saveBtn.setAttribute('data-state', 'loading');
+          return;
+        }
+
+        if (!authState || !authState.authenticated) {
+          saveBtn.disabled = false;
+          saveBtn.textContent = '☆ Save';
+          saveBtn.setAttribute('data-state', 'signed-out');
+          return;
+        }
+
+        if (saveState.createdByUser) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = '✓ Created by you';
+          saveBtn.setAttribute('data-state', 'created');
+          return;
+        }
+
+        if (saveState.saved) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = '★ Saved';
+          saveBtn.setAttribute('data-state', 'saved');
+          return;
+        }
+
+        saveBtn.disabled = false;
+        saveBtn.textContent = '☆ Save to My Links';
+        saveBtn.setAttribute('data-state', 'ready');
+      }
+
+      async function getAuthToken() {
+        try {
+          if (typeof window.plsreadmeGetAuthToken === 'function') {
+            var token = await window.plsreadmeGetAuthToken();
+            return typeof token === 'string' && token ? token : null;
+          }
+        } catch (e) {}
+        return null;
+      }
+
+      async function refreshSaveState() {
+        if (!authState || !authState.authenticated) {
+          saveState = { loading: false, saved: false, createdByUser: false };
+          renderSaveButton();
+          return;
+        }
+
+        var token = await getAuthToken();
+        if (!token) {
+          saveState = { loading: false, saved: false, createdByUser: false };
+          renderSaveButton();
+          return;
+        }
+
+        try {
+          var response = await fetch('/api/auth/save-link/' + DOC_ID, {
+            method: 'GET',
+            headers: {
+              Accept: 'application/json',
+              Authorization: 'Bearer ' + token
+            }
+          });
+
+          if (!response.ok) {
+            saveState = { loading: false, saved: false, createdByUser: false };
+            renderSaveButton();
+            return;
+          }
+
+          var data = await response.json();
+          saveState = {
+            loading: false,
+            saved: !!data.saved,
+            createdByUser: !!data.createdByUser
+          };
+          renderSaveButton();
+        } catch (e) {
+          saveState = { loading: false, saved: false, createdByUser: false };
+          renderSaveButton();
+        }
+      }
+
+      async function saveCurrentDoc() {
+        if (!authState || !authState.authenticated) {
+          setSaveStatus('Sign in to save this link.', true);
+          return;
+        }
+
+        if (saveState.saved || saveState.createdByUser) {
+          renderSaveButton();
+          return;
+        }
+
+        var token = await getAuthToken();
+        if (!token) {
+          setSaveStatus('Sign in to save this link.', true);
+          return;
+        }
+
+        saveState.loading = true;
+        renderSaveButton();
+        setSaveStatus('Saving…');
+
+        try {
+          var response = await fetch('/api/auth/save-link', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + token
+            },
+            body: JSON.stringify({ id: DOC_ID })
+          });
+
+          var data = await response.json().catch(function() { return {}; });
+
+          if (response.status === 401) {
+            saveState = { loading: false, saved: false, createdByUser: false };
+            renderSaveButton();
+            setSaveStatus('Sign in to save this link.', true);
+            return;
+          }
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Could not save link.');
+          }
+
+          saveState = {
+            loading: false,
+            saved: !!data.saved,
+            createdByUser: !!data.createdByUser
+          };
+          renderSaveButton();
+          if (saveState.createdByUser) {
+            setSaveStatus('This link is already in your Created links section.');
+          } else {
+            setSaveStatus('Saved to My Links.');
+          }
+        } catch (err) {
+          saveState = { loading: false, saved: false, createdByUser: false };
+          renderSaveButton();
+          setSaveStatus(err && err.message ? err.message : 'Could not save link.');
+        }
+      }
+
       function applyAuthState(nextState) {
         authState = nextState || { authenticated: false };
 
@@ -405,6 +632,11 @@ export function generateHtmlTemplate(
             authHintEl.style.display = 'block';
             authHintEl.textContent = 'Commenting as ' + identityLabel;
           }
+          if (loginCtaEl) {
+            loginCtaEl.style.display = 'none';
+          }
+          setSaveStatus('');
+          void refreshSaveState();
           return;
         }
 
@@ -418,16 +650,12 @@ export function generateHtmlTemplate(
           authHintEl.style.display = 'none';
           authHintEl.textContent = '';
         }
-      }
-
-      async function getAuthToken() {
-        try {
-          if (typeof window.plsreadmeGetAuthToken === 'function') {
-            var token = await window.plsreadmeGetAuthToken();
-            return typeof token === 'string' && token ? token : null;
-          }
-        } catch (e) {}
-        return null;
+        if (loginCtaEl) {
+          loginCtaEl.style.display = 'flex';
+        }
+        saveState = { loading: false, saved: false, createdByUser: false };
+        setSaveStatus('');
+        renderSaveButton();
       }
 
       function resolveCommentAuthor(comment) {
@@ -702,6 +930,16 @@ export function generateHtmlTemplate(
       bodyInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) void postComment();
       });
+
+      if (loginBtn) {
+        loginBtn.addEventListener('click', triggerSignInFlow);
+      }
+
+      if (saveBtn) {
+        saveBtn.addEventListener('click', function() {
+          void saveCurrentDoc();
+        });
+      }
 
       applyAuthState(authState);
       window.addEventListener('plsreadme:auth-state', function(event) {

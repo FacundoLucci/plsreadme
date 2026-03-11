@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { attachRequestAuth, getRequestAuth, requireAuth } from "../auth.ts";
-import { ensureOwnershipSchema } from "../ownership.ts";
+import { ensureOwnershipSchema, ensureSavedLinksSchema } from "../ownership.ts";
 import {
   WRITE_RATE_LIMITS,
   checkAndConsumeRateLimit,
@@ -31,20 +31,27 @@ interface MyLinkRow {
   bytes: number;
   view_count: number;
   doc_version: number;
+  saved_at?: string | null;
 }
-
-const SORT_TO_SQL: Record<MyLinksSort, string> = {
-  created_desc: "created_at DESC, id DESC",
-  created_asc: "created_at ASC, id ASC",
-  title_asc: "COALESCE(title, '') COLLATE NOCASE ASC, created_at DESC, id DESC",
-  title_desc: "COALESCE(title, '') COLLATE NOCASE DESC, created_at DESC, id DESC",
-  views_desc: "view_count DESC, created_at DESC, id DESC",
-  views_asc: "view_count ASC, created_at DESC, id DESC",
-};
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 100;
+
+function buildSortSql(alias: string, sort: MyLinksSort): string {
+  const a = alias ? `${alias}.` : "";
+
+  const map: Record<MyLinksSort, string> = {
+    created_desc: `${a}created_at DESC, ${a}id DESC`,
+    created_asc: `${a}created_at ASC, ${a}id ASC`,
+    title_asc: `COALESCE(${a}title, '') COLLATE NOCASE ASC, ${a}created_at DESC, ${a}id DESC`,
+    title_desc: `COALESCE(${a}title, '') COLLATE NOCASE DESC, ${a}created_at DESC, ${a}id DESC`,
+    views_desc: `${a}view_count DESC, ${a}created_at DESC, ${a}id DESC`,
+    views_asc: `${a}view_count ASC, ${a}created_at DESC, ${a}id DESC`,
+  };
+
+  return map[sort];
+}
 
 function toPositiveInt(value: string | undefined, fallback: number): number {
   if (!value) return fallback;
@@ -62,7 +69,15 @@ function clamp(value: number, min: number, max: number): number {
 function normalizeSort(value: string | undefined): MyLinksSort {
   if (!value) return "created_desc";
   const normalized = value.toLowerCase() as MyLinksSort;
-  return normalized in SORT_TO_SQL ? normalized : "created_desc";
+  const allowed: Record<MyLinksSort, true> = {
+    created_desc: true,
+    created_asc: true,
+    title_asc: true,
+    title_desc: true,
+    views_desc: true,
+    views_asc: true,
+  };
+  return normalized in allowed ? normalized : "created_desc";
 }
 
 function normalizeSearch(value: string | undefined): string {
@@ -88,6 +103,10 @@ type ClaimLinkBody = {
   token?: unknown;
 };
 
+type SaveLinkBody = {
+  id?: unknown;
+};
+
 function normalizeDocId(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
@@ -104,6 +123,60 @@ function normalizeAdminToken(value: unknown): string | null {
     return null;
   }
   return trimmed;
+}
+
+function buildSearchSql({
+  alias,
+  search,
+}: {
+  alias: string;
+  search: string;
+}): { clause: string; params: unknown[] } {
+  if (!search) {
+    return { clause: "", params: [] };
+  }
+
+  const a = alias ? `${alias}.` : "";
+  const like = `%${search.toLowerCase()}%`;
+
+  return {
+    clause:
+      ` AND (` +
+      `LOWER(COALESCE(${a}title, '')) LIKE ? OR ` +
+      `LOWER(${a}id) LIKE ? OR ` +
+      `LOWER(REPLACE(REPLACE(REPLACE(COALESCE(${a}title, ''), ' ', '-'), '_', '-'), '--', '-')) LIKE ?` +
+      `)`,
+    params: [like, like, like],
+  };
+}
+
+function buildPagination(page: number, pageSize: number, total: number) {
+  const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
+
+  return {
+    page,
+    pageSize,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
+  };
+}
+
+function mapLinkItem(origin: string, row: MyLinkRow, relationship: "created" | "saved") {
+  return {
+    id: row.id,
+    title: row.title,
+    slug: slugifyTitle(row.title, row.id),
+    createdAt: row.created_at,
+    savedAt: row.saved_at ?? null,
+    bytes: row.bytes,
+    viewCount: row.view_count,
+    docVersion: row.doc_version,
+    relationship,
+    url: `${origin}/v/${row.id}`,
+    rawUrl: `${origin}/v/${row.id}/raw`,
+  };
 }
 
 app.use("*", attachRequestAuth);
@@ -161,71 +234,301 @@ app.get("/my-links", async (c) => {
   }
 
   await ensureOwnershipSchema(c.env);
+  await ensureSavedLinksSchema(c.env);
 
   const rawSearch = c.req.query("search") ?? c.req.query("q");
   const search = normalizeSearch(rawSearch);
-
   const sort = normalizeSort(c.req.query("sort"));
   const page = toPositiveInt(c.req.query("page"), DEFAULT_PAGE);
   const rawPageSize = c.req.query("page_size") ?? c.req.query("pageSize") ?? c.req.query("limit");
   const pageSize = clamp(toPositiveInt(rawPageSize, DEFAULT_PAGE_SIZE), 1, MAX_PAGE_SIZE);
   const offset = (page - 1) * pageSize;
 
-  const baseParams: unknown[] = [authOrResponse.userId];
-  let whereClause = "owner_user_id = ?";
+  const origin = new URL(c.req.url).origin;
+  const userId = authOrResponse.userId;
 
-  if (search) {
-    const like = `%${search.toLowerCase()}%`;
-    whereClause +=
-      " AND (LOWER(COALESCE(title, '')) LIKE ? OR LOWER(id) LIKE ? OR LOWER(REPLACE(REPLACE(REPLACE(COALESCE(title, ''), ' ', '-'), '_', '-'), '--', '-')) LIKE ?)";
-    baseParams.push(like, like, like);
-  }
+  const createdBaseParams: unknown[] = [userId];
+  let createdWhereClause = "d.owner_user_id = ?";
 
-  const countSql = `SELECT COUNT(*) as count FROM docs WHERE ${whereClause}`;
-  const totalResult = await c.env.DB.prepare(countSql)
-    .bind(...baseParams)
+  const createdSearchSql = buildSearchSql({ alias: "d", search });
+  createdWhereClause += createdSearchSql.clause;
+  createdBaseParams.push(...createdSearchSql.params);
+
+  const createdCountSql = `SELECT COUNT(*) as count FROM docs d WHERE ${createdWhereClause}`;
+  const createdTotalResult = await c.env.DB.prepare(createdCountSql)
+    .bind(...createdBaseParams)
     .first<{ count: number | string | null }>();
+  const createdTotal = Number(createdTotalResult?.count ?? 0) || 0;
 
-  const total = Number(totalResult?.count ?? 0) || 0;
-  const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
-
-  const listSql = `
-    SELECT id, title, created_at, bytes, view_count, doc_version
-    FROM docs
-    WHERE ${whereClause}
-    ORDER BY ${SORT_TO_SQL[sort]}
-    LIMIT ? OFFSET ?
-  `;
-
-  const rows = await c.env.DB.prepare(listSql)
-    .bind(...baseParams, pageSize, offset)
+  const createdRows = await c.env.DB.prepare(
+    `SELECT d.id, d.title, d.created_at, d.bytes, d.view_count, d.doc_version
+     FROM docs d
+     WHERE ${createdWhereClause}
+     ORDER BY ${buildSortSql("d", sort)}
+     LIMIT ? OFFSET ?`
+  )
+    .bind(...createdBaseParams, pageSize, offset)
     .all<MyLinkRow>();
 
-  const origin = new URL(c.req.url).origin;
-  const items = (rows.results ?? []).map((row) => ({
-    id: row.id,
-    title: row.title,
-    slug: slugifyTitle(row.title, row.id),
-    createdAt: row.created_at,
-    bytes: row.bytes,
-    viewCount: row.view_count,
-    docVersion: row.doc_version,
-    url: `${origin}/v/${row.id}`,
-    rawUrl: `${origin}/v/${row.id}/raw`,
-  }));
+  const createdItems = (createdRows.results ?? []).map((row) =>
+    mapLinkItem(origin, row, "created")
+  );
+
+  const savedBaseParams: unknown[] = [userId, userId];
+  let savedWhereClause = "sl.user_id = ? AND (d.owner_user_id IS NULL OR d.owner_user_id <> ?)";
+
+  const savedSearchSql = buildSearchSql({ alias: "d", search });
+  savedWhereClause += savedSearchSql.clause;
+  savedBaseParams.push(...savedSearchSql.params);
+
+  const savedCountSql = `
+    SELECT COUNT(*) as count
+    FROM saved_links sl
+    INNER JOIN docs d ON d.id = sl.doc_id
+    WHERE ${savedWhereClause}
+  `;
+  const savedTotalResult = await c.env.DB.prepare(savedCountSql)
+    .bind(...savedBaseParams)
+    .first<{ count: number | string | null }>();
+  const savedTotal = Number(savedTotalResult?.count ?? 0) || 0;
+
+  const savedRows = await c.env.DB.prepare(
+    `SELECT d.id, d.title, d.created_at, d.bytes, d.view_count, d.doc_version, sl.created_at as saved_at
+     FROM saved_links sl
+     INNER JOIN docs d ON d.id = sl.doc_id
+     WHERE ${savedWhereClause}
+     ORDER BY ${buildSortSql("d", sort)}
+     LIMIT ? OFFSET ?`
+  )
+    .bind(...savedBaseParams, pageSize, offset)
+    .all<MyLinkRow>();
+
+  const savedItems = (savedRows.results ?? []).map((row) => mapLinkItem(origin, row, "saved"));
+
+  const createdPagination = buildPagination(page, pageSize, createdTotal);
+  const savedPagination = buildPagination(page, pageSize, savedTotal);
 
   return c.json({
-    items,
-    pagination: {
-      page,
-      pageSize,
-      total,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
+    // Backward-compatible fields (created links)
+    items: createdItems,
+    pagination: createdPagination,
+
+    created: {
+      items: createdItems,
+      pagination: createdPagination,
+    },
+    saved: {
+      items: savedItems,
+      pagination: savedPagination,
+    },
+    totals: {
+      created: createdTotal,
+      saved: savedTotal,
+      all: createdTotal + savedTotal,
     },
     sort,
     search,
+  });
+});
+
+app.get("/save-link/:id", async (c) => {
+  const authOrResponse = await requireAuth(c);
+  if (authOrResponse instanceof Response) {
+    return authOrResponse;
+  }
+
+  await ensureOwnershipSchema(c.env);
+  await ensureSavedLinksSchema(c.env);
+
+  const docId = normalizeDocId(c.req.param("id"));
+  if (!docId) {
+    return c.json(
+      {
+        error: "Invalid document id.",
+        code: "invalid_doc_id",
+      },
+      400
+    );
+  }
+
+  const doc = await c.env.DB.prepare("SELECT id, title, owner_user_id FROM docs WHERE id = ?")
+    .bind(docId)
+    .first<Pick<DocRecord, "id" | "title" | "owner_user_id">>();
+
+  if (!doc) {
+    return c.json(
+      {
+        error: "Document not found.",
+        code: "doc_not_found",
+      },
+      404
+    );
+  }
+
+  if (doc.owner_user_id && doc.owner_user_id === authOrResponse.userId) {
+    return c.json({
+      id: doc.id,
+      title: doc.title,
+      saved: false,
+      createdByUser: true,
+      code: "already_created",
+    });
+  }
+
+  const existing = await c.env.DB.prepare(
+    "SELECT created_at FROM saved_links WHERE user_id = ? AND doc_id = ?"
+  )
+    .bind(authOrResponse.userId, doc.id)
+    .first<{ created_at: string | null }>();
+
+  return c.json({
+    id: doc.id,
+    title: doc.title,
+    saved: Boolean(existing),
+    savedAt: existing?.created_at ?? null,
+    createdByUser: false,
+    code: existing ? "already_saved" : "not_saved",
+  });
+});
+
+app.post("/save-link", async (c) => {
+  const endpoint = "/api/auth/save-link";
+  const clientIp = getClientIp(c.req);
+  const ipHash = await sha256(clientIp);
+  const contentLength = parseContentLength(c.req.header("content-length"));
+
+  const authOrResponse = await requireAuth(c);
+  if (authOrResponse instanceof Response) {
+    return authOrResponse;
+  }
+
+  const contentLengthFailure = validateContentLength(contentLength);
+  if (contentLengthFailure) {
+    await logAbuseAttempt(c.env, {
+      endpoint,
+      ipHash,
+      reason: contentLengthFailure.reason,
+      contentLength,
+    });
+    return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
+  }
+
+  const rateLimitActorKey = await resolveRateLimitActorKey({
+    ipHash,
+    userId: authOrResponse.userId,
+  });
+
+  const rateLimit = await checkAndConsumeRateLimit(c.env, rateLimitActorKey, WRITE_RATE_LIMITS.saveLink);
+  if (!rateLimit.allowed) {
+    await logAbuseAttempt(c.env, {
+      endpoint,
+      ipHash,
+      reason: "rate_limit_exceeded",
+      contentLength,
+    });
+
+    return c.json(
+      {
+        error: `Rate limit exceeded. Maximum ${rateLimit.maxRequests} save attempts per hour.`,
+        code: "rate_limit_exceeded",
+        limit: rateLimit.maxRequests,
+        actual: rateLimit.count,
+        retry_after_seconds: rateLimit.retryAfterSeconds ?? 3600,
+      },
+      429
+    );
+  }
+
+  await ensureOwnershipSchema(c.env);
+  await ensureSavedLinksSchema(c.env);
+
+  const body = await c.req.json<SaveLinkBody>().catch(() => null);
+  const docId = normalizeDocId(body?.id);
+
+  if (!docId) {
+    await logAbuseAttempt(c.env, {
+      endpoint,
+      ipHash,
+      reason: "invalid_save_payload",
+      contentLength,
+    });
+
+    return c.json(
+      {
+        error: "Invalid save payload. Provide a valid document ID.",
+        code: "invalid_save_payload",
+      },
+      400
+    );
+  }
+
+  const doc = await c.env.DB.prepare("SELECT id, title, owner_user_id FROM docs WHERE id = ?")
+    .bind(docId)
+    .first<Pick<DocRecord, "id" | "title" | "owner_user_id">>();
+
+  if (!doc) {
+    return c.json(
+      {
+        error: "Document not found.",
+        code: "doc_not_found",
+      },
+      404
+    );
+  }
+
+  if (doc.owner_user_id && doc.owner_user_id === authOrResponse.userId) {
+    return c.json({
+      id: doc.id,
+      title: doc.title,
+      saved: false,
+      createdByUser: true,
+      code: "already_created",
+      message: "This link is already in your Created links section.",
+    });
+  }
+
+  const existing = await c.env.DB.prepare(
+    "SELECT created_at FROM saved_links WHERE user_id = ? AND doc_id = ?"
+  )
+    .bind(authOrResponse.userId, doc.id)
+    .first<{ created_at: string | null }>();
+
+  if (existing) {
+    return c.json({
+      id: doc.id,
+      title: doc.title,
+      saved: true,
+      savedAt: existing.created_at,
+      createdByUser: false,
+      code: "already_saved",
+      message: "This link is already in your Saved links section.",
+    });
+  }
+
+  const now = new Date().toISOString();
+
+  await c.env.DB.prepare("INSERT INTO saved_links (user_id, doc_id, created_at) VALUES (?, ?, ?)")
+    .bind(authOrResponse.userId, doc.id, now)
+    .run();
+
+  try {
+    await c.env.ANALYTICS.writeDataPoint({
+      blobs: ["link_saved", authOrResponse.userId, doc.id],
+      doubles: [Date.now()],
+      indexes: [authOrResponse.userId.slice(0, 32)],
+    });
+  } catch (analyticsError) {
+    console.error("link_saved analytics error:", analyticsError);
+  }
+
+  return c.json({
+    id: doc.id,
+    title: doc.title,
+    saved: true,
+    savedAt: now,
+    createdByUser: false,
+    code: "saved",
+    message: "Link saved to My Links.",
   });
 });
 
@@ -374,9 +677,7 @@ app.post("/claim-link", async (c) => {
     });
   }
 
-  await c.env.DB.prepare(
-    "UPDATE docs SET owner_user_id = ? WHERE id = ? AND owner_user_id IS NULL"
-  )
+  await c.env.DB.prepare("UPDATE docs SET owner_user_id = ? WHERE id = ? AND owner_user_id IS NULL")
     .bind(userId, doc.id)
     .run();
 

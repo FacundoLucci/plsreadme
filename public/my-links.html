@@ -6,7 +6,7 @@
     <title>My Links – plsreadme</title>
     <meta
       name="description"
-      content="View and manage your saved plsreadme links"
+      content="View and manage your created and saved plsreadme links"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -97,67 +97,6 @@
         color: var(--ml-text-muted);
       }
 
-      .ml-legacy-claim {
-        border: 1px solid var(--ml-border);
-        border-radius: 12px;
-        background: var(--ml-surface);
-        padding: 1rem;
-        margin-bottom: 1rem;
-      }
-
-      .ml-legacy-claim h2 {
-        margin: 0;
-        font-size: 1rem;
-      }
-
-      .ml-legacy-claim-copy {
-        margin: 0.5rem 0 0.9rem;
-        color: var(--ml-text-muted);
-        font-size: 0.88rem;
-      }
-
-      .ml-legacy-claim-form {
-        display: grid;
-        grid-template-columns: 1fr 1fr auto;
-        gap: 0.55rem;
-        align-items: end;
-      }
-
-      .ml-legacy-claim-label {
-        display: block;
-        font-size: 0.74rem;
-        font-weight: 600;
-        color: var(--ml-text-muted);
-        margin-bottom: 0.3rem;
-      }
-
-      .ml-legacy-claim-status {
-        margin-top: 0.65rem;
-        font-size: 0.82rem;
-        color: var(--ml-text-muted);
-      }
-
-      .ml-legacy-claim-status[data-kind="success"] {
-        color: #059669;
-      }
-
-      .ml-legacy-claim-status[data-kind="error"] {
-        color: #dc2626;
-      }
-
-      .ml-legacy-support {
-        margin-top: 0.8rem;
-        padding-top: 0.8rem;
-        border-top: 1px dashed var(--ml-border-strong);
-        font-size: 0.8rem;
-        color: var(--ml-text-muted);
-      }
-
-      .ml-legacy-support ul {
-        margin: 0.45rem 0 0;
-        padding-left: 1.1rem;
-      }
-
       .ml-controls {
         display: grid;
         grid-template-columns: minmax(0, 1fr) 220px;
@@ -177,6 +116,36 @@
         font: inherit;
       }
 
+      .ml-status {
+        margin-bottom: 1rem;
+        color: var(--ml-text-muted);
+        font-size: 0.92rem;
+      }
+
+      .ml-status[hidden] {
+        display: none;
+      }
+
+      .ml-auth-required,
+      .ml-empty-all {
+        border: 1px solid var(--ml-border);
+        border-radius: 12px;
+        background: var(--ml-surface);
+        padding: 1.6rem 1rem;
+        text-align: center;
+        color: var(--ml-text-muted);
+      }
+
+      .ml-auth-required a,
+      .ml-empty-all a {
+        color: var(--ml-accent);
+      }
+
+      .ml-section-grid {
+        display: grid;
+        gap: 1rem;
+      }
+
       .ml-panel {
         border: 1px solid var(--ml-border);
         border-radius: 12px;
@@ -184,14 +153,29 @@
         overflow: hidden;
       }
 
-      .ml-status {
-        padding: 1rem;
-        color: var(--ml-text-muted);
+      .ml-panel-head {
+        padding: 0.9rem 1rem;
         border-bottom: 1px solid var(--ml-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
       }
 
-      .ml-status[hidden] {
-        display: none;
+      .ml-panel-title {
+        margin: 0;
+        font-size: 0.98rem;
+      }
+
+      .ml-panel-count {
+        color: var(--ml-text-muted);
+        font-size: 0.78rem;
+      }
+
+      .ml-empty-section {
+        padding: 1rem;
+        color: var(--ml-text-muted);
+        font-size: 0.86rem;
       }
 
       .ml-table {
@@ -258,58 +242,13 @@
         color: var(--ml-accent-hover);
       }
 
-      .ml-pagination {
-        padding: 0.9rem 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 0.75rem;
-        color: var(--ml-text-muted);
-        font-size: 0.82rem;
-      }
-
-      .ml-pagination-buttons {
-        display: inline-flex;
-        gap: 0.5rem;
-      }
-
-      .ml-pagination button {
-        border: 1px solid var(--ml-border-strong);
-        background: var(--ml-surface);
-        color: var(--ml-text);
-        border-radius: 7px;
-        padding: 0.4rem 0.72rem;
-        font-size: 0.78rem;
-        cursor: pointer;
-      }
-
-      .ml-pagination button:disabled {
-        opacity: 0.45;
-        cursor: not-allowed;
-      }
-
-      .ml-empty,
-      .ml-auth-required {
-        padding: 2rem 1rem;
-        text-align: center;
-        color: var(--ml-text-muted);
-      }
-
-      .ml-auth-required a {
-        color: var(--ml-accent);
+      .ml-highlight-row {
+        background: rgba(37, 99, 235, 0.12);
       }
 
       @media (max-width: 780px) {
         .ml-controls {
           grid-template-columns: 1fr;
-        }
-
-        .ml-legacy-claim-form {
-          grid-template-columns: 1fr;
-        }
-
-        .ml-legacy-claim-form .ml-action-btn {
-          width: 100%;
         }
 
         .ml-table thead {
@@ -334,11 +273,6 @@
           border: none;
           padding: 0.35rem 1rem;
         }
-
-        .ml-pagination {
-          flex-direction: column;
-          align-items: flex-start;
-        }
       }
     </style>
   </head>
@@ -356,52 +290,8 @@
     <main class="ml-page">
       <h1 class="ml-title">My Links</h1>
       <p class="ml-subtitle">
-        Your saved links. Search by title, slug, or ID. Copy or open in one click.
+        Separate views for links you created and links you saved.
       </p>
-
-      <section class="ml-legacy-claim" aria-labelledby="legacy-claim-title">
-        <h2 id="legacy-claim-title">Claim a legacy link</h2>
-        <p class="ml-legacy-claim-copy">
-          If you created links before signing in, claim them with the original edit token.
-          Claiming keeps the same URL and adds the link to this account.
-        </p>
-        <form id="legacy-claim-form" class="ml-legacy-claim-form">
-          <label>
-            <span class="ml-legacy-claim-label">Link URL or Doc ID</span>
-            <input
-              id="legacy-claim-link-input"
-              class="ml-input"
-              type="text"
-              autocomplete="off"
-              placeholder="https://plsrd.me/v/abc123 or abc123"
-              required
-            />
-          </label>
-          <label>
-            <span class="ml-legacy-claim-label">Edit token</span>
-            <input
-              id="legacy-claim-token-input"
-              class="ml-input"
-              type="password"
-              autocomplete="off"
-              placeholder="sk_..."
-              required
-            />
-          </label>
-          <button id="legacy-claim-submit" class="ml-action-btn" type="submit">
-            Claim link
-          </button>
-        </form>
-        <div id="legacy-claim-status" class="ml-legacy-claim-status" aria-live="polite"></div>
-        <div class="ml-legacy-support">
-          Need help? Keep this info ready for support:
-          <ul>
-            <li>Link URL + approximate creation date</li>
-            <li>Whether you still have the original <code>sk_...</code> token</li>
-            <li>The account email you want as owner</li>
-          </ul>
-        </div>
-      </section>
 
       <div class="ml-controls">
         <input
@@ -421,36 +311,58 @@
         </select>
       </div>
 
-      <section class="ml-panel" aria-live="polite">
-        <div id="my-links-status" class="ml-status">Loading your links…</div>
+      <div id="my-links-status" class="ml-status">Loading your links…</div>
 
-        <div id="my-links-auth-required" class="ml-auth-required" hidden>
-          Sign in to view your links. Use the auth controls in the top-right.
-        </div>
+      <div id="my-links-auth-required" class="ml-auth-required" hidden>
+        Sign in to view your links. Use the auth controls in the top-right.
+      </div>
 
-        <div id="my-links-empty" class="ml-empty" hidden>
-          You have no saved links yet. <a href="/app.html">Create your first link</a>.
-        </div>
+      <div id="my-links-empty" class="ml-empty-all" hidden>
+        No links matched your filters. <a href="/app.html">Create a new link</a> or save one from a preview page.
+      </div>
 
-        <table id="my-links-table" class="ml-table" hidden>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Created</th>
-              <th>Views</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="my-links-body"></tbody>
-        </table>
-
-        <div id="my-links-pagination" class="ml-pagination" hidden>
-          <span id="my-links-page-label">Page 1</span>
-          <div class="ml-pagination-buttons">
-            <button id="my-links-prev" type="button">Previous</button>
-            <button id="my-links-next" type="button">Next</button>
+      <section id="my-links-sections" class="ml-section-grid" hidden>
+        <article class="ml-panel">
+          <div class="ml-panel-head">
+            <h2 class="ml-panel-title">Created links</h2>
+            <span id="my-created-count" class="ml-panel-count">0</span>
           </div>
-        </div>
+          <div id="my-created-empty" class="ml-empty-section" hidden>
+            No created links for this search.
+          </div>
+          <table id="my-created-table" class="ml-table" hidden>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Created</th>
+                <th>Views</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="my-created-body"></tbody>
+          </table>
+        </article>
+
+        <article class="ml-panel">
+          <div class="ml-panel-head">
+            <h2 class="ml-panel-title">Saved links</h2>
+            <span id="my-saved-count" class="ml-panel-count">0</span>
+          </div>
+          <div id="my-saved-empty" class="ml-empty-section" hidden>
+            No saved links for this search.
+          </div>
+          <table id="my-saved-table" class="ml-table" hidden>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Created</th>
+                <th>Views</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="my-saved-body"></tbody>
+          </table>
+        </article>
       </section>
     </main>
 

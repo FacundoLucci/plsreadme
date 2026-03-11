@@ -49,6 +49,17 @@ CREATE INDEX idx_docs_sha256 ON docs(sha256);
 CREATE INDEX idx_docs_owner_user_id ON docs(owner_user_id);
 CREATE INDEX idx_docs_owner_created_at ON docs(owner_user_id, created_at DESC);
 
+-- Saved/starred links
+CREATE TABLE IF NOT EXISTS saved_links (
+  user_id TEXT NOT NULL,
+  doc_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  PRIMARY KEY (user_id, doc_id),
+  FOREIGN KEY (doc_id) REFERENCES docs(id)
+);
+CREATE INDEX IF NOT EXISTS idx_saved_links_user_created_at ON saved_links(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_links_doc_user ON saved_links(doc_id, user_id);
+
 -- Comments table
 CREATE TABLE IF NOT EXISTS comments (
   id TEXT PRIMARY KEY,
