@@ -134,6 +134,101 @@ function addStableAnchorIds(html: string): string {
   });
 }
 
+type DocVersionHistoryEntry = {
+  version: number;
+  is_current: boolean;
+  raw_url: string;
+};
+
+function resolveDocVersion(doc: DocRecord): number {
+  const parsed = Number(doc.doc_version ?? 1);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return 1;
+  }
+  return parsed;
+}
+
+function buildDocVersionHistory(baseUrl: string, doc: DocRecord): DocVersionHistoryEntry[] {
+  const currentVersion = resolveDocVersion(doc);
+  const versions: DocVersionHistoryEntry[] = [];
+
+  for (let version = currentVersion; version >= 1; version -= 1) {
+    versions.push({
+      version,
+      is_current: version === currentVersion,
+      raw_url:
+        version === currentVersion
+          ? `${baseUrl}/v/${doc.id}/raw`
+          : `${baseUrl}/v/${doc.id}/raw?version=${version}`,
+    });
+  }
+
+  return versions;
+}
+
+function escapeHtmlText(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function generateVersionHistoryHtml(doc: DocRecord, versions: DocVersionHistoryEntry[]): string {
+  const safeTitle = escapeHtmlText(doc.title || "Untitled Document");
+  const safeCreatedAt = escapeHtmlText(doc.created_at || "unknown");
+
+  const listItems = versions
+    .map((entry) => {
+      const versionLabel = `v${entry.version}${entry.is_current ? " (current)" : ""}`;
+      const contextLabel = entry.is_current ? "Latest readable link" : "Snapshot before an edit";
+
+      return `<li>
+        <div class="version-header">
+          <strong>${versionLabel}</strong>
+          <span>${contextLabel}</span>
+        </div>
+        <a href="${entry.raw_url}" target="_blank" rel="noopener">Open raw markdown</a>
+      </li>`;
+    })
+    .join("\n");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${safeTitle} — Version History</title>
+  <style>
+    body { font-family: Inter, system-ui, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; }
+    main { max-width: 760px; margin: 0 auto; padding: 2rem 1rem 3rem; }
+    h1 { margin-bottom: 0.4rem; }
+    .meta { color: #475569; font-size: 0.92rem; margin-bottom: 1rem; }
+    .actions { display: flex; gap: 0.65rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .actions a { text-decoration: none; color: #1d4ed8; font-weight: 600; }
+    ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
+    li { border: 1px solid #dbe2ea; border-radius: 10px; background: white; padding: 0.8rem 0.9rem; }
+    .version-header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.35rem; }
+    .version-header span { color: #64748b; font-size: 0.84rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Version history</h1>
+    <p class="meta">${safeTitle} · Created ${safeCreatedAt}</p>
+    <div class="actions">
+      <a href="/v/${doc.id}">← Back to readable doc</a>
+      <a href="/v/${doc.id}/versions" target="_blank" rel="noopener">View JSON API</a>
+    </div>
+    <ul>
+      ${listItems}
+    </ul>
+  </main>
+</body>
+</html>`;
+}
+
 // Helper: Generate HTML template for rendered doc
 export function generateHtmlTemplate(
   title: string | null,
@@ -384,6 +479,7 @@ export function generateHtmlTemplate(
     <span class="doc-toolbar-item">Made readable with <a href="/">plsreadme</a></span>
     <button class="doc-toolbar-item" onclick="copyLink()">Copy link</button>
     <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
+    <a href="/v/${docId}/history" class="doc-toolbar-item">History</a>
     <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-feature">\u{1F4A1} Feature Request</a>
   </div>
   <script src="/clerk-auth-shell.js" defer></script>
@@ -1191,6 +1287,58 @@ app.get("/test-discord", async (c) => {
     success: true,
     message: "Sent test Discord link notification",
   });
+});
+
+// GET /v/:id/versions - Version timeline metadata
+app.get("/:id/versions", async (c) => {
+  try {
+    const id = c.req.param("id");
+
+    const doc = await c.env.DB.prepare("SELECT * FROM docs WHERE id = ?")
+      .bind(id)
+      .first<DocRecord>();
+
+    if (!doc) {
+      return c.json({ error: "Document not found" }, 404);
+    }
+
+    const baseUrl = new URL(c.req.url).origin;
+    const versions = buildDocVersionHistory(baseUrl, doc);
+
+    return c.json({
+      id: doc.id,
+      title: doc.title,
+      created_at: doc.created_at,
+      current_version: resolveDocVersion(doc),
+      total_versions: versions.length,
+      versions,
+    });
+  } catch (error) {
+    console.error("Error fetching document versions:", error);
+    return c.json({ error: "Failed to fetch document versions" }, 500);
+  }
+});
+
+// GET /v/:id/history - Human-readable version history page
+app.get("/:id/history", async (c) => {
+  try {
+    const id = c.req.param("id");
+
+    const doc = await c.env.DB.prepare("SELECT * FROM docs WHERE id = ?")
+      .bind(id)
+      .first<DocRecord>();
+
+    if (!doc) {
+      return c.html("<h1>Document not found</h1>", 404);
+    }
+
+    const baseUrl = new URL(c.req.url).origin;
+    const versions = buildDocVersionHistory(baseUrl, doc);
+    return c.html(generateVersionHistoryHtml(doc, versions));
+  } catch (error) {
+    console.error("Error rendering version history:", error);
+    return c.html("<h1>Error</h1><p>Failed to load version history.</p>", 500);
+  }
 });
 
 // GET /v/:id - Render the document as HTML
