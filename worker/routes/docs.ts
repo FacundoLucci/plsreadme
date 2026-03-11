@@ -189,8 +189,8 @@ export function generateHtmlTemplate(
     .auth-secondary-link { color: #2563eb; text-decoration: none; font-size: 0.75rem; font-weight: 600; }
     .auth-secondary-link:hover { text-decoration: underline; }
     .auth-status { color: var(--text-muted); font-size: 0.75rem; }
-    .layout { max-width: 1240px; margin: 0 auto; padding: 1.5rem; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1rem; }
-    .doc-content { background: transparent; border: none; border-radius: 0; padding: 2.2rem 1.8rem; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
+    .layout { max-width: 1320px; margin: 0 auto; padding: 2rem 2.25rem 2.5rem; display: grid; grid-template-columns: minmax(0, 820px) minmax(260px, 320px); justify-content: center; align-items: start; gap: 2rem; }
+    .doc-content { background: transparent; border: none; border-radius: 0; padding: 2.4rem 0.75rem 3rem; max-width: 820px; width: 100%; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,td,th) { overflow-wrap: anywhere; word-break: break-word; }
     .doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
     .doc-content pre code { white-space: inherit; word-break: inherit; }
@@ -199,7 +199,7 @@ export function generateHtmlTemplate(
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(59,130,246,0.08); }
     .doc-content .anchor-selected { background: rgba(59,130,246,0.16); border-radius: 6px; }
     .anchor-dot { position: absolute; left: -14px; top: 0.7em; width: 8px; height: 8px; border-radius: 50%; background: #2563eb; }
-    .side-panel { position: sticky; top: 1rem; align-self: start; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; max-height: calc(100vh - 2rem); overflow: auto; }
+    .side-panel { position: sticky; top: 4.5rem; align-self: start; background: transparent; border: none; border-left: 1px solid var(--border); border-radius: 0; padding: 0.3rem 0 0.6rem 1.25rem; max-height: calc(100vh - 5.25rem); overflow: auto; }
     .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
     .panel-title { margin: 0; font-size: 1rem; }
     .anchor-context { font-size: 0.82rem; color: var(--text-muted); margin: 0.5rem 0 0.75rem; }
@@ -224,8 +224,8 @@ export function generateHtmlTemplate(
     #inline-comment-box .comment-auth-hint { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.1rem; }
     /* Sidebar grouped comments */
     .comment-group { margin-bottom: 1rem; }
-    .comment-group-header { display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.6rem; background: var(--surface-muted); border-radius: 6px; cursor: pointer; font-size: 0.82rem; color: var(--text-main); font-weight: 500; border: none; width: 100%; text-align: left; }
-    .comment-group-header:hover { background: #ebe8e1; }
+    .comment-group-header { display: flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.5rem; background: transparent; border-radius: 6px; cursor: pointer; font-size: 0.82rem; color: var(--text-main); font-weight: 500; border: none; width: 100%; text-align: left; }
+    .comment-group-header:hover { background: var(--surface-muted); }
     .comment-group-header .group-count { font-size: 0.7rem; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
     .comment-group-comments { padding-left: 0.5rem; margin-top: 0.35rem; }
     .sidebar-comment { border-bottom: 1px solid var(--border); padding: 0.4rem 0; font-size: 0.82rem; }
@@ -254,7 +254,7 @@ export function generateHtmlTemplate(
     .onboarding-tip .tip-dismiss { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; padding: 0 0.15rem; line-height: 1; }
     .onboarding-tip .tip-dismiss:hover { color: #6b7280; }
     @media (max-width: 640px) { .onboarding-tip { left: 1rem; right: 1rem; transform: none; white-space: normal; } }
-    @media (max-width: 980px) { .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; } .layout { grid-template-columns: 1fr; } .side-panel { position: static; max-height: none; } .anchor-dot { left: -10px; } }
+    @media (max-width: 980px) { .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; } .layout { grid-template-columns: 1fr; padding: 1rem 1rem 1.75rem; gap: 1rem; } .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; } .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; } .anchor-dot { left: -10px; } }
     @media (prefers-color-scheme: dark) {
       :root {
         --page-bg: #13151a;
@@ -279,7 +279,7 @@ export function generateHtmlTemplate(
       .auth-secondary-link { color: #93c5fd; }
       .auth-status { color: var(--text-muted); }
       .doc-content { background: transparent; border: none; }
-      .side-panel { background: var(--surface); border-color: var(--border); }
+      .side-panel { background: transparent; border-color: var(--border); }
       .doc-content :is(p,li,blockquote) { color: #cfd4de; }
       .doc-content :is(h1,h2,h3,h4,h5,h6) { color: #edf1f8; }
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
