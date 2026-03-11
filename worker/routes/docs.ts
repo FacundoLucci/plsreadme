@@ -215,7 +215,7 @@ export function generateHtmlTemplate(
     /* Inline comment box */
     #inline-comment-box { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin: 0.75rem 0; box-shadow: var(--panel-shadow); }
     #inline-comment-box .inline-form { display: flex; flex-direction: column; gap: 0.55rem; }
-    #inline-comment-box input, #inline-comment-box textarea { width: 100%; box-sizing: border-box; padding: 0.55rem 0.65rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: inherit; font-family: inherit; }
+    #inline-comment-box input, #inline-comment-box textarea { width: 100%; box-sizing: border-box; padding: 0.55rem 0.65rem; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: inherit; font-family: inherit; font-size: 16px; }
     #inline-comment-box textarea { min-height: 80px; resize: vertical; }
     #inline-comment-box .inline-btn-row { display: flex; gap: 0.5rem; align-items: center; }
     #inline-comment-box .btn-post { background: #111827; color: #fff; border: none; border-radius: 6px; padding: 0.45rem 0.9rem; cursor: pointer; }
