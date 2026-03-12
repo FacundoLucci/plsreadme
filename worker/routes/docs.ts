@@ -427,7 +427,7 @@ export function generateHtmlTemplate(
     .preview-save-btn[data-state="created"] { border-color: #86efac; color: #166534; background: #f0fdf4; cursor: default; }
     .preview-save-status { font-size: 0.72rem; color: var(--text-muted); }
     .preview-save-status button { margin-left: 0.35rem; border: none; background: none; color: #2563eb; font-weight: 600; cursor: pointer; padding: 0; }
-    .doc-toolbar-save-status { padding: 0.05rem 0.2rem; white-space: normal; overflow-wrap: anywhere; }
+    .doc-toolbar-save-status { flex-basis: 100%; padding: 0.05rem 0.2rem; white-space: normal; overflow-wrap: anywhere; }
     .doc-toolbar-save-status:empty { display: none; }
     .auth-shell-inner { display: flex; align-items: center; gap: 0.45rem; }
     .auth-link-button { border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--surface); color: var(--text-main); padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
@@ -573,10 +573,10 @@ export function generateHtmlTemplate(
     .doc-toolbar-toggle { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; user-select: none; }
     .doc-toolbar-toggle::after { content: '▾'; font-size: 0.68rem; line-height: 1; }
     .doc-toolbar-menu[open] .doc-toolbar-toggle::after { content: '▴'; }
-    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% + 0.52rem); display: none; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; width: min(100%, 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.7rem; border: 1px solid var(--border); border-radius: 14px; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-    .doc-toolbar-menu[open] .doc-toolbar-actions-panel { display: grid; }
-    .doc-toolbar-actions-panel > * { min-width: 0; }
-    .doc-toolbar-item { display: flex; align-items: center; justify-content: flex-start; width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.52rem 0.96rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.3; }
+    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% + 0.52rem); display: none; flex-wrap: wrap; align-items: flex-start; gap: 0.5rem; width: min(100%, 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.7rem; border: 1px solid var(--border); border-radius: 14px; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .doc-toolbar-menu[open] .doc-toolbar-actions-panel { display: flex; }
+    .doc-toolbar-actions-panel > * { min-width: 0; flex: 0 0 auto; }
+    .doc-toolbar-item { display: inline-flex; align-items: center; justify-content: center; width: fit-content; max-width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.52rem 0.96rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: center; white-space: nowrap; line-height: 1.25; flex: 0 0 auto; }
     button.doc-toolbar-item { font-family: inherit; }
     .doc-toolbar-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.55rem; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.34rem 0.5rem 0.34rem 0.78rem; }
     .doc-toolbar-brand { display: inline-flex; align-items: center; gap: 0.18rem; color: var(--text-muted); font-size: 0.75rem; line-height: 1.25; min-width: 0; white-space: normal; overflow-wrap: anywhere; }

@@ -214,8 +214,10 @@ test("GET /:id renders mobile actions-only viewer chrome", async () => {
     html,
     /id="doc-toolbar-actions-panel"[\s\S]*Current v3[\s\S]*id="preview-save-btn"[\s\S]*Save to My Links[\s\S]*id="preview-save-status"[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw[\s\S]*\/v\/doc123\/history/
   );
-  assert.match(html, /doc-toolbar-item \{[^}]*width: 100%;/);
-  assert.match(html, /doc-toolbar-item \{[^}]*white-space: normal;/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*flex-wrap: wrap;/);
+  assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
+  assert.match(html, /doc-toolbar-item \{[^}]*white-space: nowrap;/);
+  assert.match(html, /doc-toolbar-save-status \{[^}]*flex-basis: 100%;/);
   assert.match(
     html,
     /<div class="doc-toolbar-meta">\s*<span class="doc-toolbar-brand">Made readable with <a href="\/">plsreadme<\/a><\/span>\s*<div class="viewer-auth-shell doc-toolbar-avatar-shell" data-auth-root data-auth-variant="read-link"><\/div>\s*<\/div>/
