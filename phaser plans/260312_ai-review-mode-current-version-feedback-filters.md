@@ -21,7 +21,7 @@
 
 ## Phases
 
-### Phase 1 — API Filter Contract + Tests ✅ (commit: pending)
+### Phase 1 — API Filter Contract + Tests ✅ (commit: ec218fa)
 **Context Scope:** `worker/routes/comments.ts` API behavior + server-side tests under `tests/`.
 **Out of Scope (for this phase):** client UI controls and layout changes in docs viewer.
 - [x] Add `GET /api/comments/:docId` query filter support for `view=current|all`.
@@ -47,7 +47,7 @@
 
 **Phase Run Log:**
 - [x] `2026-03-12 19:15 UTC` — Agent: coder — Status: started — Notes: validated branch safety and drafted API contract.
-- [x] `2026-03-12 19:30 UTC` — Agent: coder — Status: completed — Notes: filters + tests landed; `npm test` passed.
+- [x] `2026-03-12 19:30 UTC` — Agent: coder — Status: completed — Notes: filters + tests landed in `ec218fa`; `npm test` passed.
 
 ### Phase 2 — Viewer Review-Mode UX (Current vs Timeline) ⚪
 **Context Scope:** inline docs viewer template in `worker/routes/docs.ts` (comments sidebar and load behavior).
