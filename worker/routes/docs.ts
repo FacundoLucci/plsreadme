@@ -415,10 +415,9 @@ export function generateHtmlTemplate(
     html, body { margin: 0; padding: 0; background: var(--page-bg); }
     body { font-family: 'Instrument Sans', sans-serif; color: var(--text-main); }
     .viewer-header { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--border); background: var(--header-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-    .viewer-header-inner { max-width: 1240px; margin: 0 auto; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.85rem; }
+    .viewer-header-inner { max-width: 1240px; margin: 0 auto; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: flex-start; gap: 0.85rem; }
     .viewer-brand { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 0.96rem; }
     .viewer-brand:hover { color: #2563eb; }
-    .viewer-header-actions { display: inline-flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; justify-content: flex-end; }
     .doc-version-badge { border: 1px solid #bfdbfe; border-radius: 999px; background: #eff6ff; color: #1e3a8a; font-size: 0.72rem; font-weight: 700; padding: 0.26rem 0.56rem; white-space: nowrap; }
     .viewer-auth-shell { min-height: 34px; display: flex; align-items: center; }
     .preview-save-btn { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-main); padding: 0.36rem 0.72rem; font-size: 0.74rem; font-weight: 600; cursor: pointer; }
@@ -427,6 +426,8 @@ export function generateHtmlTemplate(
     .preview-save-btn[data-state="created"] { border-color: #86efac; color: #166534; background: #f0fdf4; cursor: default; }
     .preview-save-status { font-size: 0.72rem; color: var(--text-muted); }
     .preview-save-status button { margin-left: 0.35rem; border: none; background: none; color: #2563eb; font-weight: 600; cursor: pointer; padding: 0; }
+    .doc-toolbar-save-status { flex-basis: 100%; padding: 0.1rem 0.2rem; white-space: normal; }
+    .doc-toolbar-save-status:empty { display: none; }
     .auth-shell-inner { display: flex; align-items: center; gap: 0.45rem; }
     .auth-link-button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-main); padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .auth-link-button:hover { border-color: #93c5fd; background: #eff6ff; }
@@ -598,8 +599,7 @@ export function generateHtmlTemplate(
     .onboarding-tip .tip-dismiss:hover { color: #6b7280; }
     @media (max-width: 640px) { .onboarding-tip { left: 1rem; right: 1rem; transform: none; white-space: normal; } }
     @media (max-width: 980px) {
-      .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; }
-      .viewer-header-actions { width: 100%; justify-content: space-between; }
+      .viewer-header-inner { padding: 0.7rem 1rem; }
       .layout { grid-template-columns: 1fr; padding: 1rem 1rem 8.2rem; gap: 1rem; }
       .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; }
       .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; }
@@ -695,11 +695,6 @@ export function generateHtmlTemplate(
   <header class="viewer-header">
     <div class="viewer-header-inner">
       <a href="/" class="viewer-brand">plsreadme</a>
-      <div class="viewer-header-actions">
-        <span class="doc-version-badge" title="Current readable version">Current version · v${docVersion}</span>
-        <button type="button" class="preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save</button>
-        <span class="preview-save-status" id="preview-save-status" aria-live="polite"></span>
-      </div>
     </div>
   </header>
   <div class="layout">
@@ -735,6 +730,8 @@ export function generateHtmlTemplate(
       <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu" aria-controls="doc-toolbar-actions-panel" aria-expanded="true">Actions</summary>
       <div class="doc-toolbar-actions-panel" id="doc-toolbar-actions-panel" aria-label="Document actions">
         <span class="doc-toolbar-item doc-toolbar-version" role="status">Current v${docVersion}</span>
+        <button type="button" class="doc-toolbar-item preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save to links</button>
+        <span class="preview-save-status doc-toolbar-save-status" id="preview-save-status" aria-live="polite"></span>
         <button type="button" class="doc-toolbar-item" id="toolbar-copy-link">Copy link</button>
         <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
         <a href="/v/${docId}/history" class="doc-toolbar-item">History</a>

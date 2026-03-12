@@ -205,10 +205,14 @@ test("GET /:id renders current-version badges in viewer chrome", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  assert.match(html, /Current version · v3/);
+  assert.doesNotMatch(html, /Current version · v3/);
+  assert.doesNotMatch(html, /class="viewer-header-actions"/);
   assert.match(html, /id="doc-toolbar-menu"\s+open/);
   assert.match(html, /id="doc-toolbar-toggle"[^>]*aria-expanded="true"[^>]*>Actions<\/summary>/);
-  assert.match(html, /id="doc-toolbar-actions-panel"[\s\S]*Current v3[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw[\s\S]*\/v\/doc123\/history/);
+  assert.match(
+    html,
+    /id="doc-toolbar-actions-panel"[\s\S]*Current v3[\s\S]*id="preview-save-btn"[\s\S]*id="preview-save-status"[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw[\s\S]*\/v\/doc123\/history/
+  );
   assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
   assert.match(
     html,
