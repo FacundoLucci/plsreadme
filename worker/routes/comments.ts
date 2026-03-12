@@ -10,6 +10,12 @@ const app = new Hono<{ Bindings: Env }>();
 const RATE_LIMIT_PER_HOUR = 10;
 const MAX_DISPLAY_NAME_LENGTH = 80;
 
+type CommentListView = "all" | "current";
+
+function normalizeCommentListView(value: string | undefined): CommentListView {
+  return value === "current" ? "current" : "all";
+}
+
 function normalizeOptionalString(value: unknown, maxLength: number): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
@@ -100,8 +106,9 @@ app.get("/:docId", async (c) => {
     await ensureCommentIdentitySchema(c.env);
 
     const docId = c.req.param("docId");
+    const view = normalizeCommentListView(c.req.query("view"));
 
-    const doc = await c.env.DB.prepare("SELECT id FROM docs WHERE id = ?")
+    const doc = await c.env.DB.prepare("SELECT id, COALESCE(doc_version, 1) as doc_version FROM docs WHERE id = ?")
       .bind(docId)
       .first<DocRecord>();
 
@@ -109,13 +116,26 @@ app.get("/:docId", async (c) => {
       return c.json({ error: "Document not found" }, 404);
     }
 
-    const { results } = await c.env.DB.prepare(
-      "SELECT id, doc_id, author_name, author_user_id, author_email, author_display_name, body, anchor_id, created_at, flagged, COALESCE(doc_version, 1) as doc_version FROM comments WHERE doc_id = ? AND flagged = 0 ORDER BY created_at ASC"
-    )
-      .bind(docId)
-      .all();
+    const currentDocVersion = Number(doc.doc_version) > 0 ? Number(doc.doc_version) : 1;
 
-    return c.json({ comments: results || [] });
+    const commentsQuery =
+      view === "current"
+        ? c.env.DB.prepare(
+            "SELECT id, doc_id, author_name, author_user_id, author_email, author_display_name, body, anchor_id, created_at, flagged, COALESCE(doc_version, 1) as doc_version FROM comments WHERE doc_id = ? AND flagged = 0 AND COALESCE(doc_version, 1) = ? ORDER BY created_at ASC"
+          ).bind(docId, currentDocVersion)
+        : c.env.DB.prepare(
+            "SELECT id, doc_id, author_name, author_user_id, author_email, author_display_name, body, anchor_id, created_at, flagged, COALESCE(doc_version, 1) as doc_version FROM comments WHERE doc_id = ? AND flagged = 0 ORDER BY created_at ASC"
+          ).bind(docId);
+
+    const { results } = await commentsQuery.all();
+
+    return c.json({
+      comments: results || [],
+      meta: {
+        view,
+        current_doc_version: currentDocVersion,
+      },
+    });
   } catch (error) {
     console.error("Error fetching comments:", error);
     return c.json({ error: "Failed to fetch comments" }, 500);
