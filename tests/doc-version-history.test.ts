@@ -207,7 +207,7 @@ test("GET /:id renders current-version badges in viewer chrome", async () => {
 
   assert.match(html, /Current version · v3/);
   assert.match(html, /id="doc-toolbar-menu"\s+open/);
-  assert.match(html, /id="doc-toolbar-toggle"[^>]*>Actions<\/summary>/);
+  assert.match(html, /id="doc-toolbar-toggle"[^>]*aria-expanded="true"[^>]*>Actions<\/summary>/);
   assert.match(html, /id="doc-toolbar-actions-panel"[\s\S]*Current v3[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw[\s\S]*\/v\/doc123\/history/);
   assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
   assert.match(

@@ -732,7 +732,7 @@ export function generateHtmlTemplate(
   <div class="onboarding-tip" id="onboarding-tip" style="display:none"><span>\u{1F4AC} Click any paragraph to leave a comment</span><button class="tip-dismiss" id="tip-dismiss" aria-label="Dismiss">\u00D7</button></div>
   <div class="doc-toolbar" aria-label="Document actions toolbar">
     <details class="doc-toolbar-menu" id="doc-toolbar-menu" open>
-      <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu" aria-controls="doc-toolbar-actions-panel">Actions</summary>
+      <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu" aria-controls="doc-toolbar-actions-panel" aria-expanded="true">Actions</summary>
       <div class="doc-toolbar-actions-panel" id="doc-toolbar-actions-panel" aria-label="Document actions">
         <span class="doc-toolbar-item doc-toolbar-version" role="status">Current v${docVersion}</span>
         <button type="button" class="doc-toolbar-item" id="toolbar-copy-link">Copy link</button>
@@ -762,10 +762,20 @@ export function generateHtmlTemplate(
       var toolbarCopyLinkBtn = document.getElementById('toolbar-copy-link');
       var toolbarActionLinks = document.querySelectorAll('.doc-toolbar-actions-panel a');
 
+      function syncToolbarAriaExpanded() {
+        if (!toolbarMenu || !toolbarToggle) return;
+        toolbarToggle.setAttribute('aria-expanded', toolbarMenu.open ? 'true' : 'false');
+      }
+
       function closeToolbarMenu() {
         if (toolbarMenu && toolbarMenu.open) {
           toolbarMenu.open = false;
         }
+      }
+
+      if (toolbarMenu) {
+        syncToolbarAriaExpanded();
+        toolbarMenu.addEventListener('toggle', syncToolbarAriaExpanded);
       }
 
       if (toolbarCopyLinkBtn) {
