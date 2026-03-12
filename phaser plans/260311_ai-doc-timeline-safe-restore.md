@@ -1,7 +1,7 @@
 # AI Doc Timeline + Safe Restore — Phaser Plan
 
 **Date:** 2026-03-11
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
 ## Objective
 - [x] Ship a clear iteration timeline so AI-generated docs can be reviewed with confidence.
@@ -13,7 +13,7 @@
   - [x] Version history discovery endpoints + lightweight history page.
   - [x] Admin-token + owner-safe restore API for prior revisions.
   - [x] UX affordances for “restore this version” with clear confirmation copy.
-  - [ ] Minimal docs/tests to keep behavior stable and maintainable.
+  - [x] Minimal docs/tests to keep behavior stable and maintainable.
 - Out of scope:
   - [ ] Full text diff viewer.
   - [ ] Branching/parallel version trees.
@@ -107,28 +107,33 @@
 - [x] `2026-03-12 04:10 UTC` — Agent: coder — Status: started — Notes: Began Phase 3 UX polish for restore safety + version context.
 - [x] `2026-03-12 04:13 UTC` — Agent: coder — Status: completed — Notes: Implemented restore panel/actions + current-version badges + test updates; `npm test` passed; committed as `30c880eef32ce2ef071ccfa14f11fee490c69c0e`. 
 
-### Phase 4 — Trust/Safety + Automation Hand-off ⚪
+### Phase 4 — Trust/Safety + Automation Hand-off ✅ (`a60418d`)
 **Context Scope:** docs + MCP-facing usage notes + operational hardening.
 **Out of Scope (for this phase):** analytics dashboard build-out.
-- [ ] Update README/docs with version timeline + restore usage patterns for AI iteration workflows.
-- [ ] Add simple abuse guard (rate-limit restore endpoint similarly to updates if needed).
-- [ ] Document MCP/agent consumption of `/versions` for auto-review loops.
-- [ ] Run checks after phase changes.
+- [x] Update README/docs with version timeline + restore usage patterns for AI iteration workflows.
+- [x] Add simple abuse guard (rate-limit restore endpoint similarly to updates if needed).
+- [x] Document MCP/agent consumption of `/versions` for auto-review loops.
+- [x] Run checks after phase changes.
 
 **Files:**
-- `README.md` and/or `docs/*` — feature docs and safe-usage guidance.
-- `worker/routes/docs.ts` and tests — final hardening pass.
+- `README.md` — surfaced timeline/restore APIs, MCP loop guidance, and updated rate-limit table.
+- `docs/ai-iteration-versioning.md` — dedicated human + agent playbook for `/versions` and safe restore.
+- `worker/routes/docs.ts` + `worker/security.ts` — restore endpoint now uses update-style actor-key rate limiting.
+- `tests/doc-version-history.test.ts` — restore-rate-limit regression coverage.
 
 **Acceptance Criteria:**
-- [ ] Feature is documented for both human and agent users.
-- [ ] Restore behavior is rate-limited and safe-by-default.
-- [ ] End-to-end checks pass.
+- [x] Feature is documented for both human and agent users.
+- [x] Restore behavior is rate-limited and safe-by-default.
+- [x] End-to-end checks pass.
 
 **Build Notes (decisions/learning):**
-- Pending.
+- Consolidated hand-off docs into both README quick-start guidance and a deeper `docs/ai-iteration-versioning.md` playbook to support human review and MCP automation.
+- Standardized restore abuse protection to the same actor-key limiter profile as updates (`60/hour`), reducing policy drift across mutation routes.
+- Added explicit restore 429 regression coverage to keep safety behavior stable as route logic evolves.
 
 **Phase Run Log:**
-- [ ] `YYYY-MM-DD HH:MM UTC` — Agent: coder — Status: started — Notes: 
+- [x] `2026-03-12 04:16 UTC` — Agent: coder — Status: started — Notes: Began Phase 4 docs hand-off + trust/safety hardening pass.
+- [x] `2026-03-12 04:19 UTC` — Agent: coder — Status: completed — Notes: Shipped README + playbook docs + restore rate-limit hardening + tests; `npm test` passed; committed as `a60418d8b38d2466c0fb24efcb06b9a52984a204`. 
 
 ## Risks
 - Risk: Restore endpoint could become destructive if version archiving is skipped.
