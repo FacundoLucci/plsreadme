@@ -51,12 +51,15 @@ test("signed-in read-link auth UI uses dropdown with My Links + Sign out", async
   assert.match(template, /data-auth-action="sign-out"/);
 });
 
-test("preview template includes save button and logged-out comment login CTA", () => {
+test("preview template keeps save action inside Actions panel and preserves logged-out comment CTA", () => {
   const html = generateHtmlTemplate("Preview", "<p>Hello</p>", "doc_preview", 1);
 
-  assert.match(html, /id="preview-save-btn"/);
+  assert.match(html, /id="doc-toolbar-actions-panel"[\s\S]*id="preview-save-btn"[\s\S]*Save to My Links/);
+  assert.doesNotMatch(html, /class="viewer-header-actions"/);
+  assert.match(html, /id="preview-save-status"/);
   assert.match(html, /id="comment-login-cta"/);
   assert.match(html, /Sign in for account-linked comments/);
+  assert.match(html, /Made readable with <a href="\/">plsreadme<\/a>/);
   assert.match(html, /\/api\/auth\/save-link/);
 });
 

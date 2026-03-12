@@ -191,7 +191,7 @@ test("GET /:id/history renders restore affordances with explicit warnings", asyn
   assert.match(html, /\/v\/doc123/);
 });
 
-test("GET /:id renders current-version badges in viewer chrome", async () => {
+test("GET /:id renders mobile actions-only viewer chrome", async () => {
   const db = new MockDB([seedDoc()]);
   const env = createEnv(
     db,
@@ -207,13 +207,15 @@ test("GET /:id renders current-version badges in viewer chrome", async () => {
 
   assert.doesNotMatch(html, /Current version · v3/);
   assert.doesNotMatch(html, /class="viewer-header-actions"/);
+  assert.match(html, /fonts\.googleapis\.com\/css2\?family=Lexend/);
   assert.match(html, /id="doc-toolbar-menu"\s+open/);
   assert.match(html, /id="doc-toolbar-toggle"[^>]*aria-expanded="true"[^>]*>Actions<\/summary>/);
   assert.match(
     html,
-    /id="doc-toolbar-actions-panel"[\s\S]*Current v3[\s\S]*id="preview-save-btn"[\s\S]*id="preview-save-status"[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw[\s\S]*\/v\/doc123\/history/
+    /id="doc-toolbar-actions-panel"[\s\S]*Current v3[\s\S]*id="preview-save-btn"[\s\S]*Save to My Links[\s\S]*id="preview-save-status"[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw[\s\S]*\/v\/doc123\/history/
   );
-  assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
+  assert.match(html, /doc-toolbar-item \{[^}]*width: 100%;/);
+  assert.match(html, /doc-toolbar-item \{[^}]*white-space: normal;/);
   assert.match(
     html,
     /<div class="doc-toolbar-meta">\s*<span class="doc-toolbar-brand">Made readable with <a href="\/">plsreadme<\/a><\/span>\s*<div class="viewer-auth-shell doc-toolbar-avatar-shell" data-auth-root data-auth-variant="read-link"><\/div>\s*<\/div>/

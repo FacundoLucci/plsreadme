@@ -391,7 +391,7 @@ export function generateHtmlTemplate(
   <meta property="og:type" content="article">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light dark;
@@ -411,29 +411,30 @@ export function generateHtmlTemplate(
       --table-row-alt: rgba(82, 92, 109, 0.04);
       --table-row-hover: rgba(59, 130, 246, 0.08);
       --table-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --control-radius: 999px;
     }
     html, body { margin: 0; padding: 0; background: var(--page-bg); }
-    body { font-family: 'Instrument Sans', sans-serif; color: var(--text-main); }
+    body { font-family: 'Lexend', 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--text-main); }
     .viewer-header { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid var(--border); background: var(--header-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
     .viewer-header-inner { max-width: 1240px; margin: 0 auto; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: flex-start; gap: 0.85rem; }
     .viewer-brand { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 0.96rem; }
     .viewer-brand:hover { color: #2563eb; }
-    .doc-version-badge { border: 1px solid #bfdbfe; border-radius: 999px; background: #eff6ff; color: #1e3a8a; font-size: 0.72rem; font-weight: 700; padding: 0.26rem 0.56rem; white-space: nowrap; }
+    .doc-version-badge { border: 1px solid #bfdbfe; border-radius: var(--control-radius); background: #eff6ff; color: #1e3a8a; font-size: 0.72rem; font-weight: 700; padding: 0.26rem 0.56rem; white-space: nowrap; }
     .viewer-auth-shell { min-height: 34px; display: flex; align-items: center; }
-    .preview-save-btn { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-main); padding: 0.36rem 0.72rem; font-size: 0.74rem; font-weight: 600; cursor: pointer; }
+    .preview-save-btn { border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--surface); color: var(--text-main); padding: 0.44rem 0.92rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
     .preview-save-btn:hover { border-color: #93c5fd; background: #eff6ff; }
     .preview-save-btn[data-state="saved"] { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
     .preview-save-btn[data-state="created"] { border-color: #86efac; color: #166534; background: #f0fdf4; cursor: default; }
     .preview-save-status { font-size: 0.72rem; color: var(--text-muted); }
     .preview-save-status button { margin-left: 0.35rem; border: none; background: none; color: #2563eb; font-weight: 600; cursor: pointer; padding: 0; }
-    .doc-toolbar-save-status { flex-basis: 100%; padding: 0.1rem 0.2rem; white-space: normal; }
+    .doc-toolbar-save-status { padding: 0.05rem 0.2rem; white-space: normal; overflow-wrap: anywhere; }
     .doc-toolbar-save-status:empty { display: none; }
     .auth-shell-inner { display: flex; align-items: center; gap: 0.45rem; }
-    .auth-link-button { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-main); padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    .auth-link-button { border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--surface); color: var(--text-main); padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .auth-link-button:hover { border-color: #93c5fd; background: #eff6ff; }
     .auth-link-button-secondary { background: transparent; color: var(--text-muted); }
     .auth-menu { position: relative; }
-    .auth-menu-trigger { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid #dbeafe; border-radius: 999px; background: #eff6ff; color: #1e3a8a; padding: 0.16rem 0.26rem 0.16rem 0.2rem; cursor: pointer; }
+    .auth-menu-trigger { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid #dbeafe; border-radius: var(--control-radius); background: #eff6ff; color: #1e3a8a; padding: 0.16rem 0.26rem 0.16rem 0.2rem; cursor: pointer; }
     .auth-menu-trigger:hover { border-color: #93c5fd; background: #dbeafe; }
     .auth-menu-caret { font-size: 0.68rem; color: #1d4ed8; }
     .auth-menu-dropdown { position: absolute; right: 0; top: calc(100% + 0.35rem); min-width: 150px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: var(--panel-shadow); display: none; padding: 0.22rem; z-index: 40; }
@@ -444,7 +445,7 @@ export function generateHtmlTemplate(
     .auth-avatar { width: 1.5rem; height: 1.5rem; border-radius: 999px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #bfdbfe; background: #dbeafe; color: #1e3a8a; flex: 0 0 auto; }
     .auth-avatar-img { width: 100%; height: 100%; object-fit: cover; }
     .auth-avatar-fallback { font-size: 0.72rem; font-weight: 700; }
-    .auth-user-chip { display: inline-flex; align-items: center; padding: 0.28rem 0.56rem; border-radius: 999px; border: 1px solid #dbeafe; background: #eff6ff; color: #1e3a8a; font-size: 0.72rem; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .auth-user-chip { display: inline-flex; align-items: center; padding: 0.28rem 0.56rem; border-radius: var(--control-radius); border: 1px solid #dbeafe; background: #eff6ff; color: #1e3a8a; font-size: 0.72rem; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .auth-secondary-link { color: #2563eb; text-decoration: none; font-size: 0.75rem; font-weight: 600; }
     .auth-secondary-link:hover { text-decoration: underline; }
     .auth-status { color: var(--text-muted); font-size: 0.75rem; }
@@ -565,29 +566,30 @@ export function generateHtmlTemplate(
     @keyframes flash-highlight { 0% { background: rgba(59,130,246,0.3); } 100% { background: transparent; } }
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: stretch; gap: 0.45rem; }
+    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: stretch; gap: 0.68rem; }
     .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
     .doc-toolbar-menu > summary { list-style: none; }
     .doc-toolbar-menu > summary::-webkit-details-marker { display: none; }
     .doc-toolbar-toggle { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; user-select: none; }
     .doc-toolbar-toggle::after { content: '▾'; font-size: 0.68rem; line-height: 1; }
     .doc-toolbar-menu[open] .doc-toolbar-toggle::after { content: '▴'; }
-    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% + 0.45rem); display: none; flex-wrap: wrap; gap: 0.45rem; width: min(100%, 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.5rem; border: 1px solid var(--border); border-radius: 10px; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% + 0.52rem); display: none; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; width: min(100%, 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.7rem; border: 1px solid var(--border); border-radius: 14px; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
     .doc-toolbar-menu[open] .doc-toolbar-actions-panel { display: flex; }
-    .doc-toolbar-item { display: inline-flex; align-items: center; justify-content: center; width: fit-content; max-width: 100%; border: 1px solid var(--border); border-radius: 999px; background: rgba(253,252,249,0.95); padding: 0.45rem 0.72rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; white-space: nowrap; line-height: 1.25; flex: 0 0 auto; }
+    .doc-toolbar-actions-panel > * { min-width: 0; }
+    .doc-toolbar-item { display: flex; align-items: center; justify-content: flex-start; width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.52rem 0.96rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.3; }
     button.doc-toolbar-item { font-family: inherit; }
-    .doc-toolbar-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.55rem; border: 1px solid var(--border); border-radius: 999px; background: rgba(253,252,249,0.95); padding: 0.28rem 0.45rem 0.28rem 0.7rem; }
-    .doc-toolbar-brand { color: var(--text-muted); font-size: 0.75rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-toolbar-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.55rem; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.34rem 0.5rem 0.34rem 0.78rem; }
+    .doc-toolbar-brand { display: inline-flex; align-items: center; gap: 0.18rem; color: var(--text-muted); font-size: 0.75rem; line-height: 1.25; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
     .doc-toolbar-brand a { color: inherit; font-weight: 700; text-decoration: none; }
     .doc-toolbar-brand a:hover { text-decoration: underline; }
     .doc-toolbar-avatar-shell { min-height: 0; display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; }
     .doc-toolbar-avatar-shell .auth-shell-inner,
     .doc-toolbar-avatar-shell .auth-shell-inner-read-link,
     .doc-toolbar-avatar-shell .auth-shell-inner-read-link-signed-in { gap: 0; }
-    .doc-toolbar-avatar-shell .auth-menu-trigger { padding: 0.16rem; border-radius: 999px; min-width: 0; }
+    .doc-toolbar-avatar-shell .auth-menu-trigger { padding: 0.16rem; border-radius: var(--control-radius); min-width: 0; }
     .doc-toolbar-avatar-shell .auth-user-chip,
     .doc-toolbar-avatar-shell .auth-menu-caret { display: none; }
-    .doc-toolbar-avatar-shell .auth-link-button { padding: 0.26rem 0.65rem; font-size: 0.72rem; }
+    .doc-toolbar-avatar-shell .auth-link-button { padding: 0.26rem 0.65rem; font-size: 0.72rem; border-radius: var(--control-radius); }
     .doc-toolbar-version { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; font-weight: 700; cursor: default; }
     .doc-toolbar-feature { border-color: #a78bfa; color: #7c3aed; }
     /* Onboarding tip */
@@ -730,7 +732,7 @@ export function generateHtmlTemplate(
       <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu" aria-controls="doc-toolbar-actions-panel" aria-expanded="true">Actions</summary>
       <div class="doc-toolbar-actions-panel" id="doc-toolbar-actions-panel" aria-label="Document actions">
         <span class="doc-toolbar-item doc-toolbar-version" role="status">Current v${docVersion}</span>
-        <button type="button" class="doc-toolbar-item preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save to links</button>
+        <button type="button" class="doc-toolbar-item preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save to My Links</button>
         <span class="preview-save-status doc-toolbar-save-status" id="preview-save-status" aria-live="polite"></span>
         <button type="button" class="doc-toolbar-item" id="toolbar-copy-link">Copy link</button>
         <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
@@ -894,7 +896,7 @@ export function generateHtmlTemplate(
 
         if (!authState || !authState.authenticated) {
           saveBtn.disabled = false;
-          saveBtn.textContent = '☆ Save';
+          saveBtn.textContent = '☆ Save to My Links';
           saveBtn.setAttribute('data-state', 'signed-out');
           return;
         }
