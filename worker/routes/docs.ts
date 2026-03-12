@@ -468,6 +468,7 @@ export function generateHtmlTemplate(
       border-spacing: 0;
       margin: 0;
       font-size: 0.95rem;
+      line-height: 1.55;
     }
     .doc-content .doc-table-scroll :is(th,td) {
       min-width: 7ch;
@@ -478,15 +479,30 @@ export function generateHtmlTemplate(
       border-right: 1px solid var(--table-border);
       border-bottom: 1px solid var(--table-border);
       vertical-align: top;
+      font-size: inherit;
+      line-height: inherit;
       transition: background 0.16s ease;
     }
     .doc-content .doc-table-scroll th {
       background: var(--table-header-bg);
       color: var(--table-header-text);
+      font-size: 0.84rem;
+      line-height: 1.35;
       font-weight: 650;
       text-align: left;
       letter-spacing: 0.01em;
     }
+    .doc-content .doc-table-scroll tbody td {
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+    .doc-content .doc-table-scroll :is(td,th) :is(p,strong,em,code,a,ul,ol,li) {
+      font-size: inherit;
+      line-height: inherit;
+    }
+    .doc-content .doc-table-scroll :is(td,th) :is(p,ul,ol) { margin: 0; }
+    .doc-content .doc-table-scroll :is(td,th) :is(ul,ol) { padding-left: 1.2rem; }
+    .doc-content .doc-table-scroll :is(td,th) li + li { margin-top: 0.22rem; }
     .doc-content .doc-table-scroll :is(th,td):last-child { border-right: none; }
     .doc-content .doc-table-scroll tbody tr:last-child td { border-bottom: none; }
     .doc-content .doc-table-scroll tbody tr:nth-child(even) td { background: var(--table-row-alt); }

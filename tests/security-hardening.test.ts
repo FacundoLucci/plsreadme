@@ -213,10 +213,18 @@ test("rendered HTML includes wrap-safe CSS for markdown, comments, code blocks, 
   assert.ok(html.includes("min-width: 100%;"));
   assert.ok(html.includes("border-collapse: separate;"));
   assert.ok(html.includes("border-spacing: 0;"));
+  assert.ok(html.includes("line-height: 1.55;"));
   assert.ok(html.includes(".doc-content .doc-table-scroll :is(th,td) {"));
   assert.ok(html.includes("padding: 0.68rem 0.85rem;"));
   assert.ok(html.includes("border-right: 1px solid var(--table-border);"));
   assert.ok(html.includes("border-bottom: 1px solid var(--table-border);"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll th {"));
+  assert.ok(html.includes("font-size: 0.84rem;"));
+  assert.ok(html.includes("font-weight: 650;"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll tbody td {"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll :is(td,th) :is(p,strong,em,code,a,ul,ol,li) {"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll :is(td,th) :is(p,ul,ol) { margin: 0; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll :is(td,th) :is(ul,ol) { padding-left: 1.2rem; }"));
   assert.ok(html.includes(".doc-content .doc-table-scroll tbody tr:nth-child(even) td { background: var(--table-row-alt); }"));
   assert.ok(html.includes(".doc-content .doc-table-scroll tbody tr:hover td { background: var(--table-row-hover); }"));
   assert.ok(html.includes("--table-bg: #fffefb;"));
