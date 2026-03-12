@@ -404,6 +404,13 @@ export function generateHtmlTemplate(
       --header-bg: rgba(246, 245, 242, 0.96);
       --panel-shadow: 0 4px 12px rgba(17, 24, 39, 0.08);
       --tooltip-shadow: 0 2px 10px rgba(17, 24, 39, 0.08);
+      --table-bg: #fffefb;
+      --table-header-bg: #f5f2ea;
+      --table-header-text: #20242d;
+      --table-border: #ddd6c9;
+      --table-row-alt: rgba(82, 92, 109, 0.04);
+      --table-row-hover: rgba(59, 130, 246, 0.08);
+      --table-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
     }
     html, body { margin: 0; padding: 0; background: var(--page-bg); }
     body { font-family: 'Instrument Sans', sans-serif; color: var(--text-main); }
@@ -443,9 +450,51 @@ export function generateHtmlTemplate(
     .layout { max-width: 1320px; margin: 0 auto; padding: 2rem 2.25rem 2.5rem; display: grid; grid-template-columns: minmax(0, 820px) minmax(260px, 320px); justify-content: center; align-items: start; gap: 2rem; }
     .doc-content { background: transparent; border: none; border-radius: 0; padding: 2.4rem 0.75rem 3rem; max-width: 820px; width: 100%; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote) { overflow-wrap: anywhere; word-break: break-word; }
-    .doc-content .doc-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .doc-content .doc-table-scroll > table { width: max-content; min-width: 100%; border-collapse: collapse; table-layout: auto; }
-    .doc-content .doc-table-scroll :is(th,td) { min-width: 7ch; white-space: normal; overflow-wrap: break-word; word-break: normal; }
+    .doc-content .doc-table-scroll {
+      max-width: 100%;
+      margin: 1.1rem 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--table-border);
+      border-radius: 12px;
+      background: var(--table-bg);
+      box-shadow: var(--table-shadow);
+    }
+    .doc-content .doc-table-scroll > table {
+      width: max-content;
+      min-width: 100%;
+      table-layout: auto;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 0;
+      font-size: 0.95rem;
+    }
+    .doc-content .doc-table-scroll :is(th,td) {
+      min-width: 7ch;
+      padding: 0.68rem 0.85rem;
+      white-space: normal;
+      overflow-wrap: break-word;
+      word-break: normal;
+      border-right: 1px solid var(--table-border);
+      border-bottom: 1px solid var(--table-border);
+      vertical-align: top;
+      transition: background 0.16s ease;
+    }
+    .doc-content .doc-table-scroll th {
+      background: var(--table-header-bg);
+      color: var(--table-header-text);
+      font-weight: 650;
+      text-align: left;
+      letter-spacing: 0.01em;
+    }
+    .doc-content .doc-table-scroll :is(th,td):last-child { border-right: none; }
+    .doc-content .doc-table-scroll tbody tr:last-child td { border-bottom: none; }
+    .doc-content .doc-table-scroll tbody tr:nth-child(even) td { background: var(--table-row-alt); }
+    .doc-content .doc-table-scroll tbody tr:hover td { background: var(--table-row-hover); }
+    .doc-content .doc-table-scroll thead tr:first-child th:first-child { border-top-left-radius: 11px; }
+    .doc-content .doc-table-scroll thead tr:first-child th:last-child { border-top-right-radius: 11px; }
+    .doc-content .doc-table-scroll tbody tr:last-child td:first-child { border-bottom-left-radius: 11px; }
+    .doc-content .doc-table-scroll tbody tr:last-child td:last-child { border-bottom-right-radius: 11px; }
     .doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
     .doc-content pre code { white-space: inherit; word-break: inherit; }
     .doc-content code { overflow-wrap: anywhere; word-break: break-word; }
@@ -530,6 +579,13 @@ export function generateHtmlTemplate(
         --header-bg: rgba(19, 21, 26, 0.92);
         --panel-shadow: 0 4px 14px rgba(0,0,0,0.35);
         --tooltip-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        --table-bg: #1a1e26;
+        --table-header-bg: #232a38;
+        --table-header-text: #edf1f8;
+        --table-border: #3a4252;
+        --table-row-alt: rgba(148, 163, 184, 0.06);
+        --table-row-hover: rgba(96, 165, 250, 0.16);
+        --table-shadow: 0 1px 2px rgba(0,0,0,0.34);
       }
       html, body { background: var(--page-bg); color: var(--text-main); }
       .viewer-header { border-color: var(--border); background: var(--header-bg); }

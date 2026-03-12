@@ -202,9 +202,25 @@ test("rendered HTML includes wrap-safe CSS for markdown, comments, code blocks, 
 
   assert.ok(html.includes("overflow-wrap: anywhere;"));
   assert.ok(html.includes(".doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
-  assert.ok(html.includes(".doc-content .doc-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }"));
-  assert.ok(html.includes(".doc-content .doc-table-scroll > table { width: max-content; min-width: 100%; border-collapse: collapse; table-layout: auto; }"));
-  assert.ok(html.includes(".doc-content .doc-table-scroll :is(th,td) { min-width: 7ch; white-space: normal; overflow-wrap: break-word; word-break: normal; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll {"));
+  assert.ok(html.includes("overflow-x: auto;"));
+  assert.ok(html.includes("-webkit-overflow-scrolling: touch;"));
+  assert.ok(html.includes("border: 1px solid var(--table-border);"));
+  assert.ok(html.includes("border-radius: 12px;"));
+  assert.ok(html.includes("box-shadow: var(--table-shadow);"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll > table {"));
+  assert.ok(html.includes("width: max-content;"));
+  assert.ok(html.includes("min-width: 100%;"));
+  assert.ok(html.includes("border-collapse: separate;"));
+  assert.ok(html.includes("border-spacing: 0;"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll :is(th,td) {"));
+  assert.ok(html.includes("padding: 0.68rem 0.85rem;"));
+  assert.ok(html.includes("border-right: 1px solid var(--table-border);"));
+  assert.ok(html.includes("border-bottom: 1px solid var(--table-border);"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll tbody tr:nth-child(even) td { background: var(--table-row-alt); }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll tbody tr:hover td { background: var(--table-row-hover); }"));
+  assert.ok(html.includes("--table-bg: #fffefb;"));
+  assert.ok(html.includes("--table-bg: #1a1e26;"));
   assert.equal(html.includes(".doc-content .doc-table-scroll > table { min-width: 620px; }"), false);
   assert.equal(html.includes(".doc-content .doc-table-scroll :is(th,td) { white-space: nowrap; }"), false);
   assert.match(html, /<div class="doc-table-scroll"><table>[\s\S]*<\/table><\/div>/);
