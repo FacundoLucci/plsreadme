@@ -419,6 +419,9 @@ export function generateHtmlTemplate(
     .viewer-header-inner { max-width: 1240px; margin: 0 auto; padding: 0.75rem 1.5rem; display: flex; align-items: center; justify-content: flex-start; gap: 0.85rem; }
     .viewer-brand { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 0.96rem; }
     .viewer-brand:hover { color: #2563eb; }
+    .viewer-header-actions { margin-left: auto; min-width: 0; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .viewer-header-actions .preview-save-btn { padding: 0.32rem 0.74rem; font-size: 0.72rem; line-height: 1.2; white-space: nowrap; }
+    .viewer-header-actions .preview-save-status { max-width: min(19rem, 36vw); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .doc-version-badge { border: 1px solid #bfdbfe; border-radius: var(--control-radius); background: #eff6ff; color: #1e3a8a; font-size: 0.72rem; font-weight: 700; padding: 0.26rem 0.56rem; white-space: nowrap; }
     .viewer-auth-shell { min-height: 34px; display: flex; align-items: center; }
     .preview-save-btn { border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--surface); color: var(--text-main); padding: 0.44rem 0.92rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; text-align: left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
@@ -427,8 +430,6 @@ export function generateHtmlTemplate(
     .preview-save-btn[data-state="created"] { border-color: #86efac; color: #166534; background: #f0fdf4; cursor: default; }
     .preview-save-status { font-size: 0.72rem; color: var(--text-muted); }
     .preview-save-status button { margin-left: 0.35rem; border: none; background: none; color: #2563eb; font-weight: 600; cursor: pointer; padding: 0; }
-    .doc-toolbar-save-status { flex-basis: 100%; padding: 0.05rem 0.2rem; white-space: normal; overflow-wrap: anywhere; }
-    .doc-toolbar-save-status:empty { display: none; }
     .auth-shell-inner { display: flex; align-items: center; gap: 0.45rem; }
     .auth-link-button { border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--surface); color: var(--text-main); padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .auth-link-button:hover { border-color: #93c5fd; background: #eff6ff; }
@@ -566,20 +567,22 @@ export function generateHtmlTemplate(
     @keyframes flash-highlight { 0% { background: rgba(59,130,246,0.3); } 100% { background: transparent; } }
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: stretch; gap: 0.4rem; }
+    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.32rem; }
     .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: auto; max-width: 100%; align-self: flex-start; }
     .doc-toolbar-menu > summary { list-style: none; }
     .doc-toolbar-menu > summary::-webkit-details-marker { display: none; }
-    .doc-toolbar-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; font-weight: 600; user-select: none; min-height: 2.5rem; padding: 0.3rem 0.78rem; border-radius: 11px; line-height: 1.2; }
+    .doc-toolbar-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; font-weight: 600; user-select: none; min-height: 2.5rem; padding: 0.3rem 0.78rem; border-radius: 11px; line-height: 1.2; transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease; }
     .doc-toolbar-toggle::after { content: '▾'; font-size: 0.68rem; line-height: 1; }
     .doc-toolbar-menu[open] .doc-toolbar-toggle::after { content: '▴'; }
-    .doc-toolbar-menu[open] .doc-toolbar-toggle { border-color: #bfdbfe; background: #eff6ff; border-top-left-radius: 0; border-top-right-radius: 0; }
-    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% - 1px); display: none; flex-wrap: wrap; align-items: flex-start; gap: 0.42rem; width: min(calc(100vw - 1.6rem), 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.58rem; border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 0; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-    .doc-toolbar-menu[open] .doc-toolbar-actions-panel { display: flex; }
+    .doc-toolbar-menu[open] .doc-toolbar-toggle { transform: translateY(-0.18rem); border-color: #bfdbfe; background: #eff6ff; border-top-left-radius: 0; border-top-right-radius: 0; }
+    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% - 0.2rem); display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.42rem; width: min(calc(100vw - 1.6rem), 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.86rem 0.58rem 0.58rem; border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 0; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(0.32rem) scale(0.98); transform-origin: bottom left; transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s; }
+    .doc-toolbar-menu[open] .doc-toolbar-actions-panel { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0) scale(1); transition-delay: 0s; }
     .doc-toolbar-actions-panel > * { min-width: 0; flex: 0 0 auto; }
+    .doc-toolbar-panel-close { position: absolute; top: 0.32rem; right: 0.32rem; width: 1.5rem; height: 1.5rem; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-muted); font-size: 1.06rem; line-height: 1; cursor: pointer; }
+    .doc-toolbar-panel-close:hover { border-color: var(--border); background: var(--surface-muted); color: var(--text-main); }
     .doc-toolbar-item { display: inline-flex; align-items: center; justify-content: center; width: fit-content; max-width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.52rem 0.96rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: center; white-space: nowrap; line-height: 1.25; flex: 0 0 auto; }
     button.doc-toolbar-item { font-family: inherit; }
-    .doc-toolbar-meta { display: flex; align-items: center; justify-content: flex-start; gap: 0.55rem; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.34rem 0.78rem; }
+    .doc-toolbar-meta { display: inline-flex; align-items: center; justify-content: flex-start; align-self: flex-start; width: fit-content; max-width: 100%; gap: 0.55rem; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.34rem 0.78rem; }
     .doc-toolbar-brand { display: inline-flex; align-items: center; gap: 0.18rem; color: var(--text-muted); font-size: 0.75rem; line-height: 1.25; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
     .doc-toolbar-brand a { color: inherit; font-weight: 700; text-decoration: none; }
     .doc-toolbar-brand a:hover { text-decoration: underline; }
@@ -590,11 +593,11 @@ export function generateHtmlTemplate(
     .doc-toolbar-auth-shell .auth-shell-inner-read-link-signed-in { gap: 0; }
     .doc-toolbar-auth-shell .auth-menu { position: relative; z-index: 2; }
     .doc-toolbar-auth-shell .auth-menu-trigger { padding: 0.16rem; border-radius: var(--control-radius); min-width: 0; position: relative; z-index: 2; pointer-events: auto; }
-    .doc-toolbar-auth-shell .auth-menu-dropdown { z-index: 80; pointer-events: auto; }
+    .doc-toolbar-auth-shell .auth-menu-dropdown { top: auto; bottom: calc(100% + 0.35rem); right: 0; max-width: min(17rem, calc(100vw - 1.2rem)); z-index: 80; pointer-events: auto; }
     .doc-toolbar-auth-shell .auth-user-chip,
     .doc-toolbar-auth-shell .auth-menu-caret { display: none; }
     .doc-toolbar-auth-shell .auth-link-button { padding: 0.26rem 0.65rem; font-size: 0.72rem; border-radius: var(--control-radius); }
-    .doc-toolbar-version { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; font-weight: 700; cursor: default; }
+    .doc-toolbar-version { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; font-weight: 700; }
     .doc-toolbar-feature { border-color: #a78bfa; color: #7c3aed; }
     /* Onboarding tip */
     @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -606,6 +609,7 @@ export function generateHtmlTemplate(
     @media (max-width: 640px) { .onboarding-tip { left: 1rem; right: 1rem; transform: none; white-space: normal; } }
     @media (max-width: 980px) {
       .viewer-header-inner { padding: 0.7rem 1rem; }
+      .viewer-header-actions .preview-save-status { display: none; }
       .layout { grid-template-columns: 1fr; padding: 1rem 1rem 8.2rem; gap: 1rem; }
       .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; }
       .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; }
@@ -669,6 +673,7 @@ export function generateHtmlTemplate(
       .doc-toolbar-menu[open] .doc-toolbar-toggle { border-color: #1d4ed8; background: rgba(30,64,175,0.3); color: #bfdbfe; }
       .doc-toolbar-meta { background: #191d26; border-color: var(--border); }
       .doc-toolbar-actions-panel { background: rgba(21,25,35,0.96); border-color: var(--border); }
+      .doc-toolbar-panel-close:hover { background: #262d3a; border-color: var(--border); }
       .doc-toolbar-brand { color: #a1a8b6; }
       .doc-toolbar-brand a { color: #dbe2ef; }
       .doc-toolbar-version { border-color: #1d4ed8; background: rgba(30,64,175,0.28); color: #bfdbfe; }
@@ -697,12 +702,23 @@ export function generateHtmlTemplate(
       .onboarding-tip .tip-dismiss { color: #7f8795; }
       .onboarding-tip .tip-dismiss:hover { color: #a1a8b6; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      .doc-toolbar-toggle,
+      .doc-toolbar-actions-panel { transition: none; }
+      .doc-toolbar-menu[open] .doc-toolbar-toggle { transform: none; }
+      .doc-toolbar-actions-panel,
+      .doc-toolbar-menu[open] .doc-toolbar-actions-panel { transform: none; }
+    }
   </style>
 </head>
 <body>
   <header class="viewer-header">
     <div class="viewer-header-inner">
       <a href="/" class="viewer-brand">plsreadme</a>
+      <div class="viewer-header-actions">
+        <button type="button" class="preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save to My Links</button>
+        <span class="preview-save-status" id="preview-save-status" aria-live="polite"></span>
+      </div>
     </div>
   </header>
   <div class="layout">
@@ -737,12 +753,10 @@ export function generateHtmlTemplate(
     <details class="doc-toolbar-menu" id="doc-toolbar-menu" open>
       <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu" aria-controls="doc-toolbar-actions-panel" aria-expanded="true">Actions</summary>
       <div class="doc-toolbar-actions-panel" id="doc-toolbar-actions-panel" aria-label="Document actions">
-        <span class="doc-toolbar-item doc-toolbar-version" role="status">Current v${docVersion}</span>
-        <button type="button" class="doc-toolbar-item preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save to My Links</button>
-        <span class="preview-save-status doc-toolbar-save-status" id="preview-save-status" aria-live="polite"></span>
+        <button type="button" class="doc-toolbar-panel-close" id="doc-toolbar-close" aria-label="Close actions panel">\u00D7</button>
+        <a href="/v/${docId}/history" class="doc-toolbar-item doc-toolbar-version">Current v${docVersion}</a>
         <button type="button" class="doc-toolbar-item" id="toolbar-copy-link">Copy link</button>
         <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
-        <a href="/v/${docId}/history" class="doc-toolbar-item">History</a>
         <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-feature">\u{1F4A1} Feature Request</a>
       </div>
     </details>
@@ -767,6 +781,7 @@ export function generateHtmlTemplate(
       var toolbarMenu = document.getElementById('doc-toolbar-menu');
       var toolbarToggle = document.getElementById('doc-toolbar-toggle');
       var toolbarCopyLinkBtn = document.getElementById('toolbar-copy-link');
+      var toolbarCloseBtn = document.getElementById('doc-toolbar-close');
       var toolbarActionLinks = document.querySelectorAll('.doc-toolbar-actions-panel a');
 
       function syncToolbarAriaExpanded() {
@@ -789,6 +804,15 @@ export function generateHtmlTemplate(
         toolbarCopyLinkBtn.addEventListener('click', function() {
           copyLink();
           closeToolbarMenu();
+        });
+      }
+
+      if (toolbarCloseBtn) {
+        toolbarCloseBtn.addEventListener('click', function() {
+          closeToolbarMenu();
+          if (toolbarToggle && typeof toolbarToggle.focus === 'function') {
+            toolbarToggle.focus();
+          }
         });
       }
 

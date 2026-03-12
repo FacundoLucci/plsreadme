@@ -51,21 +51,24 @@ test("signed-in read-link auth UI uses dropdown with dashboard + logout actions"
   assert.match(template, /data-auth-action="sign-out"[^>]*>Logout</);
 });
 
-test("preview template keeps save action inside Actions panel and preserves logged-out comment CTA", () => {
+test("preview template keeps save action in header and updated toolbar interactions", () => {
   const html = generateHtmlTemplate("Preview", "<p>Hello</p>", "doc_preview", 1);
 
-  assert.match(html, /id="doc-toolbar-actions-panel"[\s\S]*id="preview-save-btn"[\s\S]*Save to My Links/);
-  assert.doesNotMatch(html, /class="viewer-header-actions"/);
-  assert.match(html, /id="preview-save-status"/);
+  assert.match(html, /class="viewer-header-actions"[\s\S]*id="preview-save-btn"[\s\S]*Save to My Links/);
+  assert.match(html, /class="viewer-header-actions"[\s\S]*id="preview-save-status"/);
+  assert.doesNotMatch(html, /id="doc-toolbar-actions-panel"[\s\S]*id="preview-save-btn"/);
+  assert.match(html, /id="doc-toolbar-actions-panel"[\s\S]*id="doc-toolbar-close"[\s\S]*Current v1[\s\S]*Copy link[\s\S]*\/v\/doc_preview\/raw/);
+  assert.doesNotMatch(html, /class="doc-toolbar-item">History</);
   assert.match(html, /id="comment-login-cta"/);
   assert.match(html, /Sign in for account-linked comments/);
   assert.match(html, /<div class="doc-toolbar-meta">\s*<span class="doc-toolbar-brand">Made readable with <a href="\/">plsreadme<\/a><\/span>\s*<\/div>/);
-  assert.match(html, /<div class="doc-toolbar-auth-floating">\s*<div class="viewer-auth-shell doc-toolbar-auth-shell" data-auth-root data-auth-variant="read-link"><\/div>\s*<\/div>/);
-  assert.match(html, /doc-toolbar-toggle \{[^}]*min-height: 2\.5rem;[^}]*padding: 0\.3rem 0\.78rem;/);
-  assert.match(html, /doc-toolbar-menu\[open\] \.doc-toolbar-toggle \{[^}]*border-color: #bfdbfe;[^}]*background: #eff6ff;[^}]*border-top-left-radius: 0;[^}]*border-top-right-radius: 0;/);
-  assert.match(html, /doc-toolbar-actions-panel \{[^}]*bottom: calc\(100% - 1px\);[^}]*border-bottom-left-radius: 0;/);
+  assert.match(html, /doc-toolbar-meta \{[^}]*display: inline-flex;[^}]*align-self: flex-start;[^}]*width: fit-content;/);
+  assert.match(html, /doc-toolbar-toggle \{[^}]*min-height: 2\.5rem;[^}]*transition: transform 0\.2s ease/);
+  assert.match(html, /doc-toolbar-menu\[open\] \.doc-toolbar-toggle \{[^}]*transform: translateY\(-0\.18rem\);/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*bottom: calc\(100% - 0\.2rem\);[^}]*opacity: 0;[^}]*visibility: hidden;/);
+  assert.match(html, /doc-toolbar-panel-close \{[^}]*position: absolute;[^}]*top: 0\.32rem;[^}]*right: 0\.32rem;/);
   assert.match(html, /doc-toolbar-auth-floating \{[^}]*z-index: 45;[^}]*pointer-events: auto;/);
-  assert.match(html, /doc-toolbar-auth-shell \.auth-menu-dropdown \{[^}]*z-index: 80;[^}]*pointer-events: auto;/);
+  assert.match(html, /doc-toolbar-auth-shell \.auth-menu-dropdown \{[^}]*top: auto;[^}]*bottom: calc\(100% \+ 0\.35rem\);[^}]*z-index: 80;/);
   assert.match(html, /\/api\/auth\/save-link/);
 });
 
