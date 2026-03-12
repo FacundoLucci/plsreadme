@@ -444,8 +444,8 @@ export function generateHtmlTemplate(
     .doc-content { background: transparent; border: none; border-radius: 0; padding: 2.4rem 0.75rem 3rem; max-width: 820px; width: 100%; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote) { overflow-wrap: anywhere; word-break: break-word; }
     .doc-content .doc-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .doc-content .doc-table-scroll > table { min-width: 100%; border-collapse: collapse; }
-    .doc-content .doc-table-scroll :is(th,td) { white-space: normal; overflow-wrap: normal; word-break: normal; }
+    .doc-content .doc-table-scroll > table { width: max-content; min-width: 100%; border-collapse: collapse; table-layout: auto; }
+    .doc-content .doc-table-scroll :is(th,td) { min-width: 7ch; white-space: normal; overflow-wrap: break-word; word-break: normal; }
     .doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
     .doc-content pre code { white-space: inherit; word-break: inherit; }
     .doc-content code { overflow-wrap: anywhere; word-break: break-word; }
@@ -516,8 +516,6 @@ export function generateHtmlTemplate(
       .viewer-header-actions { width: 100%; justify-content: space-between; }
       .layout { grid-template-columns: 1fr; padding: 1rem 1rem 1.75rem; gap: 1rem; }
       .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; }
-      .doc-content .doc-table-scroll > table { min-width: 620px; }
-      .doc-content .doc-table-scroll :is(th,td) { white-space: nowrap; }
       .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; }
       .anchor-dot { left: -10px; }
     }

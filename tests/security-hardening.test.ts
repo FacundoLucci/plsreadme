@@ -203,10 +203,10 @@ test("rendered HTML includes wrap-safe CSS for markdown, comments, code blocks, 
   assert.ok(html.includes("overflow-wrap: anywhere;"));
   assert.ok(html.includes(".doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
   assert.ok(html.includes(".doc-content .doc-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }"));
-  assert.ok(html.includes(".doc-content .doc-table-scroll > table { min-width: 100%; border-collapse: collapse; }"));
-  assert.ok(html.includes(".doc-content .doc-table-scroll :is(th,td) { white-space: normal; overflow-wrap: normal; word-break: normal; }"));
-  assert.ok(html.includes(".doc-content .doc-table-scroll > table { min-width: 620px; }"));
-  assert.ok(html.includes(".doc-content .doc-table-scroll :is(th,td) { white-space: nowrap; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll > table { width: max-content; min-width: 100%; border-collapse: collapse; table-layout: auto; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll :is(th,td) { min-width: 7ch; white-space: normal; overflow-wrap: break-word; word-break: normal; }"));
+  assert.equal(html.includes(".doc-content .doc-table-scroll > table { min-width: 620px; }"), false);
+  assert.equal(html.includes(".doc-content .doc-table-scroll :is(th,td) { white-space: nowrap; }"), false);
   assert.match(html, /<div class="doc-table-scroll"><table>[\s\S]*<\/table><\/div>/);
   assert.ok(html.includes(".comment-body { margin: 0.3rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font-size: 0.88rem; }"));
   assert.ok(html.includes(".sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4f5663; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
