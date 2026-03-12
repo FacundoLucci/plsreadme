@@ -564,8 +564,29 @@ export function generateHtmlTemplate(
     @keyframes flash-highlight { 0% { background: rgba(59,130,246,0.3); } 100% { background: transparent; } }
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-    .doc-toolbar { position: fixed; left: 1rem; bottom: 1rem; display: flex; gap: 0.5rem; }
-    .doc-toolbar-item { border: 1px solid var(--border); border-radius: 6px; background: rgba(253,252,249,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; }
+    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: stretch; gap: 0.45rem; }
+    .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; }
+    .doc-toolbar-menu > summary { list-style: none; }
+    .doc-toolbar-menu > summary::-webkit-details-marker { display: none; }
+    .doc-toolbar-toggle { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; user-select: none; }
+    .doc-toolbar-toggle::after { content: '▾'; font-size: 0.68rem; line-height: 1; }
+    .doc-toolbar-menu[open] .doc-toolbar-toggle::after { content: '▴'; }
+    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% + 0.45rem); display: none; flex-wrap: wrap; gap: 0.45rem; width: min(100%, 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.5rem; border: 1px solid var(--border); border-radius: 10px; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .doc-toolbar-menu[open] .doc-toolbar-actions-panel { display: flex; }
+    .doc-toolbar-item { display: inline-flex; align-items: center; justify-content: center; width: fit-content; max-width: 100%; border: 1px solid var(--border); border-radius: 999px; background: rgba(253,252,249,0.95); padding: 0.45rem 0.72rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; white-space: nowrap; line-height: 1.25; flex: 0 0 auto; }
+    button.doc-toolbar-item { font-family: inherit; }
+    .doc-toolbar-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.55rem; border: 1px solid var(--border); border-radius: 999px; background: rgba(253,252,249,0.95); padding: 0.28rem 0.45rem 0.28rem 0.7rem; }
+    .doc-toolbar-brand { color: var(--text-muted); font-size: 0.75rem; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-toolbar-brand a { color: inherit; font-weight: 700; text-decoration: none; }
+    .doc-toolbar-brand a:hover { text-decoration: underline; }
+    .doc-toolbar-avatar-shell { min-height: 0; display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; }
+    .doc-toolbar-avatar-shell .auth-shell-inner,
+    .doc-toolbar-avatar-shell .auth-shell-inner-read-link,
+    .doc-toolbar-avatar-shell .auth-shell-inner-read-link-signed-in { gap: 0; }
+    .doc-toolbar-avatar-shell .auth-menu-trigger { padding: 0.16rem; border-radius: 999px; min-width: 0; }
+    .doc-toolbar-avatar-shell .auth-user-chip,
+    .doc-toolbar-avatar-shell .auth-menu-caret { display: none; }
+    .doc-toolbar-avatar-shell .auth-link-button { padding: 0.26rem 0.65rem; font-size: 0.72rem; }
     .doc-toolbar-version { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; font-weight: 700; cursor: default; }
     .doc-toolbar-feature { border-color: #a78bfa; color: #7c3aed; }
     /* Onboarding tip */
@@ -579,10 +600,18 @@ export function generateHtmlTemplate(
     @media (max-width: 980px) {
       .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; }
       .viewer-header-actions { width: 100%; justify-content: space-between; }
-      .layout { grid-template-columns: 1fr; padding: 1rem 1rem 1.75rem; gap: 1rem; }
+      .layout { grid-template-columns: 1fr; padding: 1rem 1rem 7.75rem; gap: 1rem; }
       .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; }
       .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; }
       .anchor-dot { left: -10px; }
+      .doc-toolbar { left: 0.8rem; right: 0.8rem; bottom: 0.8rem; max-width: calc(100vw - 1.6rem); }
+      .doc-toolbar-menu { width: fit-content; max-width: 100%; }
+      .doc-toolbar-actions-panel { width: min(100%, 30rem); max-width: calc(100vw - 1.6rem); }
+    }
+    @media (min-width: 981px) {
+      .doc-toolbar { flex-direction: row; align-items: center; }
+      .doc-toolbar-toggle { display: none; }
+      .doc-toolbar-actions-panel { position: static; display: flex; width: auto; max-width: none; padding: 0; border: none; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -633,6 +662,8 @@ export function generateHtmlTemplate(
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
       .doc-content .anchor-selected { background: rgba(96,165,250,0.22); }
       .general-btn,.doc-toolbar-item { background: #191d26; border-color: var(--border); color: var(--text-main); }
+      .doc-toolbar-actions-panel { background: rgba(21,25,35,0.96); border-color: var(--border); }
+      .doc-toolbar-brand a { color: #dbe2ef; }
       .doc-toolbar-version { border-color: #1d4ed8; background: rgba(30,64,175,0.28); color: #bfdbfe; }
       .doc-toolbar-feature { border-color: #7c3aed; color: #a78bfa; }
       .comment-author { color: #f2f4f8; }
@@ -701,18 +732,69 @@ export function generateHtmlTemplate(
     </aside>
   </div>
   <div class="onboarding-tip" id="onboarding-tip" style="display:none"><span>\u{1F4AC} Click any paragraph to leave a comment</span><button class="tip-dismiss" id="tip-dismiss" aria-label="Dismiss">\u00D7</button></div>
-  <div class="doc-toolbar">
-    <span class="doc-toolbar-item">Made readable with <a href="/">plsreadme</a></span>
-    <span class="doc-toolbar-item doc-toolbar-version">Current v${docVersion}</span>
-    <button class="doc-toolbar-item" onclick="copyLink()">Copy link</button>
-    <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
-    <a href="/v/${docId}/history" class="doc-toolbar-item">History</a>
-    <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-feature">\u{1F4A1} Feature Request</a>
+  <div class="doc-toolbar" aria-label="Document actions toolbar">
+    <details class="doc-toolbar-menu" id="doc-toolbar-menu">
+      <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu">Actions</summary>
+      <div class="doc-toolbar-actions-panel" aria-label="Document actions">
+        <span class="doc-toolbar-item doc-toolbar-version">Current v${docVersion}</span>
+        <button type="button" class="doc-toolbar-item" id="toolbar-copy-link">Copy link</button>
+        <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
+        <a href="/v/${docId}/history" class="doc-toolbar-item">History</a>
+        <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-feature">\u{1F4A1} Feature Request</a>
+      </div>
+    </details>
+    <span class="doc-toolbar-item doc-toolbar-brand">Made readable with <a href="/">plsreadme</a></span>
   </div>
   <script src="/clerk-auth-shell.js" defer></script>
   <script>
-    function copyLink() { navigator.clipboard.writeText(window.location.href); }
+    function copyLink() {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        return navigator.clipboard.writeText(window.location.href);
+      }
+
+      return Promise.resolve();
+    }
+
     (function() {
+      var toolbarMenu = document.getElementById('doc-toolbar-menu');
+      var toolbarToggle = document.getElementById('doc-toolbar-toggle');
+      var toolbarCopyLinkBtn = document.getElementById('toolbar-copy-link');
+      var toolbarActionLinks = document.querySelectorAll('.doc-toolbar-actions-panel a');
+
+      function closeToolbarMenu() {
+        if (toolbarMenu && toolbarMenu.open) {
+          toolbarMenu.open = false;
+        }
+      }
+
+      if (toolbarCopyLinkBtn) {
+        toolbarCopyLinkBtn.addEventListener('click', function() {
+          copyLink();
+          closeToolbarMenu();
+        });
+      }
+
+      toolbarActionLinks.forEach(function(linkEl) {
+        linkEl.addEventListener('click', closeToolbarMenu);
+      });
+
+      document.addEventListener('click', function(event) {
+        if (!toolbarMenu || !toolbarMenu.open) return;
+        var target = event.target;
+        if (target instanceof Node && !toolbarMenu.contains(target)) {
+          closeToolbarMenu();
+        }
+      });
+
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape' && toolbarMenu && toolbarMenu.open) {
+          closeToolbarMenu();
+          if (toolbarToggle && typeof toolbarToggle.focus === 'function') {
+            toolbarToggle.focus();
+          }
+        }
+      });
+
       var DOC_ID = '${docId}';
       var CURRENT_DOC_VERSION = ${docVersion};
       var DOC_ROOT = 'doc-root';

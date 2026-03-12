@@ -206,6 +206,11 @@ test("GET /:id renders current-version badges in viewer chrome", async () => {
   const html = await response.text();
 
   assert.match(html, /Current version · v3/);
+  assert.match(html, /id="doc-toolbar-menu"/);
+  assert.match(html, /doc-toolbar-actions-panel/);
+  assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
+  assert.match(html, />Actions<\/summary>/);
+  assert.match(html, /Made readable with <a href="\/">plsreadme<\/a>/);
   assert.match(html, /Current v3/);
   assert.match(html, /\/v\/doc123\/history/);
 });
