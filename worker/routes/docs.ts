@@ -566,15 +566,15 @@ export function generateHtmlTemplate(
     @keyframes flash-highlight { 0% { background: rgba(59,130,246,0.3); } 100% { background: transparent; } }
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: stretch; gap: 0.42rem; }
-    .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
+    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: stretch; gap: 0.4rem; }
+    .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: auto; max-width: 100%; align-self: flex-start; }
     .doc-toolbar-menu > summary { list-style: none; }
     .doc-toolbar-menu > summary::-webkit-details-marker { display: none; }
-    .doc-toolbar-toggle { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600; user-select: none; min-height: 2.25rem; padding: 0.42rem 0.82rem; border-radius: 12px; }
+    .doc-toolbar-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; font-weight: 600; user-select: none; min-height: 2.5rem; padding: 0.3rem 0.78rem; border-radius: 11px; line-height: 1.2; }
     .doc-toolbar-toggle::after { content: '▾'; font-size: 0.68rem; line-height: 1; }
     .doc-toolbar-menu[open] .doc-toolbar-toggle::after { content: '▴'; }
-    .doc-toolbar-menu[open] .doc-toolbar-toggle { border-color: #bfdbfe; background: #eff6ff; }
-    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% + 0.22rem); display: none; flex-wrap: wrap; align-items: flex-start; gap: 0.42rem; width: min(calc(100vw - 1.6rem), 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.58rem; border: 1px solid var(--border); border-radius: 12px; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    .doc-toolbar-menu[open] .doc-toolbar-toggle { border-color: #bfdbfe; background: #eff6ff; border-top-left-radius: 0; border-top-right-radius: 0; }
+    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% - 1px); display: none; flex-wrap: wrap; align-items: flex-start; gap: 0.42rem; width: min(calc(100vw - 1.6rem), 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.58rem; border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 0; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
     .doc-toolbar-menu[open] .doc-toolbar-actions-panel { display: flex; }
     .doc-toolbar-actions-panel > * { min-width: 0; flex: 0 0 auto; }
     .doc-toolbar-item { display: inline-flex; align-items: center; justify-content: center; width: fit-content; max-width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.52rem 0.96rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: center; white-space: nowrap; line-height: 1.25; flex: 0 0 auto; }

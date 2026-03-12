@@ -214,10 +214,12 @@ test("GET /:id renders mobile actions-only viewer chrome", async () => {
     html,
     /id="doc-toolbar-actions-panel"[\s\S]*Current v3[\s\S]*id="preview-save-btn"[\s\S]*Save to My Links[\s\S]*id="preview-save-status"[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw[\s\S]*\/v\/doc123\/history/
   );
-  assert.match(html, /doc-toolbar \{[^}]*gap: 0\.42rem;/);
-  assert.match(html, /doc-toolbar-toggle \{[^}]*min-height: 2\.25rem;[^}]*padding: 0\.42rem 0\.82rem;/);
+  assert.match(html, /doc-toolbar \{[^}]*gap: 0\.4rem;/);
+  assert.match(html, /doc-toolbar-menu \{[^}]*width: auto;[^}]*align-self: flex-start;/);
+  assert.match(html, /doc-toolbar-toggle \{[^}]*min-height: 2\.5rem;[^}]*padding: 0\.3rem 0\.78rem;/);
+  assert.match(html, /doc-toolbar-menu\[open\] \.doc-toolbar-toggle \{[^}]*border-top-left-radius: 0;[^}]*border-top-right-radius: 0;/);
   assert.match(html, /doc-toolbar-actions-panel \{[^}]*flex-wrap: wrap;/);
-  assert.match(html, /doc-toolbar-actions-panel \{[^}]*bottom: calc\(100% \+ 0\.22rem\);[^}]*padding: 0\.58rem;/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*bottom: calc\(100% - 1px\);[^}]*padding: 0\.58rem;[^}]*border-bottom-left-radius: 0;/);
   assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
   assert.match(html, /doc-toolbar-item \{[^}]*white-space: nowrap;/);
   assert.match(html, /doc-toolbar-save-status \{[^}]*flex-basis: 100%;/);
