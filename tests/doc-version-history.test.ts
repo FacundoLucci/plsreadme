@@ -8,6 +8,7 @@ type QueryRecord = { sql: string; params: unknown[] };
 class MockDB {
   public firsts: QueryRecord[] = [];
   public runs: QueryRecord[] = [];
+  public rateCount = 0;
   private readonly docs = new Map<string, DocRecord>();
 
   constructor(seedDocs: DocRecord[]) {
@@ -27,6 +28,10 @@ class MockDB {
       },
       async first<T>() {
         db.firsts.push({ sql, params: this.params });
+
+        if (/SELECT COUNT\(\*\) as count FROM request_rate_limits/i.test(sql)) {
+          return { count: db.rateCount } as T;
+        }
 
         if (/SELECT \* FROM docs WHERE id = \? AND admin_token = \?/i.test(sql)) {
           const [docId, adminToken] = this.params as [string, string];
@@ -270,6 +275,38 @@ test("POST /:id/restore restores a prior version, archives current markdown, and
   );
   assert.equal(archivedSnapshotResponse.status, 200);
   assert.equal(await archivedSnapshotResponse.text(), "# Current V3\nLatest markdown");
+});
+
+test("POST /:id/restore is rate-limited like updates", async () => {
+  const db = new MockDB([seedDoc()]);
+  db.rateCount = 60;
+  const env = createEnv(db, new MockBucket({ "md/doc123.md": "# Current" }));
+
+  const response = await docsRoutes.request(
+    "http://local/doc123/restore",
+    {
+      method: "POST",
+      headers: {
+        authorization: "Bearer sk_doc123",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ version: 1 }),
+    },
+    env
+  );
+
+  assert.equal(response.status, 429);
+  const payload = (await response.json()) as Record<string, unknown>;
+  assert.equal(payload.reason, "rate_limit_exceeded");
+  assert.equal(payload.limit, 60);
+  assert.equal(payload.error, "Rate limit exceeded. Maximum 60 restores per hour.");
+
+  assert.equal(
+    db.runs.some((entry) =>
+      /^UPDATE docs SET bytes = \?, sha256 = \?, title = \?, doc_version = \? WHERE id = \?/i.test(entry.sql)
+    ),
+    false
+  );
 });
 
 test("POST /:id/restore requires admin token", async () => {

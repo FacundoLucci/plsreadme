@@ -1662,8 +1662,55 @@ async function enforceOwnedDocMutationAuth(
 
 // POST /v/:id/restore - Restore document from a previous version
 app.post("/:id/restore", async (c) => {
+  const id = c.req.param("id");
+  const endpoint = `/api/render/${id}/restore`;
+  const clientIp = getClientIp(c.req);
+  const ipHash = await sha256(clientIp);
+  const contentLength = parseContentLength(c.req.header("content-length"));
+
   try {
-    const id = c.req.param("id");
+    const contentLengthFailure = validateContentLength(contentLength);
+    if (contentLengthFailure) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: contentLengthFailure.reason,
+        contentLength,
+      });
+      return c.json(failureToErrorPayload(contentLengthFailure), contentLengthFailure.status);
+    }
+
+    const requestAuth = await getRequestAuth(c);
+    const rateLimitActorKey = await resolveRateLimitActorKey({
+      ipHash,
+      userId: requestAuth.isAuthenticated ? requestAuth.userId : null,
+    });
+
+    const rateLimit = await checkAndConsumeRateLimit(
+      c.env,
+      rateLimitActorKey,
+      WRITE_RATE_LIMITS.renderRestore
+    );
+
+    if (!rateLimit.allowed) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: "rate_limit_exceeded",
+        contentLength,
+      });
+
+      return c.json(
+        {
+          error: `Rate limit exceeded. Maximum ${rateLimit.maxRequests} restores per hour.`,
+          reason: "rate_limit_exceeded",
+          limit: rateLimit.maxRequests,
+          actual: rateLimit.count,
+          retry_after_seconds: rateLimit.retryAfterSeconds ?? 3600,
+        },
+        429
+      );
+    }
 
     await ensureOwnershipSchema(c.env);
 

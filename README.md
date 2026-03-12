@@ -39,6 +39,7 @@ You wrote a README, a PRD, meeting notes, or an API doc in markdown. Now you nee
 - **OpenClaw skill** — Available on [ClawHub](https://clawhub.com) for AI agent workflows
 - **Short links** — Every doc gets a compact `plsrd.me/v/xxx` URL
 - **Raw access** — Download the original `.md` file from any shared link
+- **Version timeline + safe restore** — `/v/:id/versions` + `/v/:id/history` + archive-first restore API for fast rollback
 - **Clerk auth foundation** — GitHub/Google sign-in wiring + Clerk-hosted email fallback + backend auth verification utilities
 - **Ownership model (Phase 2)** — docs can be linked to a Clerk user (`owner_user_id`) while preserving anonymous flows
 - **My Links dashboard (Phase 3)** — authenticated `/my-links` page with search/sort/pagination and quick copy/open actions
@@ -82,7 +83,38 @@ curl -X DELETE https://plsreadme.com/v/abc123def456 \
   -H "Authorization: Bearer sk_..."
 ```
 
-For docs owned by an authenticated Clerk user, update/delete also require that owner session (to prevent cross-user mutation), while anonymous docs continue to work with `admin_token` only.
+#### Version timeline + safe restore
+
+Use the timeline endpoint to review revision context during AI iteration cycles:
+
+```bash
+curl https://plsreadme.com/v/abc123def456/versions
+```
+
+```json
+{
+  "id": "abc123def456",
+  "current_version": 5,
+  "total_versions": 5,
+  "versions": [
+    { "version": 5, "is_current": true, "raw_url": "https://plsreadme.com/v/abc123def456/raw" },
+    { "version": 4, "is_current": false, "raw_url": "https://plsreadme.com/v/abc123def456/raw?version=4" }
+  ]
+}
+```
+
+If an AI edit regresses the doc, restore a prior snapshot (archive-first, non-destructive):
+
+```bash
+curl -X POST https://plsreadme.com/v/abc123def456/restore \
+  -H "Authorization: Bearer sk_..." \
+  -H "Content-Type: application/json" \
+  -d '{"version": 4}'
+```
+
+Restore is rate-limited similarly to updates (currently `60/hour` per actor key) to reduce abuse.
+
+For docs owned by an authenticated Clerk user, update/delete/restore also require that owner session (to prevent cross-user mutation), while anonymous docs continue to work with `admin_token` only.
 
 To claim a legacy anonymous link into your signed-in account:
 
@@ -100,6 +132,20 @@ Connect your editor to plsreadme and share docs with natural language:
 > *"Share this README as a plsreadme link"*
 > *"Turn my PRD into a shareable page"*
 > *"Make these meeting notes into a readable link"*
+
+### MCP/agent auto-review loop with `/versions`
+
+For iterative AI writing flows (draft → critique → revise), agents can consume `/v/:id/versions` as the source of truth:
+
+1. Keep the canonical readable URL (`/v/:id`) for humans.
+2. Poll `/v/:id/versions` between iterations.
+3. Compare `current_version` to the last reviewed version.
+4. If changed, fetch `raw_url` for the newest version and run review checks.
+5. If quality regresses, optionally trigger `/v/:id/restore` with admin token + owner session.
+
+This gives automation deterministic revision tracking without scraping HTML.
+
+See [`docs/ai-iteration-versioning.md`](docs/ai-iteration-versioning.md) for a full playbook.
 
 ## 🔌 MCP Setup
 
@@ -255,7 +301,8 @@ plsreadme/
 ├── db/
 │   └── schema.sql            # D1 database schema
 ├── docs/
-│   ├── auth-clerk.md         # Auth setup + environment checklist
+│   ├── ai-iteration-versioning.md # Version timeline/restore patterns for human + agent loops
+│   ├── auth-clerk.md              # Auth setup + environment checklist
 │   └── runbooks/
 │       └── legacy-link-claim-rollout.md
 ├── skill/
@@ -342,7 +389,8 @@ For the full auth setup checklist, see [`docs/auth-clerk.md`](docs/auth-clerk.md
 | Limit | Value |
 |-------|-------|
 | Max document size | 200 KB |
-| Upload rate limit | 30/hour per IP |
+| Upload rate limit | 30/hour per actor key |
+| Update/restore rate limit | 60/hour per actor key |
 | AI convert rate limit | 10/hour per IP |
 | Link lifetime | Permanent |
 
