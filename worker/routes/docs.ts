@@ -578,18 +578,21 @@ export function generateHtmlTemplate(
     .doc-toolbar-actions-panel > * { min-width: 0; flex: 0 0 auto; }
     .doc-toolbar-item { display: inline-flex; align-items: center; justify-content: center; width: fit-content; max-width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.52rem 0.96rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: center; white-space: nowrap; line-height: 1.25; flex: 0 0 auto; }
     button.doc-toolbar-item { font-family: inherit; }
-    .doc-toolbar-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.55rem; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.34rem 0.5rem 0.34rem 0.78rem; }
+    .doc-toolbar-meta { display: flex; align-items: center; justify-content: flex-start; gap: 0.55rem; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.34rem 0.78rem; }
     .doc-toolbar-brand { display: inline-flex; align-items: center; gap: 0.18rem; color: var(--text-muted); font-size: 0.75rem; line-height: 1.25; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
     .doc-toolbar-brand a { color: inherit; font-weight: 700; text-decoration: none; }
     .doc-toolbar-brand a:hover { text-decoration: underline; }
-    .doc-toolbar-avatar-shell { min-height: 0; display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; }
-    .doc-toolbar-avatar-shell .auth-shell-inner,
-    .doc-toolbar-avatar-shell .auth-shell-inner-read-link,
-    .doc-toolbar-avatar-shell .auth-shell-inner-read-link-signed-in { gap: 0; }
-    .doc-toolbar-avatar-shell .auth-menu-trigger { padding: 0.16rem; border-radius: var(--control-radius); min-width: 0; }
-    .doc-toolbar-avatar-shell .auth-user-chip,
-    .doc-toolbar-avatar-shell .auth-menu-caret { display: none; }
-    .doc-toolbar-avatar-shell .auth-link-button { padding: 0.26rem 0.65rem; font-size: 0.72rem; border-radius: var(--control-radius); }
+    .doc-toolbar-auth-floating { position: fixed; right: 0.8rem; bottom: 0.8rem; z-index: 45; pointer-events: auto; isolation: isolate; }
+    .doc-toolbar-auth-shell { min-height: 0; display: flex; align-items: center; justify-content: flex-end; flex: 0 0 auto; pointer-events: auto; }
+    .doc-toolbar-auth-shell .auth-shell-inner,
+    .doc-toolbar-auth-shell .auth-shell-inner-read-link,
+    .doc-toolbar-auth-shell .auth-shell-inner-read-link-signed-in { gap: 0; }
+    .doc-toolbar-auth-shell .auth-menu { position: relative; z-index: 2; }
+    .doc-toolbar-auth-shell .auth-menu-trigger { padding: 0.16rem; border-radius: var(--control-radius); min-width: 0; position: relative; z-index: 2; pointer-events: auto; }
+    .doc-toolbar-auth-shell .auth-menu-dropdown { z-index: 80; pointer-events: auto; }
+    .doc-toolbar-auth-shell .auth-user-chip,
+    .doc-toolbar-auth-shell .auth-menu-caret { display: none; }
+    .doc-toolbar-auth-shell .auth-link-button { padding: 0.26rem 0.65rem; font-size: 0.72rem; border-radius: var(--control-radius); }
     .doc-toolbar-version { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; font-weight: 700; cursor: default; }
     .doc-toolbar-feature { border-color: #a78bfa; color: #7c3aed; }
     /* Onboarding tip */
@@ -610,6 +613,7 @@ export function generateHtmlTemplate(
     @media (min-width: 981px) {
       .doc-toolbar { left: 1rem; right: auto; width: min(31rem, calc(100vw - 2rem)); max-width: none; }
       .doc-toolbar-actions-panel { width: min(31rem, calc(100vw - 2rem)); max-width: calc(100vw - 2rem); }
+      .doc-toolbar-auth-floating { right: 1rem; }
       .onboarding-tip { bottom: 4.2rem; }
     }
     @media (prefers-color-scheme: dark) {
@@ -742,8 +746,10 @@ export function generateHtmlTemplate(
     </details>
     <div class="doc-toolbar-meta">
       <span class="doc-toolbar-brand">Made readable with <a href="/">plsreadme</a></span>
-      <div class="viewer-auth-shell doc-toolbar-avatar-shell" data-auth-root data-auth-variant="read-link"></div>
     </div>
+  </div>
+  <div class="doc-toolbar-auth-floating">
+    <div class="viewer-auth-shell doc-toolbar-auth-shell" data-auth-root data-auth-variant="read-link"></div>
   </div>
   <script src="/clerk-auth-shell.js" defer></script>
   <script>

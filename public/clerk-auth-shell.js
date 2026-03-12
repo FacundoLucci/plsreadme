@@ -228,12 +228,20 @@
     }
   }
 
-  function closeAllAuthMenus() {
+  function closeAllAuthMenus(options) {
+    const shouldFocusTrigger = !!(options && options.focusTrigger);
+
     for (const menu of document.querySelectorAll("[data-auth-menu]")) {
       const trigger = menu.querySelector("[data-auth-action='toggle-menu']");
+      const wasOpen = menu.classList.contains("is-open");
+
       menu.classList.remove("is-open");
       if (trigger) {
         trigger.setAttribute("aria-expanded", "false");
+      }
+
+      if (shouldFocusTrigger && wasOpen && trigger && typeof trigger.focus === "function") {
+        trigger.focus();
       }
     }
   }
@@ -268,7 +276,7 @@
 
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
-          closeAllAuthMenus();
+          closeAllAuthMenus({ focusTrigger: true });
         }
       });
 
@@ -337,8 +345,8 @@
             <span class="auth-menu-caret" aria-hidden="true">▾</span>
           </button>
           <div class="auth-menu-dropdown" role="menu">
-            <a href="/my-links" class="auth-menu-item" role="menuitem">My Links</a>
-            <button type="button" class="auth-menu-item auth-menu-item-button" data-auth-action="sign-out" role="menuitem">Sign out</button>
+            <a href="/my-links" class="auth-menu-item" role="menuitem">My dashboard</a>
+            <button type="button" class="auth-menu-item auth-menu-item-button" data-auth-action="sign-out" role="menuitem">Logout</button>
           </div>
         </div>
       </div>

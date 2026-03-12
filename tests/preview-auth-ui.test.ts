@@ -34,7 +34,7 @@ test("signed-out read-link auth UI exposes a single Sign in CTA", async () => {
   assert.doesNotMatch(template, /sign-up|email-fallback/);
 });
 
-test("signed-in read-link auth UI uses dropdown with My Links + Sign out", async () => {
+test("signed-in read-link auth UI uses dropdown with dashboard + logout actions", async () => {
   const script = await loadAuthShellScript();
   const fnBlock = script.match(/function renderSignedIn\(variant, displayName, avatarUrl, email\) \{([\s\S]*?)\n  \}\n\n  async function boot/);
   assert.ok(fnBlock, "could not locate renderSignedIn function");
@@ -47,8 +47,8 @@ test("signed-in read-link auth UI uses dropdown with My Links + Sign out", async
   assert.match(template, /data-auth-action="toggle-menu"/);
   assert.match(template, /class="auth-avatar"/);
   assert.match(template, /class="auth-user-chip"/);
-  assert.match(template, /href="\/my-links" class="auth-menu-item"/);
-  assert.match(template, /data-auth-action="sign-out"/);
+  assert.match(template, /href="\/my-links" class="auth-menu-item"[^>]*>My dashboard</);
+  assert.match(template, /data-auth-action="sign-out"[^>]*>Logout</);
 });
 
 test("preview template keeps save action inside Actions panel and preserves logged-out comment CTA", () => {
@@ -59,8 +59,19 @@ test("preview template keeps save action inside Actions panel and preserves logg
   assert.match(html, /id="preview-save-status"/);
   assert.match(html, /id="comment-login-cta"/);
   assert.match(html, /Sign in for account-linked comments/);
-  assert.match(html, /Made readable with <a href="\/">plsreadme<\/a>/);
+  assert.match(html, /<div class="doc-toolbar-meta">\s*<span class="doc-toolbar-brand">Made readable with <a href="\/">plsreadme<\/a><\/span>\s*<\/div>/);
+  assert.match(html, /<div class="doc-toolbar-auth-floating">\s*<div class="viewer-auth-shell doc-toolbar-auth-shell" data-auth-root data-auth-variant="read-link"><\/div>\s*<\/div>/);
+  assert.match(html, /doc-toolbar-auth-floating \{[^}]*z-index: 45;[^}]*pointer-events: auto;/);
+  assert.match(html, /doc-toolbar-auth-shell \.auth-menu-dropdown \{[^}]*z-index: 80;[^}]*pointer-events: auto;/);
   assert.match(html, /\/api\/auth\/save-link/);
+});
+
+test("auth dropdown close handler preserves keyboard accessibility", async () => {
+  const script = await loadAuthShellScript();
+
+  assert.match(script, /function closeAllAuthMenus\(options\)/);
+  assert.match(script, /const shouldFocusTrigger = !!\(options && options\.focusTrigger\);/);
+  assert.match(script, /if \(event\.key === "Escape"\) \{\s*closeAllAuthMenus\(\{ focusTrigger: true \}\);\s*\}/);
 });
 
 test("auth redirects preserve returnBackUrl from preview actions", async () => {

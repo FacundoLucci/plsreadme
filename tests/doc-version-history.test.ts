@@ -218,10 +218,10 @@ test("GET /:id renders mobile actions-only viewer chrome", async () => {
   assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
   assert.match(html, /doc-toolbar-item \{[^}]*white-space: nowrap;/);
   assert.match(html, /doc-toolbar-save-status \{[^}]*flex-basis: 100%;/);
-  assert.match(
-    html,
-    /<div class="doc-toolbar-meta">\s*<span class="doc-toolbar-brand">Made readable with <a href="\/">plsreadme<\/a><\/span>\s*<div class="viewer-auth-shell doc-toolbar-avatar-shell" data-auth-root data-auth-variant="read-link"><\/div>\s*<\/div>/
-  );
+  assert.match(html, /<div class="doc-toolbar-meta">\s*<span class="doc-toolbar-brand">Made readable with <a href="\/">plsreadme<\/a><\/span>\s*<\/div>/);
+  assert.match(html, /<div class="doc-toolbar-auth-floating">\s*<div class="viewer-auth-shell doc-toolbar-auth-shell" data-auth-root data-auth-variant="read-link"><\/div>\s*<\/div>/);
+  assert.match(html, /doc-toolbar-auth-floating \{[^}]*z-index: 45;[^}]*pointer-events: auto;/);
+  assert.match(html, /doc-toolbar-auth-shell \.auth-menu-trigger \{[^}]*pointer-events: auto;/);
 });
 
 test("GET /:id/versions returns 404 for missing docs", async () => {
