@@ -5,13 +5,13 @@
 
 ## Objective
 - [x] Ship a clear iteration timeline so AI-generated docs can be reviewed with confidence.
-- [ ] Add a safe rollback flow so users can recover from bad AI edits without data loss.
+- [x] Add a safe rollback flow so users can recover from bad AI edits without data loss.
 - [ ] Make version-aware collaboration easy (share exact revision context during feedback loops).
 
 ## Scope
 - In scope:
   - [x] Version history discovery endpoints + lightweight history page.
-  - [ ] Admin-token + owner-safe restore API for prior revisions.
+  - [x] Admin-token + owner-safe restore API for prior revisions.
   - [ ] UX affordances for “restore this version” with clear confirmation copy.
   - [ ] Minimal docs/tests to keep behavior stable and maintainable.
 - Out of scope:
@@ -51,31 +51,34 @@
 - [x] `2026-03-11 19:03 UTC` — Agent: coder — Status: started — Notes: Created feature branch and seeded Phaser plan.
 - [x] `2026-03-11 19:08 UTC` — Agent: coder — Status: completed — Notes: Implemented timeline/history endpoints + tests; `npm test` passed.
 
-### Phase 2 — Safe Restore API (token + owner checks) ⚪
+### Phase 2 — Safe Restore API (token + owner checks) ✅ (`6b044eb`)
 **Context Scope:** `worker/routes/docs.ts` update/authorization flow + R2 archival semantics + regression tests.
 **Out of Scope (for this phase):** frontend confirmation UI polish.
-- [ ] Add `POST /v/:id/restore` accepting `{ version }` and requiring admin token.
-- [ ] Reuse owner-auth guard so owned docs can only be restored by current owner session.
-- [ ] Archive current markdown before restore and increment `doc_version` monotonically.
-- [ ] Return restoration payload with new current version and URLs.
-- [ ] Add tests for success, unauthorized restore, missing version, and owner mismatch.
-- [ ] Run checks after phase changes.
+- [x] Add `POST /v/:id/restore` accepting `{ version }` and requiring admin token.
+- [x] Reuse owner-auth guard so owned docs can only be restored by current owner session.
+- [x] Archive current markdown before restore and increment `doc_version` monotonically.
+- [x] Return restoration payload with new current version and URLs.
+- [x] Add tests for success, unauthorized restore, missing version, and owner mismatch.
+- [x] Run checks after phase changes.
 
 **Files:**
 - `worker/routes/docs.ts` — restore endpoint and storage/version mutation path.
 - `tests/ownership-auth.test.ts` + `tests/doc-version-history.test.ts` — restore auth + timeline correctness after restore.
 
 **Acceptance Criteria:**
-- [ ] Restore never overwrites history destructively.
-- [ ] Cross-user restore attempts are blocked.
-- [ ] Current version increases after restore and remains recoverable.
-- [ ] Tests cover happy path + guard rails.
+- [x] Restore never overwrites history destructively.
+- [x] Cross-user restore attempts are blocked.
+- [x] Current version increases after restore and remains recoverable.
+- [x] Tests cover happy path + guard rails.
 
 **Build Notes (decisions/learning):**
-- Pending.
+- Kept restore auth layered: admin token validation first, then owned-doc session enforcement to block cross-user restores.
+- Used archive-first restore semantics (`md/<id>_v<current>.md` before rewriting canonical `md/<id>.md`) so rollback is non-destructive.
+- Restores always advance `doc_version` and return direct viewer/raw/history URLs, making post-restore review deterministic.
 
 **Phase Run Log:**
-- [ ] `YYYY-MM-DD HH:MM UTC` — Agent: coder — Status: started — Notes: 
+- [x] `2026-03-12 03:55 UTC` — Agent: coder — Status: started — Notes: Began Phase 2 safe-restore implementation + test expansion.
+- [x] `2026-03-12 04:05 UTC` — Agent: coder — Status: completed — Notes: Added restore endpoint + auth guards + archival/version bump flow; tests passed; committed as `6b044eb6881e8f8883f4a66acc7e75c63a3969d9`.
 
 ### Phase 3 — Restore UX + Review Loop Clarity ⚪
 **Context Scope:** viewer template UX in `generateHtmlTemplate` + minimal inline JS interactions.
