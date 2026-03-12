@@ -6,13 +6,13 @@
 ## Objective
 - [x] Ship a clear iteration timeline so AI-generated docs can be reviewed with confidence.
 - [x] Add a safe rollback flow so users can recover from bad AI edits without data loss.
-- [ ] Make version-aware collaboration easy (share exact revision context during feedback loops).
+- [x] Make version-aware collaboration easy (share exact revision context during feedback loops).
 
 ## Scope
 - In scope:
   - [x] Version history discovery endpoints + lightweight history page.
   - [x] Admin-token + owner-safe restore API for prior revisions.
-  - [ ] UX affordances for “restore this version” with clear confirmation copy.
+  - [x] UX affordances for “restore this version” with clear confirmation copy.
   - [ ] Minimal docs/tests to keep behavior stable and maintainable.
 - Out of scope:
   - [ ] Full text diff viewer.
@@ -80,29 +80,32 @@
 - [x] `2026-03-12 03:55 UTC` — Agent: coder — Status: started — Notes: Began Phase 2 safe-restore implementation + test expansion.
 - [x] `2026-03-12 04:05 UTC` — Agent: coder — Status: completed — Notes: Added restore endpoint + auth guards + archival/version bump flow; tests passed; committed as `6b044eb6881e8f8883f4a66acc7e75c63a3969d9`.
 
-### Phase 3 — Restore UX + Review Loop Clarity ⚪
+### Phase 3 — Restore UX + Review Loop Clarity ✅ (`30c880e`)
 **Context Scope:** viewer template UX in `generateHtmlTemplate` + minimal inline JS interactions.
 **Out of Scope (for this phase):** heavy diff visualizations.
-- [ ] Add a lightweight restore action entry from history page (with explicit warning text).
-- [ ] Surface “current version” badge in viewer header/toolbar for context while commenting.
-- [ ] Show restore success state and link back to readable doc.
-- [ ] Add test coverage for history-page affordances.
-- [ ] Run checks after phase changes.
+- [x] Add a lightweight restore action entry from history page (with explicit warning text).
+- [x] Surface “current version” badge in viewer header/toolbar for context while commenting.
+- [x] Show restore success state and link back to readable doc.
+- [x] Add test coverage for history-page affordances.
+- [x] Run checks after phase changes.
 
 **Files:**
 - `worker/routes/docs.ts` — history page markup and small client-side behaviors.
 - `tests/doc-version-history.test.ts` — verify rendered affordances.
 
 **Acceptance Criteria:**
-- [ ] Users can identify current vs historical versions without reading raw URLs.
-- [ ] Restore UI flow is explicit and hard to trigger accidentally.
-- [ ] No regression to commenting and sharing flows.
+- [x] Users can identify current vs historical versions without reading raw URLs.
+- [x] Restore UI flow is explicit and hard to trigger accidentally.
+- [x] No regression to commenting and sharing flows.
 
 **Build Notes (decisions/learning):**
-- Pending.
+- Added explicit restore safety UX in history view (warning copy, admin-token field, confirm prompt, and success/error status states) so rollback intent is clear before action.
+- Introduced persistent current-version context in both the viewer header and bottom toolbar, reducing ambiguity during review/comment loops.
+- Kept affordances test-driven by expanding history-page and viewer rendering assertions, including “no restore for current version” behavior.
 
 **Phase Run Log:**
-- [ ] `YYYY-MM-DD HH:MM UTC` — Agent: coder — Status: started — Notes: 
+- [x] `2026-03-12 04:10 UTC` — Agent: coder — Status: started — Notes: Began Phase 3 UX polish for restore safety + version context.
+- [x] `2026-03-12 04:13 UTC` — Agent: coder — Status: completed — Notes: Implemented restore panel/actions + current-version badges + test updates; `npm test` passed; committed as `30c880eef32ce2ef071ccfa14f11fee490c69c0e`. 
 
 ### Phase 4 — Trust/Safety + Automation Hand-off ⚪
 **Context Scope:** docs + MCP-facing usage notes + operational hardening.
