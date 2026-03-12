@@ -178,18 +178,29 @@ function escapeHtmlText(value: string): string {
 function generateVersionHistoryHtml(doc: DocRecord, versions: DocVersionHistoryEntry[]): string {
   const safeTitle = escapeHtmlText(doc.title || "Untitled Document");
   const safeCreatedAt = escapeHtmlText(doc.created_at || "unknown");
+  const currentVersion = resolveDocVersion(doc);
 
   const listItems = versions
     .map((entry) => {
-      const versionLabel = `v${entry.version}${entry.is_current ? " (current)" : ""}`;
+      const versionLabel = `v${entry.version}`;
       const contextLabel = entry.is_current ? "Latest readable link" : "Snapshot before an edit";
+      const currentBadge = entry.is_current
+        ? '<span class="version-current-chip">Current</span>'
+        : '<span class="version-archived-chip">Archived</span>';
+      const restoreAction = entry.is_current
+        ? '<p class="restore-hint">Already the active version.</p>'
+        : `<button type="button" class="restore-btn" data-restore-version="${entry.version}">Restore this version</button>`;
 
       return `<li>
         <div class="version-header">
           <strong>${versionLabel}</strong>
-          <span>${contextLabel}</span>
+          ${currentBadge}
         </div>
-        <a href="${entry.raw_url}" target="_blank" rel="noopener">Open raw markdown</a>
+        <p class="version-context">${contextLabel}</p>
+        <div class="version-actions">
+          <a href="${entry.raw_url}" target="_blank" rel="noopener">Open raw markdown</a>
+          ${restoreAction}
+        </div>
       </li>`;
     })
     .join("\n");
@@ -207,24 +218,145 @@ function generateVersionHistoryHtml(doc: DocRecord, versions: DocVersionHistoryE
     .meta { color: #475569; font-size: 0.92rem; margin-bottom: 1rem; }
     .actions { display: flex; gap: 0.65rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
     .actions a { text-decoration: none; color: #1d4ed8; font-weight: 600; }
+    .restore-panel { border: 1px solid #fed7aa; background: #fff7ed; border-radius: 10px; padding: 0.85rem 0.95rem; margin-bottom: 1rem; }
+    .restore-panel p { margin: 0.35rem 0; }
+    .restore-warning { color: #9a3412; font-weight: 600; font-size: 0.87rem; }
+    .restore-token-field { margin-top: 0.55rem; display: grid; gap: 0.35rem; }
+    .restore-token-field label { font-size: 0.8rem; color: #7c2d12; font-weight: 600; }
+    .restore-token-field input { border: 1px solid #fdba74; border-radius: 8px; padding: 0.45rem 0.55rem; font-size: 0.86rem; }
+    .restore-status { min-height: 1.2rem; margin-top: 0.55rem; font-size: 0.84rem; color: #1e3a8a; }
+    .restore-status[data-state="error"] { color: #b91c1c; }
+    .restore-status[data-state="success"] { color: #166534; }
+    .restore-success { display: none; border: 1px solid #86efac; background: #f0fdf4; border-radius: 8px; padding: 0.65rem 0.75rem; margin-top: 0.55rem; font-size: 0.86rem; }
+    .restore-success a { color: #166534; font-weight: 600; }
     ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.75rem; }
     li { border: 1px solid #dbe2ea; border-radius: 10px; background: white; padding: 0.8rem 0.9rem; }
-    .version-header { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.35rem; }
-    .version-header span { color: #64748b; font-size: 0.84rem; }
+    .version-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.2rem; }
+    .version-current-chip,
+    .version-archived-chip { font-size: 0.72rem; border-radius: 999px; padding: 0.16rem 0.5rem; font-weight: 700; }
+    .version-current-chip { background: #dcfce7; color: #166534; }
+    .version-archived-chip { background: #e2e8f0; color: #334155; }
+    .version-context { color: #64748b; font-size: 0.84rem; margin: 0 0 0.45rem; }
+    .version-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
+    .version-actions a { color: #1d4ed8; font-weight: 600; text-decoration: none; }
+    .restore-btn { border: 1px solid #f59e0b; border-radius: 8px; background: #fffbeb; color: #92400e; font-size: 0.78rem; font-weight: 700; padding: 0.32rem 0.58rem; cursor: pointer; }
+    .restore-btn:hover { border-color: #d97706; background: #fef3c7; }
+    .restore-btn[disabled] { opacity: 0.65; cursor: wait; }
+    .restore-hint { color: #64748b; font-size: 0.78rem; margin: 0; }
   </style>
 </head>
 <body>
   <main>
     <h1>Version history</h1>
-    <p class="meta">${safeTitle} · Created ${safeCreatedAt}</p>
+    <p class="meta">${safeTitle} · Created ${safeCreatedAt} · Current version v${currentVersion}</p>
     <div class="actions">
       <a href="/v/${doc.id}">← Back to readable doc</a>
       <a href="/v/${doc.id}/versions" target="_blank" rel="noopener">View JSON API</a>
     </div>
+
+    <section class="restore-panel" aria-labelledby="restore-panel-heading">
+      <h2 id="restore-panel-heading" style="margin:0; font-size:0.98rem;">Restore an older version</h2>
+      <p class="restore-warning">⚠️ Restoring will create a new current version and can impact active review threads.</p>
+      <p style="color:#7c2d12; font-size:0.84rem; margin-bottom:0;">Use your admin token and confirm intentionally. This action should only be used when you want to roll back visible content.</p>
+      <div class="restore-token-field">
+        <label for="restore-admin-token">Admin token (required for restore)</label>
+        <input id="restore-admin-token" type="password" autocomplete="off" placeholder="sk_..." />
+      </div>
+      <p class="restore-status" id="restore-status" aria-live="polite"></p>
+      <div class="restore-success" id="restore-success">
+        Restore completed. <a id="restore-readable-link" href="/v/${doc.id}">Open readable doc</a> · <a id="restore-history-link" href="/v/${doc.id}/history">Refresh history</a>
+      </div>
+    </section>
+
     <ul>
       ${listItems}
     </ul>
   </main>
+  <script>
+    (function () {
+      const tokenInput = document.getElementById("restore-admin-token");
+      const statusEl = document.getElementById("restore-status");
+      const successEl = document.getElementById("restore-success");
+      const readableLink = document.getElementById("restore-readable-link");
+      const historyLink = document.getElementById("restore-history-link");
+      const restoreButtons = document.querySelectorAll("[data-restore-version]");
+
+      function setStatus(message, state) {
+        if (!statusEl) return;
+        statusEl.textContent = message;
+        statusEl.dataset.state = state || "";
+      }
+
+      async function restoreVersion(button) {
+        const requestedVersion = Number(button.getAttribute("data-restore-version"));
+        if (!Number.isInteger(requestedVersion) || requestedVersion < 1) {
+          setStatus("Invalid restore target.", "error");
+          return;
+        }
+
+        const token = (tokenInput && tokenInput.value ? tokenInput.value : "").trim();
+        if (!token) {
+          setStatus("Admin token is required before restoring.", "error");
+          if (tokenInput) tokenInput.focus();
+          return;
+        }
+
+        const confirmed = window.confirm("Restore v" + requestedVersion + "? This creates a new current version and may affect collaborators viewing the doc.");
+        if (!confirmed) {
+          return;
+        }
+
+        if (successEl) successEl.style.display = "none";
+        button.disabled = true;
+        const previousLabel = button.textContent;
+        button.textContent = "Restoring…";
+        setStatus("Restoring v" + requestedVersion + "…", "");
+
+        try {
+          const response = await fetch("/v/${doc.id}/restore", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: "Bearer " + token,
+            },
+            body: JSON.stringify({ version: requestedVersion }),
+          });
+
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            const errorMessage = typeof payload.error === "string" ? payload.error : "Restore failed.";
+            throw new Error(errorMessage);
+          }
+
+          const nextVersion = Number(payload.current_version);
+          const versionLabel = Number.isInteger(nextVersion) ? "v" + nextVersion : "the latest version";
+          setStatus("Restore complete. " + versionLabel + " is now current.", "success");
+
+          if (readableLink && typeof payload.url === "string") {
+            readableLink.href = payload.url;
+          }
+          if (historyLink && typeof payload.history_url === "string") {
+            historyLink.href = payload.history_url;
+          }
+          if (successEl) {
+            successEl.style.display = "block";
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Restore failed.";
+          setStatus(message, "error");
+        } finally {
+          button.disabled = false;
+          button.textContent = previousLabel;
+        }
+      }
+
+      restoreButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          void restoreVersion(button);
+        });
+      });
+    })();
+  </script>
 </body>
 </html>`;
 }
@@ -273,6 +405,7 @@ export function generateHtmlTemplate(
     .viewer-brand { display: inline-flex; align-items: center; gap: 0.45rem; color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 0.96rem; }
     .viewer-brand:hover { color: #2563eb; }
     .viewer-header-actions { display: inline-flex; align-items: center; gap: 0.55rem; flex-wrap: wrap; justify-content: flex-end; }
+    .doc-version-badge { border: 1px solid #bfdbfe; border-radius: 999px; background: #eff6ff; color: #1e3a8a; font-size: 0.72rem; font-weight: 700; padding: 0.26rem 0.56rem; white-space: nowrap; }
     .viewer-auth-shell { min-height: 34px; display: flex; align-items: center; }
     .preview-save-btn { border: 1px solid var(--border); border-radius: 999px; background: var(--surface); color: var(--text-main); padding: 0.36rem 0.72rem; font-size: 0.74rem; font-weight: 600; cursor: pointer; }
     .preview-save-btn:hover { border-color: #93c5fd; background: #eff6ff; }
@@ -358,6 +491,7 @@ export function generateHtmlTemplate(
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .doc-toolbar { position: fixed; left: 1rem; bottom: 1rem; display: flex; gap: 0.5rem; }
     .doc-toolbar-item { border: 1px solid var(--border); border-radius: 6px; background: rgba(253,252,249,0.95); padding: 0.45rem 0.7rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; }
+    .doc-toolbar-version { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; font-weight: 700; cursor: default; }
     .doc-toolbar-feature { border-color: #a78bfa; color: #7c3aed; }
     /* Onboarding tip */
     @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -400,6 +534,7 @@ export function generateHtmlTemplate(
       .auth-menu-item:hover { background: #262d3a; }
       .auth-avatar { border-color: #1d4ed8; background: #1e3a8a; color: #dbeafe; }
       .auth-user-chip { border-color: #1e40af; background: rgba(30, 64, 175, 0.25); color: #bfdbfe; }
+      .doc-version-badge { border-color: #1d4ed8; background: rgba(30,64,175,0.28); color: #bfdbfe; }
       .auth-secondary-link { color: #93c5fd; }
       .auth-status { color: var(--text-muted); }
       .doc-content { background: transparent; border: none; }
@@ -409,6 +544,7 @@ export function generateHtmlTemplate(
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
       .doc-content .anchor-selected { background: rgba(96,165,250,0.22); }
       .general-btn,.doc-toolbar-item { background: #191d26; border-color: var(--border); color: var(--text-main); }
+      .doc-toolbar-version { border-color: #1d4ed8; background: rgba(30,64,175,0.28); color: #bfdbfe; }
       .doc-toolbar-feature { border-color: #7c3aed; color: #a78bfa; }
       .comment-author { color: #f2f4f8; }
       #inline-comment-box { background: var(--surface); border-color: var(--border); }
@@ -441,6 +577,7 @@ export function generateHtmlTemplate(
     <div class="viewer-header-inner">
       <a href="/" class="viewer-brand">plsreadme</a>
       <div class="viewer-header-actions">
+        <span class="doc-version-badge" title="Current readable version">Current version · v${docVersion}</span>
         <button type="button" class="preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save</button>
         <span class="preview-save-status" id="preview-save-status" aria-live="polite"></span>
         <div class="viewer-auth-shell" data-auth-root data-auth-variant="read-link"></div>
@@ -477,6 +614,7 @@ export function generateHtmlTemplate(
   <div class="onboarding-tip" id="onboarding-tip" style="display:none"><span>\u{1F4AC} Click any paragraph to leave a comment</span><button class="tip-dismiss" id="tip-dismiss" aria-label="Dismiss">\u00D7</button></div>
   <div class="doc-toolbar">
     <span class="doc-toolbar-item">Made readable with <a href="/">plsreadme</a></span>
+    <span class="doc-toolbar-item doc-toolbar-version">Current v${docVersion}</span>
     <button class="doc-toolbar-item" onclick="copyLink()">Copy link</button>
     <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
     <a href="/v/${docId}/history" class="doc-toolbar-item">History</a>

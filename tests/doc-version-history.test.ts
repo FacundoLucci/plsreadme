@@ -164,7 +164,7 @@ test("GET /:id/versions returns descending version timeline", async () => {
   assert.equal(payload.versions[1]?.raw_url, "http://local/v/doc123/raw?version=2");
 });
 
-test("GET /:id/history renders a readable version history page", async () => {
+test("GET /:id/history renders restore affordances with explicit warnings", async () => {
   const db = new MockDB([seedDoc()]);
   const env = createEnv(db, new MockBucket());
 
@@ -174,9 +174,35 @@ test("GET /:id/history renders a readable version history page", async () => {
   const html = await response.text();
 
   assert.match(html, /Version history/i);
-  assert.match(html, /v3 \(current\)/);
+  assert.match(html, /Current version v3/i);
+  assert.match(html, /restore-admin-token/);
+  assert.match(html, /Restoring will create a new current version/i);
+  assert.match(html, /data-restore-version="2"/);
+  assert.match(html, /data-restore-version="1"/);
+  assert.ok(!html.includes('data-restore-version="3"'), "current version should not have restore action");
+  assert.match(html, /restore-success/);
+  assert.match(html, /restore-readable-link/);
   assert.match(html, /\/v\/doc123\/raw\?version=2/);
   assert.match(html, /\/v\/doc123/);
+});
+
+test("GET /:id renders current-version badges in viewer chrome", async () => {
+  const db = new MockDB([seedDoc()]);
+  const env = createEnv(
+    db,
+    new MockBucket({
+      "md/doc123.md": "# Title\n\nViewer body",
+    })
+  );
+
+  const response = await docsRoutes.request("http://local/doc123", { method: "GET" }, env);
+
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /Current version · v3/);
+  assert.match(html, /Current v3/);
+  assert.match(html, /\/v\/doc123\/history/);
 });
 
 test("GET /:id/versions returns 404 for missing docs", async () => {
