@@ -574,7 +574,7 @@ export function generateHtmlTemplate(
     .doc-toolbar-toggle::after { content: '▾'; font-size: 0.68rem; line-height: 1; }
     .doc-toolbar-menu[open] .doc-toolbar-toggle::after { content: '▴'; }
     .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% + 0.52rem); display: none; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; width: min(100%, 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.7rem; border: 1px solid var(--border); border-radius: 14px; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-    .doc-toolbar-menu[open] .doc-toolbar-actions-panel { display: flex; }
+    .doc-toolbar-menu[open] .doc-toolbar-actions-panel { display: grid; }
     .doc-toolbar-actions-panel > * { min-width: 0; }
     .doc-toolbar-item { display: flex; align-items: center; justify-content: flex-start; width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.52rem 0.96rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: left; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.3; }
     button.doc-toolbar-item { font-family: inherit; }
