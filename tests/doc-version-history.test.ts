@@ -206,13 +206,14 @@ test("GET /:id renders current-version badges in viewer chrome", async () => {
   const html = await response.text();
 
   assert.match(html, /Current version · v3/);
-  assert.match(html, /id="doc-toolbar-menu"/);
-  assert.match(html, /doc-toolbar-actions-panel/);
+  assert.match(html, /id="doc-toolbar-menu"\s+open/);
+  assert.match(html, /id="doc-toolbar-toggle"[^>]*>Actions<\/summary>/);
+  assert.match(html, /id="doc-toolbar-actions-panel"[\s\S]*Current v3[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw[\s\S]*\/v\/doc123\/history/);
   assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
-  assert.match(html, />Actions<\/summary>/);
-  assert.match(html, /Made readable with <a href="\/">plsreadme<\/a>/);
-  assert.match(html, /Current v3/);
-  assert.match(html, /\/v\/doc123\/history/);
+  assert.match(
+    html,
+    /<div class="doc-toolbar-meta">\s*<span class="doc-toolbar-brand">Made readable with <a href="\/">plsreadme<\/a><\/span>\s*<div class="viewer-auth-shell doc-toolbar-avatar-shell" data-auth-root data-auth-variant="read-link"><\/div>\s*<\/div>/
+  );
 });
 
 test("GET /:id/versions returns 404 for missing docs", async () => {

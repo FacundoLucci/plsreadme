@@ -447,7 +447,7 @@ export function generateHtmlTemplate(
     .auth-secondary-link { color: #2563eb; text-decoration: none; font-size: 0.75rem; font-weight: 600; }
     .auth-secondary-link:hover { text-decoration: underline; }
     .auth-status { color: var(--text-muted); font-size: 0.75rem; }
-    .layout { max-width: 1320px; margin: 0 auto; padding: 2rem 2.25rem 2.5rem; display: grid; grid-template-columns: minmax(0, 820px) minmax(260px, 320px); justify-content: center; align-items: start; gap: 2rem; }
+    .layout { max-width: 1320px; margin: 0 auto; padding: 2rem 2.25rem 6.2rem; display: grid; grid-template-columns: minmax(0, 820px) minmax(260px, 320px); justify-content: center; align-items: start; gap: 2rem; }
     .doc-content { background: transparent; border: none; border-radius: 0; padding: 2.4rem 0.75rem 3rem; max-width: 820px; width: 100%; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
     .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote) { overflow-wrap: anywhere; word-break: break-word; }
     .doc-content .doc-table-scroll {
@@ -565,7 +565,7 @@ export function generateHtmlTemplate(
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
     .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: stretch; gap: 0.45rem; }
-    .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; }
+    .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; }
     .doc-toolbar-menu > summary { list-style: none; }
     .doc-toolbar-menu > summary::-webkit-details-marker { display: none; }
     .doc-toolbar-toggle { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 600; user-select: none; }
@@ -592,7 +592,7 @@ export function generateHtmlTemplate(
     /* Onboarding tip */
     @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes fadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(12px); } }
-    .onboarding-tip { position: fixed; bottom: 3.5rem; left: 50%; transform: translateX(-50%); z-index: 50; background: rgba(253,252,249,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 10px; padding: 0.55rem 1rem; font-size: 0.82rem; color: #3f4652; box-shadow: var(--tooltip-shadow); display: flex; align-items: center; gap: 0.75rem; animation: fadeUp 0.4s ease-out; white-space: nowrap; }
+    .onboarding-tip { position: fixed; bottom: 5.2rem; left: 50%; transform: translateX(-50%); z-index: 50; background: rgba(253,252,249,0.92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 10px; padding: 0.55rem 1rem; font-size: 0.82rem; color: #3f4652; box-shadow: var(--tooltip-shadow); display: flex; align-items: center; gap: 0.75rem; animation: fadeUp 0.4s ease-out; white-space: nowrap; }
     .onboarding-tip.hiding { animation: fadeOut 0.35s ease-in forwards; }
     .onboarding-tip .tip-dismiss { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; padding: 0 0.15rem; line-height: 1; }
     .onboarding-tip .tip-dismiss:hover { color: #6b7280; }
@@ -600,18 +600,15 @@ export function generateHtmlTemplate(
     @media (max-width: 980px) {
       .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; }
       .viewer-header-actions { width: 100%; justify-content: space-between; }
-      .layout { grid-template-columns: 1fr; padding: 1rem 1rem 7.75rem; gap: 1rem; }
+      .layout { grid-template-columns: 1fr; padding: 1rem 1rem 8.2rem; gap: 1rem; }
       .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; }
       .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; }
       .anchor-dot { left: -10px; }
-      .doc-toolbar { left: 0.8rem; right: 0.8rem; bottom: 0.8rem; max-width: calc(100vw - 1.6rem); }
-      .doc-toolbar-menu { width: fit-content; max-width: 100%; }
-      .doc-toolbar-actions-panel { width: min(100%, 30rem); max-width: calc(100vw - 1.6rem); }
     }
     @media (min-width: 981px) {
-      .doc-toolbar { flex-direction: row; align-items: center; }
-      .doc-toolbar-toggle { display: none; }
-      .doc-toolbar-actions-panel { position: static; display: flex; width: auto; max-width: none; padding: 0; border: none; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+      .doc-toolbar { left: 1rem; right: auto; width: min(31rem, calc(100vw - 2rem)); max-width: none; }
+      .doc-toolbar-actions-panel { width: min(31rem, calc(100vw - 2rem)); max-width: calc(100vw - 2rem); }
+      .onboarding-tip { bottom: 4.2rem; }
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -662,7 +659,9 @@ export function generateHtmlTemplate(
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
       .doc-content .anchor-selected { background: rgba(96,165,250,0.22); }
       .general-btn,.doc-toolbar-item { background: #191d26; border-color: var(--border); color: var(--text-main); }
+      .doc-toolbar-meta { background: #191d26; border-color: var(--border); }
       .doc-toolbar-actions-panel { background: rgba(21,25,35,0.96); border-color: var(--border); }
+      .doc-toolbar-brand { color: #a1a8b6; }
       .doc-toolbar-brand a { color: #dbe2ef; }
       .doc-toolbar-version { border-color: #1d4ed8; background: rgba(30,64,175,0.28); color: #bfdbfe; }
       .doc-toolbar-feature { border-color: #7c3aed; color: #a78bfa; }
@@ -700,7 +699,6 @@ export function generateHtmlTemplate(
         <span class="doc-version-badge" title="Current readable version">Current version · v${docVersion}</span>
         <button type="button" class="preview-save-btn" id="preview-save-btn" data-state="idle">☆ Save</button>
         <span class="preview-save-status" id="preview-save-status" aria-live="polite"></span>
-        <div class="viewer-auth-shell" data-auth-root data-auth-variant="read-link"></div>
       </div>
     </div>
   </header>
@@ -733,17 +731,20 @@ export function generateHtmlTemplate(
   </div>
   <div class="onboarding-tip" id="onboarding-tip" style="display:none"><span>\u{1F4AC} Click any paragraph to leave a comment</span><button class="tip-dismiss" id="tip-dismiss" aria-label="Dismiss">\u00D7</button></div>
   <div class="doc-toolbar" aria-label="Document actions toolbar">
-    <details class="doc-toolbar-menu" id="doc-toolbar-menu">
-      <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu">Actions</summary>
-      <div class="doc-toolbar-actions-panel" aria-label="Document actions">
-        <span class="doc-toolbar-item doc-toolbar-version">Current v${docVersion}</span>
+    <details class="doc-toolbar-menu" id="doc-toolbar-menu" open>
+      <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu" aria-controls="doc-toolbar-actions-panel">Actions</summary>
+      <div class="doc-toolbar-actions-panel" id="doc-toolbar-actions-panel" aria-label="Document actions">
+        <span class="doc-toolbar-item doc-toolbar-version" role="status">Current v${docVersion}</span>
         <button type="button" class="doc-toolbar-item" id="toolbar-copy-link">Copy link</button>
         <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
         <a href="/v/${docId}/history" class="doc-toolbar-item">History</a>
         <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-feature">\u{1F4A1} Feature Request</a>
       </div>
     </details>
-    <span class="doc-toolbar-item doc-toolbar-brand">Made readable with <a href="/">plsreadme</a></span>
+    <div class="doc-toolbar-meta">
+      <span class="doc-toolbar-brand">Made readable with <a href="/">plsreadme</a></span>
+      <div class="viewer-auth-shell doc-toolbar-avatar-shell" data-auth-root data-auth-variant="read-link"></div>
+    </div>
   </div>
   <script src="/clerk-auth-shell.js" defer></script>
   <script>
