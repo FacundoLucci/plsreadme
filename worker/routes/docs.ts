@@ -1522,6 +1522,98 @@ async function enforceOwnedDocMutationAuth(
   return null;
 }
 
+// POST /v/:id/restore - Restore document from a previous version
+app.post("/:id/restore", async (c) => {
+  try {
+    const id = c.req.param("id");
+
+    await ensureOwnershipSchema(c.env);
+
+    const token = extractAdminToken(c);
+    if (!token) {
+      return c.json({ error: "Authorization required. Pass admin_token as Bearer token." }, 401);
+    }
+
+    const doc = await validateAdminToken(c.env, id, token);
+    if (!doc) {
+      return c.json({ error: "Invalid admin token or document not found." }, 403);
+    }
+
+    const ownerAuthError = await enforceOwnedDocMutationAuth(c, doc);
+    if (ownerAuthError) {
+      return ownerAuthError;
+    }
+
+    const body = await c.req
+      .json<{ version?: unknown }>()
+      .catch(() => null);
+
+    if (!body || !Number.isInteger(body.version) || Number(body.version) < 1) {
+      return c.json({ error: "Invalid JSON body. Expected { version: number }" }, 400);
+    }
+
+    const requestedVersion = Number(body.version);
+    const currentVersion = resolveDocVersion(doc);
+
+    const currentObject = await c.env.DOCS_BUCKET.get(doc.r2_key);
+    if (!currentObject) {
+      return c.json({ error: "Document content not found in storage." }, 500);
+    }
+    const currentMarkdown = await currentObject.text();
+
+    let restoredMarkdown = currentMarkdown;
+    if (requestedVersion !== currentVersion) {
+      const archivedObject = await c.env.DOCS_BUCKET.get(`md/${id}_v${requestedVersion}.md`);
+      if (!archivedObject) {
+        return c.json({ error: `Document version v${requestedVersion} not found.` }, 404);
+      }
+      restoredMarkdown = await archivedObject.text();
+    }
+
+    const archivedAt = new Date().toISOString();
+    await c.env.DOCS_BUCKET.put(`md/${id}_v${currentVersion}.md`, currentMarkdown, {
+      httpMetadata: { contentType: "text/markdown" },
+      customMetadata: {
+        archived_at: archivedAt,
+        doc_version: String(currentVersion),
+      },
+    });
+
+    const restoredHash = await sha256(restoredMarkdown);
+    const restoredTitle = extractTitle(restoredMarkdown);
+    const restoredBytes = new TextEncoder().encode(restoredMarkdown).length;
+    const nextVersion = currentVersion + 1;
+
+    await c.env.DOCS_BUCKET.put(doc.r2_key, restoredMarkdown, {
+      httpMetadata: { contentType: "text/markdown" },
+      customMetadata: {
+        updated_at: archivedAt,
+        sha256: restoredHash,
+        restored_from_version: String(requestedVersion),
+      },
+    });
+
+    await c.env.DB.prepare("UPDATE docs SET bytes = ?, sha256 = ?, title = ?, doc_version = ? WHERE id = ?")
+      .bind(restoredBytes, restoredHash, restoredTitle, nextVersion, id)
+      .run();
+
+    const baseUrl = new URL(c.req.url).origin;
+    return c.json({
+      id,
+      restored: true,
+      restored_from_version: requestedVersion,
+      current_version: nextVersion,
+      url: `${baseUrl}/v/${id}`,
+      raw_url: `${baseUrl}/v/${id}/raw`,
+      versions_url: `${baseUrl}/v/${id}/versions`,
+      history_url: `${baseUrl}/v/${id}/history`,
+    });
+  } catch (error) {
+    console.error("Error restoring document version:", error);
+    return c.json({ error: "Failed to restore document version" }, 500);
+  }
+});
+
 // PUT /v/:id - Update document content
 app.put("/:id", async (c) => {
   const id = c.req.param("id");

@@ -324,3 +324,62 @@ test("cross-user owned doc mutation is denied", async () => {
   );
   assert.equal(docsUpdateRan, false);
 });
+
+test("cross-user owned doc restore is denied", async () => {
+  const issuer = "https://clerk.example.dev/cross-user-restore";
+  const { token, jwk } = createSignedJwt({
+    issuer,
+    subject: "user_intruder",
+    expiresInSeconds: 600,
+  });
+
+  const db = new MockDB();
+  db.docForAdminToken = {
+    id: "doc888",
+    r2_key: "md/doc888.md",
+    content_type: "text/markdown",
+    bytes: 100,
+    created_at: new Date().toISOString(),
+    sha256: "abc",
+    title: "Owned",
+    view_count: 0,
+    admin_token: "sk_doc888",
+    doc_version: 3,
+    owner_user_id: "user_owner",
+  };
+
+  const bucket = new MockBucket({
+    "md/doc888.md": "# Current",
+    "md/doc888_v2.md": "# Older",
+  });
+  const env = createEnv(db, bucket, issuer);
+
+  const body = JSON.stringify({ version: 2 });
+
+  const response = await withMockedJwks(issuer, jwk, async () =>
+    docsRoutes.request(
+      "http://local/doc888/restore",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: "Bearer sk_doc888",
+          cookie: `__session=${encodeURIComponent(token)}`,
+        },
+        body,
+      },
+      env
+    )
+  );
+
+  assert.equal(response.status, 403);
+  const payload = (await response.json()) as Record<string, unknown>;
+  assert.equal(payload.code, "owner_mismatch");
+
+  assert.equal(bucket.puts.length, 0);
+
+  const restoreUpdateRan = db.runs.some((entry) =>
+    entry.sql.startsWith("UPDATE docs SET bytes = ?, sha256 = ?, title = ?, doc_version = ? WHERE id = ?")
+  );
+  assert.equal(restoreUpdateRan, false);
+});

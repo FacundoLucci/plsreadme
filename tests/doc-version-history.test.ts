@@ -7,6 +7,7 @@ type QueryRecord = { sql: string; params: unknown[] };
 
 class MockDB {
   public firsts: QueryRecord[] = [];
+  public runs: QueryRecord[] = [];
   private readonly docs = new Map<string, DocRecord>();
 
   constructor(seedDocs: DocRecord[]) {
@@ -27,6 +28,15 @@ class MockDB {
       async first<T>() {
         db.firsts.push({ sql, params: this.params });
 
+        if (/SELECT \* FROM docs WHERE id = \? AND admin_token = \?/i.test(sql)) {
+          const [docId, adminToken] = this.params as [string, string];
+          const doc = db.docs.get(docId);
+          if (!doc || doc.admin_token !== adminToken) {
+            return null as T;
+          }
+          return doc as T;
+        }
+
         if (/SELECT \* FROM docs WHERE id = \?/i.test(sql)) {
           const [docId] = this.params as [string];
           return (db.docs.get(docId) || null) as T;
@@ -35,6 +45,29 @@ class MockDB {
         return null;
       },
       async run() {
+        db.runs.push({ sql, params: this.params });
+
+        if (/UPDATE docs SET bytes = \?, sha256 = \?, title = \?, doc_version = \? WHERE id = \?/i.test(sql)) {
+          const [bytes, sha256Value, title, docVersion, docId] = this.params as [
+            number,
+            string,
+            string | null,
+            number,
+            string,
+          ];
+
+          const existingDoc = db.docs.get(docId);
+          if (existingDoc) {
+            db.docs.set(docId, {
+              ...existingDoc,
+              bytes: Number(bytes),
+              sha256: sha256Value,
+              title,
+              doc_version: Number(docVersion),
+            });
+          }
+        }
+
         return { success: true };
       },
       async all<T>() {
@@ -44,10 +77,40 @@ class MockDB {
   }
 }
 
-function createEnv(db: MockDB): Env {
+class MockBucket {
+  public puts: Array<{ key: string; body: string }> = [];
+  private readonly objects = new Map<string, string>();
+
+  constructor(seedObjects: Record<string, string> = {}) {
+    for (const [key, value] of Object.entries(seedObjects)) {
+      this.objects.set(key, value);
+    }
+  }
+
+  async put(key: string, body: unknown) {
+    const textBody = String(body);
+    this.puts.push({ key, body: textBody });
+    this.objects.set(key, textBody);
+  }
+
+  async get(key: string) {
+    const value = this.objects.get(key);
+    if (value === undefined) {
+      return null;
+    }
+
+    return {
+      async text() {
+        return value;
+      },
+    };
+  }
+}
+
+function createEnv(db: MockDB, bucket: MockBucket): Env {
   return {
     DB: db as unknown as D1Database,
-    DOCS_BUCKET: {} as R2Bucket,
+    DOCS_BUCKET: bucket as unknown as R2Bucket,
     ANALYTICS: {
       async writeDataPoint() {
         return;
@@ -77,7 +140,7 @@ function seedDoc(overrides: Partial<DocRecord> = {}): DocRecord {
 
 test("GET /:id/versions returns descending version timeline", async () => {
   const db = new MockDB([seedDoc()]);
-  const env = createEnv(db);
+  const env = createEnv(db, new MockBucket());
 
   const response = await docsRoutes.request("http://local/doc123/versions", { method: "GET" }, env);
 
@@ -103,7 +166,7 @@ test("GET /:id/versions returns descending version timeline", async () => {
 
 test("GET /:id/history renders a readable version history page", async () => {
   const db = new MockDB([seedDoc()]);
-  const env = createEnv(db);
+  const env = createEnv(db, new MockBucket());
 
   const response = await docsRoutes.request("http://local/doc123/history", { method: "GET" }, env);
 
@@ -118,11 +181,110 @@ test("GET /:id/history renders a readable version history page", async () => {
 
 test("GET /:id/versions returns 404 for missing docs", async () => {
   const db = new MockDB([]);
-  const env = createEnv(db);
+  const env = createEnv(db, new MockBucket());
 
   const response = await docsRoutes.request("http://local/missing/versions", { method: "GET" }, env);
 
   assert.equal(response.status, 404);
   const payload = (await response.json()) as Record<string, unknown>;
   assert.equal(payload.error, "Document not found");
+});
+
+test("POST /:id/restore restores a prior version, archives current markdown, and bumps doc_version", async () => {
+  const db = new MockDB([seedDoc()]);
+  const bucket = new MockBucket({
+    "md/doc123.md": "# Current V3\nLatest markdown",
+    "md/doc123_v2.md": "# Restored V2\nEarlier markdown",
+  });
+  const env = createEnv(db, bucket);
+
+  const response = await docsRoutes.request(
+    "http://local/doc123/restore",
+    {
+      method: "POST",
+      headers: {
+        authorization: "Bearer sk_doc123",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ version: 2 }),
+    },
+    env
+  );
+
+  assert.equal(response.status, 200);
+  const payload = (await response.json()) as Record<string, unknown>;
+  assert.equal(payload.restored, true);
+  assert.equal(payload.restored_from_version, 2);
+  assert.equal(payload.current_version, 4);
+  assert.equal(payload.raw_url, "http://local/v/doc123/raw");
+  assert.equal(payload.versions_url, "http://local/v/doc123/versions");
+  assert.equal(payload.history_url, "http://local/v/doc123/history");
+
+  assert.equal(bucket.puts[0]?.key, "md/doc123_v3.md");
+  assert.equal(bucket.puts[0]?.body, "# Current V3\nLatest markdown");
+  assert.equal(bucket.puts[1]?.key, "md/doc123.md");
+  assert.equal(bucket.puts[1]?.body, "# Restored V2\nEarlier markdown");
+
+  const restoreUpdate = db.runs.find((entry) =>
+    /^UPDATE docs SET bytes = \?, sha256 = \?, title = \?, doc_version = \? WHERE id = \?/i.test(entry.sql)
+  );
+  assert.ok(restoreUpdate, "expected docs metadata update for restore");
+  assert.equal(restoreUpdate?.params[3], 4);
+
+  const versionsResponse = await docsRoutes.request("http://local/doc123/versions", { method: "GET" }, env);
+  assert.equal(versionsResponse.status, 200);
+  const versionsPayload = (await versionsResponse.json()) as { current_version: number; total_versions: number };
+  assert.equal(versionsPayload.current_version, 4);
+  assert.equal(versionsPayload.total_versions, 4);
+
+  const archivedSnapshotResponse = await docsRoutes.request(
+    "http://local/doc123/raw?version=3",
+    { method: "GET" },
+    env
+  );
+  assert.equal(archivedSnapshotResponse.status, 200);
+  assert.equal(await archivedSnapshotResponse.text(), "# Current V3\nLatest markdown");
+});
+
+test("POST /:id/restore requires admin token", async () => {
+  const db = new MockDB([seedDoc()]);
+  const env = createEnv(db, new MockBucket({ "md/doc123.md": "# Current" }));
+
+  const response = await docsRoutes.request(
+    "http://local/doc123/restore",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ version: 1 }),
+    },
+    env
+  );
+
+  assert.equal(response.status, 401);
+  const payload = (await response.json()) as Record<string, unknown>;
+  assert.equal(payload.error, "Authorization required. Pass admin_token as Bearer token.");
+});
+
+test("POST /:id/restore rejects missing version payload", async () => {
+  const db = new MockDB([seedDoc()]);
+  const env = createEnv(db, new MockBucket({ "md/doc123.md": "# Current" }));
+
+  const response = await docsRoutes.request(
+    "http://local/doc123/restore",
+    {
+      method: "POST",
+      headers: {
+        authorization: "Bearer sk_doc123",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({}),
+    },
+    env
+  );
+
+  assert.equal(response.status, 400);
+  const payload = (await response.json()) as Record<string, unknown>;
+  assert.equal(payload.error, "Invalid JSON body. Expected { version: number }");
 });
