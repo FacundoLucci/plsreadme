@@ -192,16 +192,22 @@ test("/api/render create route uses dedicated IP rate-limit table (not docs.sha2
   assert.equal(preparedSql.includes("FROM docs WHERE sha256"), false);
 });
 
-test("rendered HTML includes wrap-safe CSS for markdown, comments, and code blocks", () => {
+test("rendered HTML includes wrap-safe CSS for markdown, comments, code blocks, and tables", () => {
   const html = generateHtmlTemplate(
     "Wrap Test",
-    "<pre><code>" + "x".repeat(200) + "</code></pre><p>ok</p>",
+    "<pre><code>" + "x".repeat(200) + "</code></pre><table><thead><tr><th>Very Long Heading</th></tr></thead><tbody><tr><td>Value</td></tr></tbody></table><p>ok</p>",
     "doc123",
     1
   );
 
   assert.ok(html.includes("overflow-wrap: anywhere;"));
   assert.ok(html.includes(".doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll > table { min-width: 100%; border-collapse: collapse; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll :is(th,td) { white-space: normal; overflow-wrap: normal; word-break: normal; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll > table { min-width: 620px; }"));
+  assert.ok(html.includes(".doc-content .doc-table-scroll :is(th,td) { white-space: nowrap; }"));
+  assert.match(html, /<div class="doc-table-scroll"><table>[\s\S]*<\/table><\/div>/);
   assert.ok(html.includes(".comment-body { margin: 0.3rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font-size: 0.88rem; }"));
   assert.ok(html.includes(".sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4f5663; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
 });

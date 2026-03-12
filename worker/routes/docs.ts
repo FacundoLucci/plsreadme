@@ -98,6 +98,12 @@ function sanitizeHtml(html: string): string {
     .replace(/javascript:/gi, "");
 }
 
+function wrapScrollableMarkdownTables(html: string): string {
+  return html.replace(/<table\b[^>]*>[\s\S]*?<\/table>/gi, (tableMarkup) => {
+    return `<div class="doc-table-scroll">${tableMarkup}</div>`;
+  });
+}
+
 // Helper: Generate HTML template for rendered doc
 function slugifyAnchorText(text: string): string {
   const stripped = text
@@ -371,6 +377,7 @@ export function generateHtmlTemplate(
   const pageTitle = title || "Untitled Document";
   const anchoredHtml = addStableAnchorIds(htmlContent);
   const sanitizedHtml = sanitizeHtml(anchoredHtml);
+  const responsiveHtml = wrapScrollableMarkdownTables(sanitizedHtml);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -435,7 +442,10 @@ export function generateHtmlTemplate(
     .auth-status { color: var(--text-muted); font-size: 0.75rem; }
     .layout { max-width: 1320px; margin: 0 auto; padding: 2rem 2.25rem 2.5rem; display: grid; grid-template-columns: minmax(0, 820px) minmax(260px, 320px); justify-content: center; align-items: start; gap: 2rem; }
     .doc-content { background: transparent; border: none; border-radius: 0; padding: 2.4rem 0.75rem 3rem; max-width: 820px; width: 100%; line-height: 1.7; min-width: 0; overflow-wrap: anywhere; }
-    .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,td,th) { overflow-wrap: anywhere; word-break: break-word; }
+    .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote) { overflow-wrap: anywhere; word-break: break-word; }
+    .doc-content .doc-table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .doc-content .doc-table-scroll > table { min-width: 100%; border-collapse: collapse; }
+    .doc-content .doc-table-scroll :is(th,td) { white-space: normal; overflow-wrap: normal; word-break: normal; }
     .doc-content pre { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
     .doc-content pre code { white-space: inherit; word-break: inherit; }
     .doc-content code { overflow-wrap: anywhere; word-break: break-word; }
@@ -501,7 +511,16 @@ export function generateHtmlTemplate(
     .onboarding-tip .tip-dismiss { background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 1rem; padding: 0 0.15rem; line-height: 1; }
     .onboarding-tip .tip-dismiss:hover { color: #6b7280; }
     @media (max-width: 640px) { .onboarding-tip { left: 1rem; right: 1rem; transform: none; white-space: normal; } }
-    @media (max-width: 980px) { .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; } .viewer-header-actions { width: 100%; justify-content: space-between; } .layout { grid-template-columns: 1fr; padding: 1rem 1rem 1.75rem; gap: 1rem; } .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; } .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; } .anchor-dot { left: -10px; } }
+    @media (max-width: 980px) {
+      .viewer-header-inner { flex-wrap: wrap; padding: 0.7rem 1rem; }
+      .viewer-header-actions { width: 100%; justify-content: space-between; }
+      .layout { grid-template-columns: 1fr; padding: 1rem 1rem 1.75rem; gap: 1rem; }
+      .doc-content { max-width: 100%; padding: 1.3rem 0.15rem 1.8rem; }
+      .doc-content .doc-table-scroll > table { min-width: 620px; }
+      .doc-content .doc-table-scroll :is(th,td) { white-space: nowrap; }
+      .side-panel { position: static; max-height: none; border-left: none; border-top: 1px solid var(--border); padding: 0.9rem 0 0; }
+      .anchor-dot { left: -10px; }
+    }
     @media (prefers-color-scheme: dark) {
       :root {
         --page-bg: #13151a;
@@ -585,7 +604,7 @@ export function generateHtmlTemplate(
     </div>
   </header>
   <div class="layout">
-    <article class="doc-content" id="doc-content">${sanitizedHtml}
+    <article class="doc-content" id="doc-content">${responsiveHtml}
       <div id="inline-comment-box">
         <div class="inline-form">
           <div class="comment-login-cta" id="comment-login-cta" style="display:none">
