@@ -234,4 +234,10 @@ test("rendered HTML includes wrap-safe CSS for markdown, comments, code blocks, 
   assert.match(html, /<div class="doc-table-scroll"><table>[\s\S]*<\/table><\/div>/);
   assert.ok(html.includes(".comment-body { margin: 0.3rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; font-size: 0.88rem; }"));
   assert.ok(html.includes(".sidebar-comment .sc-body { margin: 0.15rem 0 0; color: #4f5663; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }"));
+  assert.ok(html.includes("--node-hover-highlight-bg: rgba(59, 130, 246, 0.12);"));
+  assert.ok(html.includes("--node-hover-highlight-bg: rgba(96, 165, 250, 0.19);"));
+  assert.ok(html.includes(".comment-group-hover-highlight { position: absolute; top: 0; left: 0; width: 0; height: 0; border-radius: 14px;"));
+  assert.ok(html.includes("#sidebar-groups.is-hover-highlight-ready .comment-group-header:hover { background: transparent; }"));
+  assert.ok(html.includes("var SIDEBAR_HOVER_BLEED_X = 10;"));
+  assert.ok(html.includes("function setSidebarHoverTarget(target, immediate) {"));
 });
