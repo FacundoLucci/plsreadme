@@ -524,6 +524,11 @@ export function generateHtmlTemplate(
     .side-panel { position: sticky; top: 4.5rem; align-self: start; background: transparent; border: none; border-left: 1px solid var(--border); border-radius: 0; padding: 0.3rem 0 0.6rem 1.25rem; max-height: calc(100vh - 5.25rem); overflow: auto; }
     .panel-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
     .panel-title { margin: 0; font-size: 1rem; }
+    .review-mode-controls { display: inline-flex; align-items: center; gap: 0.32rem; margin-top: 0.6rem; padding: 0.2rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+    .review-mode-btn { border: none; border-radius: 999px; background: transparent; color: var(--text-muted); font-size: 0.72rem; font-weight: 600; padding: 0.3rem 0.6rem; cursor: pointer; }
+    .review-mode-btn:hover { color: var(--text-main); background: var(--surface-muted); }
+    .review-mode-btn.is-active { background: #dbeafe; color: #1e3a8a; }
+    .review-mode-note { margin: 0.4rem 0 0; font-size: 0.72rem; color: var(--text-muted); }
     .anchor-context { font-size: 0.82rem; color: var(--text-muted); margin: 0.5rem 0 0.75rem; }
     .general-btn { border: 1px solid var(--border); background: var(--surface-muted); border-radius: 6px; font-size: 0.78rem; padding: 0.25rem 0.55rem; cursor: pointer; color: var(--text-main); }
     .comments-list { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
@@ -670,6 +675,11 @@ export function generateHtmlTemplate(
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
       .doc-content .anchor-selected { background: rgba(96,165,250,0.22); }
       .general-btn,.doc-toolbar-item { background: #191d26; border-color: var(--border); color: var(--text-main); }
+      .review-mode-controls { background: #191d26; border-color: var(--border); }
+      .review-mode-btn { color: #a1a8b6; }
+      .review-mode-btn:hover { color: #e8ebf0; background: #2b303c; }
+      .review-mode-btn.is-active { background: rgba(30,64,175,0.32); color: #bfdbfe; }
+      .review-mode-note { color: #a1a8b6; }
       .doc-toolbar-menu[open] .doc-toolbar-toggle { border-color: #1d4ed8; background: rgba(30,64,175,0.3); color: #bfdbfe; }
       .doc-toolbar-meta { background: #191d26; border-color: var(--border); }
       .doc-toolbar-actions-panel { background: rgba(21,25,35,0.96); border-color: var(--border); }
@@ -745,6 +755,11 @@ export function generateHtmlTemplate(
         <h2 class="panel-title">Comments (<span id="comment-count">0</span>)</h2>
         <button id="general-btn" class="general-btn" type="button">General</button>
       </div>
+      <div class="review-mode-controls" role="group" aria-label="Comment review mode">
+        <button id="review-mode-current" class="review-mode-btn" type="button">Current draft</button>
+        <button id="review-mode-timeline" class="review-mode-btn" type="button">Timeline</button>
+      </div>
+      <p id="review-mode-note" class="review-mode-note" aria-live="polite"></p>
       <div id="sidebar-groups"></div>
     </aside>
   </div>
@@ -839,11 +854,17 @@ export function generateHtmlTemplate(
 
       var DOC_ID = '${docId}';
       var CURRENT_DOC_VERSION = ${docVersion};
+      var currentDocVersion = CURRENT_DOC_VERSION;
+      var HAS_MULTIPLE_VERSIONS = CURRENT_DOC_VERSION > 1;
+      var REVIEW_MODE_CURRENT = 'current';
+      var REVIEW_MODE_TIMELINE = 'timeline';
       var DOC_ROOT = 'doc-root';
       var selectedAnchor = DOC_ROOT;
       var selectedEl = null;
       var selectedDot = null;
       var allComments = [];
+      var activeReviewMode = resolveInitialReviewMode();
+      var latestCommentsRequestId = 0;
       var contentEl = document.getElementById('doc-content');
       var countEl = document.getElementById('comment-count');
       var nameInput = document.getElementById('comment-name');
@@ -855,6 +876,9 @@ export function generateHtmlTemplate(
       var saveBtn = document.getElementById('preview-save-btn');
       var saveStatusEl = document.getElementById('preview-save-status');
       var generalBtn = document.getElementById('general-btn');
+      var reviewModeCurrentBtn = document.getElementById('review-mode-current');
+      var reviewModeTimelineBtn = document.getElementById('review-mode-timeline');
+      var reviewModeNoteEl = document.getElementById('review-mode-note');
       var sidebarGroupsEl = document.getElementById('sidebar-groups');
       var inlineBox = document.getElementById('inline-comment-box');
       var postBtn = document.getElementById('inline-post-btn');
@@ -881,6 +905,89 @@ export function generateHtmlTemplate(
       function displayNameFromAuth(state) {
         if (!state || !state.authenticated) return '';
         return (state.displayName || state.email || state.userId || 'Signed-in user') + '';
+      }
+
+      function normalizeReviewMode(value) {
+        if (value === REVIEW_MODE_CURRENT) return REVIEW_MODE_CURRENT;
+        if (value === REVIEW_MODE_TIMELINE || value === 'all') return REVIEW_MODE_TIMELINE;
+        return null;
+      }
+
+      function defaultReviewMode() {
+        return HAS_MULTIPLE_VERSIONS ? REVIEW_MODE_CURRENT : REVIEW_MODE_TIMELINE;
+      }
+
+      function resolveInitialReviewMode() {
+        var queryMode = null;
+        try {
+          var params = new URLSearchParams(window.location.search || '');
+          queryMode = normalizeReviewMode(params.get('view'));
+        } catch (e) {
+          queryMode = null;
+        }
+
+        return queryMode || defaultReviewMode();
+      }
+
+      function commentVersion(c) {
+        var v = Number(c && c.doc_version);
+        return Number.isFinite(v) && v > 0 ? v : 1;
+      }
+
+      function apiViewFromReviewMode(mode) {
+        return mode === REVIEW_MODE_CURRENT ? 'current' : 'all';
+      }
+
+      function isCommentVisibleInActiveMode(comment) {
+        if (activeReviewMode !== REVIEW_MODE_CURRENT) return true;
+        return commentVersion(comment) === currentDocVersion;
+      }
+
+      function updateReviewModeUrl(mode) {
+        try {
+          var nextUrl = new URL(window.location.href);
+          nextUrl.searchParams.set('view', mode);
+          window.history.replaceState({}, '', nextUrl.pathname + nextUrl.search + nextUrl.hash);
+        } catch (e) {}
+      }
+
+      function updateReviewModeControls() {
+        if (reviewModeCurrentBtn) {
+          reviewModeCurrentBtn.classList.toggle('is-active', activeReviewMode === REVIEW_MODE_CURRENT);
+          reviewModeCurrentBtn.setAttribute('aria-pressed', activeReviewMode === REVIEW_MODE_CURRENT ? 'true' : 'false');
+        }
+
+        if (reviewModeTimelineBtn) {
+          reviewModeTimelineBtn.classList.toggle('is-active', activeReviewMode === REVIEW_MODE_TIMELINE);
+          reviewModeTimelineBtn.setAttribute('aria-pressed', activeReviewMode === REVIEW_MODE_TIMELINE ? 'true' : 'false');
+        }
+
+        if (reviewModeNoteEl) {
+          if (activeReviewMode === REVIEW_MODE_CURRENT) {
+            reviewModeNoteEl.textContent = 'Showing comments on current draft only.';
+          } else {
+            reviewModeNoteEl.textContent = 'Showing full comment timeline across versions.';
+          }
+        }
+      }
+
+      function setReviewMode(mode, options) {
+        var normalized = normalizeReviewMode(mode) || defaultReviewMode();
+        var opts = options || {};
+        var changed = normalized !== activeReviewMode;
+        activeReviewMode = normalized;
+
+        updateReviewModeControls();
+
+        if (opts.syncUrl !== false) {
+          updateReviewModeUrl(activeReviewMode);
+        }
+
+        if (changed || opts.forceReload) {
+          return loadComments();
+        }
+
+        return Promise.resolve();
       }
 
       function triggerSignInFlow() {
@@ -1131,13 +1238,11 @@ export function generateHtmlTemplate(
         sidebarGroupsEl.innerHTML = '';
         countEl.textContent = allComments.length;
         if (!allComments.length) {
-          sidebarGroupsEl.innerHTML = '<p class="sidebar-empty">No comments yet.</p>';
+          var emptyMessage = activeReviewMode === REVIEW_MODE_CURRENT
+            ? 'No comments on the current draft yet.'
+            : 'No comments yet.';
+          sidebarGroupsEl.innerHTML = '<p class="sidebar-empty">' + emptyMessage + '</p>';
           return;
-        }
-
-        function commentVersion(c) {
-          var v = Number(c && c.doc_version);
-          return Number.isFinite(v) && v > 0 ? v : 1;
         }
 
         // Group by anchor_id, with orphan fallback to General
@@ -1151,7 +1256,7 @@ export function generateHtmlTemplate(
           if (!groups[aid]) { groups[aid] = []; order.push(aid); }
           groups[aid].push({
             comment: c,
-            isOlder: commentVersion(c) < CURRENT_DOC_VERSION,
+            isOlder: commentVersion(c) < currentDocVersion,
             isOrphan: isOrphan,
             originalAnchor: originalAid,
             version: commentVersion(c)
@@ -1265,6 +1370,18 @@ export function generateHtmlTemplate(
         hideInlineBox();
       });
 
+      if (reviewModeCurrentBtn) {
+        reviewModeCurrentBtn.addEventListener('click', function() {
+          void setReviewMode(REVIEW_MODE_CURRENT);
+        });
+      }
+
+      if (reviewModeTimelineBtn) {
+        reviewModeTimelineBtn.addEventListener('click', function() {
+          void setReviewMode(REVIEW_MODE_TIMELINE);
+        });
+      }
+
       cancelBtn.addEventListener('click', function() {
         hideInlineBox();
         clearSelection();
@@ -1315,9 +1432,22 @@ export function generateHtmlTemplate(
       }
 
       function loadComments() {
-        fetch('/api/comments/' + DOC_ID)
+        var requestId = ++latestCommentsRequestId;
+        var apiView = apiViewFromReviewMode(activeReviewMode);
+
+        return fetch('/api/comments/' + DOC_ID + '?view=' + encodeURIComponent(apiView))
           .then(function(r) { return r.json(); })
-          .then(function(data) { allComments = data.comments || []; renderComments(); renderBadges(); })
+          .then(function(data) {
+            if (requestId !== latestCommentsRequestId) return;
+            var comments = data && Array.isArray(data.comments) ? data.comments : [];
+            var metaVersion = Number(data && data.meta && data.meta.current_doc_version);
+            if (Number.isFinite(metaVersion) && metaVersion > 0) {
+              currentDocVersion = metaVersion;
+            }
+            allComments = comments;
+            renderComments();
+            renderBadges();
+          })
           .catch(function() {});
       }
 
@@ -1358,13 +1488,17 @@ export function generateHtmlTemplate(
             return r.json();
           })
           .then(function(data) {
-            allComments.push(data.comment);
+            var nextComment = data && data.comment;
+            if (nextComment && isCommentVisibleInActiveMode(nextComment)) {
+              allComments.push(nextComment);
+              renderComments();
+              renderBadges();
+            }
             bodyInput.value = '';
             if (!isSignedIn) {
               localStorage.setItem('plsreadme_author_name', name);
             }
-            renderComments();
-            renderBadges();
+            return loadComments();
           })
           .catch(function(err) {
             errorEl.textContent = err.message;
@@ -1393,7 +1527,8 @@ export function generateHtmlTemplate(
         applyAuthState((event && event.detail) || { authenticated: false });
       });
 
-      loadComments();
+      updateReviewModeControls();
+      void setReviewMode(activeReviewMode, { forceReload: true });
 
       // Onboarding tip
       (function() {

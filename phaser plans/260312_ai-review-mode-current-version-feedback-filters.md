@@ -5,15 +5,15 @@
 
 ## Objective
 - [x] Define the feature contract for AI-first review mode.
-- [ ] Ship a comments review mode that defaults to **current-version feedback** so collaborators and agents see what still matters on the latest draft.
-- [ ] Preserve timeline visibility (`all` comments) for audits/history without overwhelming day-to-day iteration.
+- [x] Ship a comments review mode that defaults to **current-version feedback** so collaborators and agents see what still matters on the latest draft.
+- [x] Preserve timeline visibility (`all` comments) for audits/history without overwhelming day-to-day iteration.
 
 ## Scope
 - In scope:
   - [x] Comments API filter contract for current-version vs timeline views.
-  - [ ] Viewer sidebar controls for switching review mode.
-  - [ ] URL/query-state persistence for review mode.
-  - [ ] Automated tests for API behavior and regression safety.
+  - [x] Viewer sidebar controls for switching review mode.
+  - [x] URL/query-state persistence for review mode.
+  - [x] Automated tests for API behavior and regression safety.
 - Out of scope:
   - [ ] Threaded replies or comment resolution workflows.
   - [ ] Notification fanout or digest-email redesign.
@@ -49,15 +49,15 @@
 - [x] `2026-03-12 19:15 UTC` — Agent: coder — Status: started — Notes: validated branch safety and drafted API contract.
 - [x] `2026-03-12 19:30 UTC` — Agent: coder — Status: completed — Notes: filters + tests landed in `ec218fa`; `npm test` passed.
 
-### Phase 2 — Viewer Review-Mode UX (Current vs Timeline) ⚪
+### Phase 2 — Viewer Review-Mode UX (Current vs Timeline) ✅
 **Context Scope:** inline docs viewer template in `worker/routes/docs.ts` (comments sidebar and load behavior).
 **Out of Scope (for this phase):** backend schema changes, threaded replies, notification systems.
-- [ ] Add review mode controls in sidebar (`Current draft`, `Timeline`).
-- [ ] Default viewer to `Current draft` when doc has multiple versions; keep `Timeline` available.
-- [ ] Wire mode changes to `GET /api/comments/:docId?view=...`.
-- [ ] Persist mode in URL query param for shareable review links.
-- [ ] Ensure comment badges/counts reflect active mode and remain stable after posting.
-- [ ] Run checks after implementation (`npm test`).
+- [x] Add review mode controls in sidebar (`Current draft`, `Timeline`).
+- [x] Default viewer to `Current draft` when doc has multiple versions; keep `Timeline` available.
+- [x] Wire mode changes to `GET /api/comments/:docId?view=...`.
+- [x] Persist mode in URL query param for shareable review links.
+- [x] Ensure comment badges/counts reflect active mode and remain stable after posting.
+- [x] Run checks after implementation (`npm test`).
 
 **Files:**
 - `worker/routes/docs.ts` — UI controls, state, fetch params, count/badge rendering updates.
@@ -65,15 +65,18 @@
 - `phaser plans/260312_ai-review-mode-current-version-feedback-filters.md` — phase tracking.
 
 **Acceptance Criteria:**
-- [ ] Users can switch between latest actionable feedback and full timeline.
-- [ ] Default mode reduces stale-comment noise for iterative AI doc editing.
-- [ ] No regression to comment posting flow.
+- [x] Users can switch between latest actionable feedback and full timeline.
+- [x] Default mode reduces stale-comment noise for iterative AI doc editing.
+- [x] No regression to comment posting flow.
 
 **Build Notes (decisions/learning):**
-- Pending.
+- Sidebar now exposes explicit review-mode controls and uses URL `?view=current|timeline` to keep links shareable.
+- API calls map `current -> view=current` and `timeline -> view=all` while preserving existing endpoint contract.
+- After posting, the viewer refreshes comments in the active mode to keep badges/counts consistent.
 
 **Phase Run Log:**
-- [ ] `YYYY-MM-DD HH:MM UTC` — Agent: coder — Status: started — Notes:
+- [x] `2026-03-13 00:54 UTC` — Agent: coder — Status: started — Notes: implementing sidebar controls, URL state, and active-mode comment loading.
+- [x] `2026-03-13 00:54 UTC` — Agent: coder — Status: completed — Notes: review-mode UI + URL persistence + mode-aware comment refresh landed; `npm test` passed.
 
 ### Phase 3 — Documentation + Rollout Validation ⚪
 **Context Scope:** product docs and AI workflow guidance.
