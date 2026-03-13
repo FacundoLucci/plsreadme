@@ -50,6 +50,27 @@ Safety behavior:
 - Monotonic `doc_version` increment
 - Restore is rate-limited similarly to updates (currently 60/hour per actor key)
 
+### `GET /api/comments/:docId?view=current|all`
+Comment review mode endpoint for version-aware feedback triage.
+
+Query options:
+- `view=current` → returns only comments on the latest doc version (actionable now)
+- `view=all` → returns the full timeline (default API behavior)
+
+Viewer mapping:
+- `?view=current` in the viewer URL maps to API `view=current`
+- `?view=timeline` in the viewer URL maps to API `view=all`
+
+## Recommended workflow: Current draft first, Timeline on demand
+
+Use this sequence for both human and AI-assisted review loops:
+
+1. Open the doc in **Current draft** mode first (`?view=current`) to focus on unresolved feedback for the latest revision.
+2. Address or re-evaluate only comments that still apply to the active draft.
+3. Switch to **Timeline** mode (`?view=timeline`) when you need historical context, audit trails, or regression forensics.
+4. Keep iteration decisions anchored to `current_version` from `/v/:id/versions`.
+5. If a draft regresses, restore with `POST /v/:id/restore` and continue forward from that new current version.
+
 ## Suggested human workflow
 
 1. Share initial draft (`POST /api/render`).
@@ -67,7 +88,9 @@ Use `/versions` instead of scraping rendered pages:
 3. If `current_version === lastReviewedVersion`, no-op.
 4. If newer:
    - fetch `versions[0].raw_url`
+   - fetch `/api/comments/:docId?view=current` for latest-draft-only feedback
    - run your lint/review/check logic
+   - escalate to `view=all` only when historical context is required
    - post findings to your review channel
    - set `lastReviewedVersion = current_version`
 5. If checks fail hard, escalate to human or restore a known-good version.

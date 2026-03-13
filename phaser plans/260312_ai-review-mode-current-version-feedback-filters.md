@@ -1,7 +1,7 @@
 # AI Review Mode: Current-Version Feedback Filters — Phaser Plan
 
 **Date:** 2026-03-12
-**Status:** 🟡 In Progress
+**Status:** ✅ Complete
 
 ## Objective
 - [x] Define the feature contract for AI-first review mode.
@@ -78,13 +78,13 @@
 - [x] `2026-03-13 00:54 UTC` — Agent: coder — Status: started — Notes: implementing sidebar controls, URL state, and active-mode comment loading.
 - [x] `2026-03-13 00:54 UTC` — Agent: coder — Status: completed — Notes: review-mode UI + URL persistence + mode-aware comment refresh landed; `npm test` passed.
 
-### Phase 3 — Documentation + Rollout Validation ⚪
+### Phase 3 — Documentation + Rollout Validation ✅
 **Context Scope:** product docs and AI workflow guidance.
 **Out of Scope (for this phase):** new backend features beyond documented scope.
-- [ ] Update README feature list and usage notes for review mode.
-- [ ] Update `docs/ai-iteration-versioning.md` with recommended “Current draft first, Timeline on demand” workflow.
-- [ ] Run final validation checks for shipped phases (`npm test`; optional `npx wrangler deploy --dry-run` if env allows).
-- [ ] Capture release notes/changelog snippet.
+- [x] Update README feature list and usage notes for review mode.
+- [x] Update `docs/ai-iteration-versioning.md` with recommended “Current draft first, Timeline on demand” workflow.
+- [x] Run final validation checks for shipped phases (`npm test`; optional `npx wrangler deploy --dry-run` if env allows).
+- [x] Capture release notes/changelog snippet.
 
 **Files:**
 - `README.md` — feature and behavior updates.
@@ -92,15 +92,26 @@
 - `phaser plans/260312_ai-review-mode-current-version-feedback-filters.md` — final status and notes.
 
 **Acceptance Criteria:**
-- [ ] Docs clearly explain review-mode behavior and why it helps AI iteration.
-- [ ] Validation evidence is captured in plan run logs.
-- [ ] Plan is ready for next `/loop` pass without ambiguity.
+- [x] Docs clearly explain review-mode behavior and why it helps AI iteration.
+- [x] Validation evidence is captured in plan run logs.
+- [x] Plan is ready for next `/loop` pass without ambiguity.
 
 **Build Notes (decisions/learning):**
-- Pending.
+- README now documents review-mode behavior end-to-end (feature list + API/viewer usage notes) so humans and agents can align on `current` vs `timeline` semantics.
+- AI iteration playbook now codifies the recommended operating sequence: **Current draft first, Timeline on demand**.
+- Validation now includes both test and deploy packaging checks from the phase branch.
+
+**Release Notes / Changelog Snippet:**
+- Added docs for review-mode controls: **Current draft** (latest actionable feedback) and **Timeline** (full history).
+- Added API usage notes for `/api/comments/:docId?view=current|all` and shareable viewer URLs `?view=current|timeline`.
+- Updated AI iteration playbook with the recommended “Current draft first, Timeline on demand” workflow.
+- Verified rollout readiness with `npm test` and `npx wrangler deploy --dry-run`.
 
 **Phase Run Log:**
-- [ ] `YYYY-MM-DD HH:MM UTC` — Agent: coder — Status: started — Notes:
+- [x] `2026-03-13 00:56 UTC` — Agent: coder — Status: started — Notes: updating README + AI iteration docs for review-mode rollout guidance.
+- [x] `2026-03-13 00:57 UTC` — Agent: coder — Status: validation — Notes: `npm test` passed (42/42).
+- [x] `2026-03-13 00:57 UTC` — Agent: coder — Status: validation — Notes: `npx wrangler deploy --dry-run` succeeded; bindings/package output rendered with no deploy executed.
+- [x] `2026-03-13 00:57 UTC` — Agent: coder — Status: completed — Notes: phase docs + changelog snippet finalized; Phase 3 acceptance criteria marked complete.
 
 ## Risks
 - Risk: Clients that assume all comments always return may mis-handle filtered responses.

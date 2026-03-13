@@ -34,6 +34,7 @@ You wrote a README, a PRD, meeting notes, or an API doc in markdown. Now you nee
 - **Instant sharing** — Paste markdown or upload a file, get a `plsrd.me` link
 - **Beautiful rendering** — Clean typography, dark mode, mobile-responsive
 - **Inline comments** — Readers can click any paragraph and leave feedback
+- **Review mode (current vs timeline)** — Multi-version docs default to **Current draft** feedback with one-click access to full **Timeline** history
 - **AI auto-formatting** — Throw raw text at it; it comes out as clean markdown
 - **MCP server** — Share docs directly from Claude, Cursor, VS Code, or any MCP client
 - **OpenClaw skill** — Available on [ClawHub](https://clawhub.com) for AI agent workflows
@@ -115,6 +116,28 @@ curl -X POST https://plsreadme.com/v/abc123def456/restore \
 Restore is rate-limited similarly to updates (currently `60/hour` per actor key) to reduce abuse.
 
 For docs owned by an authenticated Clerk user, update/delete/restore also require that owner session (to prevent cross-user mutation), while anonymous docs continue to work with `admin_token` only.
+
+#### Review mode usage notes (Current draft first, Timeline on demand)
+
+The document viewer now exposes comment review controls:
+
+- **Current draft** — shows only comments tied to the latest doc version (default when a doc has multiple versions).
+- **Timeline** — shows the full cross-version comment history.
+
+You can fetch the same modes directly from the API:
+
+```bash
+# Latest-version comments only
+curl "https://plsreadme.com/api/comments/abc123def456?view=current"
+
+# Full timeline comments (default API behavior)
+curl "https://plsreadme.com/api/comments/abc123def456?view=all"
+```
+
+Viewer links persist the mode in the URL for shareable review context:
+
+- `https://plsreadme.com/v/abc123def456?view=current`
+- `https://plsreadme.com/v/abc123def456?view=timeline`
 
 To claim a legacy anonymous link into your signed-in account:
 
