@@ -135,26 +135,41 @@
     return window.Clerk;
   }
 
+  async function fetchBackendSession(token) {
+    if (!token) {
+      return null;
+    }
+
+    const response = await fetch("/api/auth/session", {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return response.json();
+  }
+
   async function getBackendSession(clerk) {
     try {
       const token = await clerk.session?.getToken?.();
-      if (!token) {
-        return null;
+      const session = await fetchBackendSession(token);
+
+      if (session && session.authenticated === true) {
+        return session;
       }
 
-      const response = await fetch("/api/auth/session", {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        return null;
+      const refreshedToken = await clerk.session?.getToken?.({ skipCache: true });
+      if (!refreshedToken || refreshedToken === token) {
+        return session;
       }
 
-      return response.json();
+      return fetchBackendSession(refreshedToken);
     } catch {
       return null;
     }
@@ -398,13 +413,14 @@
     try {
       const clerk = await getClerkClient(config.publishableKey);
       const backendSession = await getBackendSession(clerk);
+      const backendAuthenticated = !!(backendSession && backendSession.authenticated === true);
 
-      if (!clerk.isSignedIn) {
+      if (!clerk.isSignedIn || !backendAuthenticated) {
         renderRoots((root) => renderSignedOut(getVariant(root)));
 
         publishAuthState({
           authenticated: false,
-          reason: "signed_out",
+          reason: clerk.isSignedIn ? "session_invalid" : "signed_out",
           clerkReady: true,
         });
         setTokenGetter(async () => null);
@@ -417,21 +433,12 @@
         clerk.user?.fullName ||
         clerk.user?.firstName ||
         clerk.user?.primaryEmailAddress?.emailAddress ||
-        backendSession?.email ||
+        backendSession.email ||
         "Signed in";
       const avatarUrl = clerk.user?.imageUrl || "";
-      const email = backendSession?.email || clerk.user?.primaryEmailAddress?.emailAddress || "";
+      const email = backendSession.email || clerk.user?.primaryEmailAddress?.emailAddress || "";
 
       renderRoots((root) => renderSignedIn(getVariant(root), displayName, avatarUrl, email));
-
-      publishAuthState({
-        authenticated: true,
-        userId: backendSession?.userId || clerk.user?.id || null,
-        sessionId: backendSession?.sessionId || clerk.session?.id || null,
-        email: email || null,
-        displayName,
-        tokenSource: backendSession?.tokenSource || "clerk",
-      });
 
       setTokenGetter(async () => {
         try {
@@ -441,9 +448,18 @@
         }
       });
 
+      publishAuthState({
+        authenticated: true,
+        userId: backendSession.userId || clerk.user?.id || null,
+        sessionId: backendSession.sessionId || clerk.session?.id || null,
+        email: email || null,
+        displayName,
+        tokenSource: backendSession.tokenSource || "clerk",
+      });
+
       const identity =
-        backendSession?.sessionId || backendSession?.userId || clerk.session?.id || clerk.user?.id;
-      trackLoginSuccess(identity, backendSession?.tokenSource || "clerk");
+        backendSession.sessionId || backendSession.userId || clerk.session?.id || clerk.user?.id;
+      trackLoginSuccess(identity, backendSession.tokenSource || "clerk");
       bindSignedInActions(clerk);
     } catch (error) {
       console.error("Failed to initialize Clerk auth shell", error);

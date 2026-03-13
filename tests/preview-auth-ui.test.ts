@@ -97,3 +97,12 @@ test("auth redirects preserve returnBackUrl from preview actions", async () => {
   assert.match(script, /redirectToSignUp\(\{\s*returnBackUrl: window\.location\.href,/);
   assert.match(script, /searchParams\.set\("redirect_url", returnTo\)/);
 });
+
+test("auth shell gates read-link authenticated state on backend session validity", async () => {
+  const script = await loadAuthShellScript();
+
+  assert.match(script, /const backendAuthenticated = !!\(backendSession && backendSession\.authenticated === true\);/);
+  assert.match(script, /if \(!clerk\.isSignedIn \|\| !backendAuthenticated\)/);
+  assert.match(script, /reason: clerk\.isSignedIn \? "session_invalid" : "signed_out"/);
+  assert.match(script, /const refreshedToken = await clerk\.session\?\.getToken\?\.\(\{ skipCache: true \}\);/);
+});
