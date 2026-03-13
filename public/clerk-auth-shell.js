@@ -300,11 +300,27 @@
     }
   }
 
+
+  const AUTH_ICONS = {
+    chevronDown:
+      '<svg class="lucide-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>',
+    signIn:
+      '<svg class="lucide-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 3 6 6-6 6"></path><path d="M21 9H9"></path><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path></svg>',
+    dashboard:
+      '<svg class="lucide-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect></svg>',
+    signOut:
+      '<svg class="lucide-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 17 5-5-5-5"></path><path d="M21 12H9"></path><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path></svg>',
+  };
+
+  function authIcon(name) {
+    return AUTH_ICONS[name] || "";
+  }
+
   function renderSignedOut(variant) {
     if (variant === "read-link") {
       return `
         <div class="auth-shell-inner auth-shell-inner-read-link">
-          <button type="button" class="auth-link-button" data-auth-action="sign-in">Sign in</button>
+          <button type="button" class="auth-link-button" data-auth-action="sign-in"><span class="auth-link-button-icon" aria-hidden="true">${authIcon("signIn")}</span><span>Sign in</span></button>
         </div>
       `;
     }
@@ -312,7 +328,7 @@
     return `
       <div class="auth-shell-inner">
         <div class="auth-buttons">
-          <button type="button" class="auth-link-button" data-auth-action="sign-in">Sign in</button>
+          <button type="button" class="auth-link-button" data-auth-action="sign-in"><span class="auth-link-button-icon" aria-hidden="true">${authIcon("signIn")}</span><span>Sign in</span></button>
         </div>
       </div>
     `;
@@ -342,11 +358,11 @@
           >
             <span class="auth-avatar" aria-hidden="true">${avatarMarkup}</span>
             <span class="auth-user-chip" title="${escapeHtml(email || displayName)}">${escapeHtml(displayName)}</span>
-            <span class="auth-menu-caret" aria-hidden="true">▾</span>
+            <span class="auth-menu-caret" aria-hidden="true">${authIcon("chevronDown")}</span>
           </button>
           <div class="auth-menu-dropdown" role="menu">
-            <a href="/my-links" class="auth-menu-item" role="menuitem">My dashboard</a>
-            <button type="button" class="auth-menu-item auth-menu-item-button" data-auth-action="sign-out" role="menuitem">Logout</button>
+            <a href="/my-links" class="auth-menu-item" role="menuitem"><span class="auth-menu-item-icon" aria-hidden="true">${authIcon("dashboard")}</span><span>My dashboard</span></a>
+            <button type="button" class="auth-menu-item auth-menu-item-button" data-auth-action="sign-out" role="menuitem"><span class="auth-menu-item-icon" aria-hidden="true">${authIcon("signOut")}</span><span>Logout</span></button>
           </div>
         </div>
       </div>

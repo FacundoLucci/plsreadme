@@ -209,29 +209,34 @@ test("GET /:id renders mobile actions-only viewer chrome", async () => {
   assert.match(html, /class="viewer-header-actions"[\s\S]*id="preview-save-btn"[\s\S]*Save to My Links/);
   assert.match(html, /class="viewer-header-actions"[\s\S]*id="preview-save-status"/);
   assert.match(html, /fonts\.googleapis\.com\/css2\?family=Lexend/);
-  assert.match(html, /id="doc-toolbar-menu"\s+open/);
-  assert.match(html, /id="doc-toolbar-toggle"[^>]*aria-expanded="true"[^>]*>Actions<\/summary>/);
+  assert.doesNotMatch(html, /<details class="doc-toolbar-menu"/);
+  assert.match(html, /id="doc-toolbar-toggle"[^>]*aria-expanded="false"[\s\S]*Current v3/);
   assert.match(
     html,
-    /id="doc-toolbar-actions-panel"[\s\S]*id="doc-toolbar-close"[\s\S]*Current v3[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw/
+    /id="doc-toolbar-actions-panel"[\s\S]*id="doc-toolbar-close"[\s\S]*doc-toolbar-history[\s\S]*History[\s\S]*id="toolbar-copy-link"[\s\S]*Copy link[\s\S]*\/v\/doc123\/raw/
   );
   assert.doesNotMatch(html, /id="doc-toolbar-actions-panel"[\s\S]*id="preview-save-btn"/);
-  assert.doesNotMatch(html, /class="doc-toolbar-item">History</);
-  assert.match(html, /doc-toolbar \{[^}]*align-items: flex-start;[^}]*gap: 0\.32rem;/);
-  assert.match(html, /doc-toolbar-menu \{[^}]*width: auto;[^}]*align-self: flex-start;/);
-  assert.match(html, /doc-toolbar-toggle \{[^}]*min-height: 2\.5rem;[^}]*padding: 0\.3rem 0\.78rem;[^}]*transition: transform 0\.2s ease/);
-  assert.match(html, /doc-toolbar-menu\[open\] \.doc-toolbar-toggle \{[^}]*transform: translateY\(-0\.18rem\);[^}]*border-top-left-radius: 0;[^}]*border-top-right-radius: 0;/);
-  assert.match(html, /doc-toolbar-actions-panel \{[^}]*flex-wrap: wrap;/);
-  assert.match(html, /doc-toolbar-actions-panel \{[^}]*bottom: calc\(100% - 0\.2rem\);[^}]*padding: 0\.86rem 0\.58rem 0\.58rem;[^}]*opacity: 0;[^}]*visibility: hidden;/);
-  assert.match(html, /doc-toolbar-item \{[^}]*width: fit-content;/);
-  assert.match(html, /doc-toolbar-item \{[^}]*white-space: nowrap;/);
-  assert.match(html, /doc-toolbar-panel-close \{[^}]*position: absolute;[^}]*top: 0\.32rem;[^}]*right: 0\.32rem;/);
+  assert.match(html, /doc-toolbar \{[^}]*align-items: flex-start;[^}]*gap: 0\.4rem;/);
+  assert.match(html, /doc-toolbar-menu \{[^}]*width: min\(100%, 14\.5rem\);[^}]*align-self: flex-start;/);
+  assert.match(html, /doc-toolbar-toggle \{[^}]*justify-content: space-between;[^}]*min-height: 2\.34rem;[^}]*padding: 0\.42rem 0\.72rem 0\.42rem 0\.82rem;/);
+  assert.match(html, /doc-toolbar-menu\.is-open \.doc-toolbar-toggle-chevron \{[^}]*transform: rotate\(180deg\);/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*flex-direction: column;/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*bottom: calc\(100% \+ 0\.42rem\);/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*padding: 0\.5rem;/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*opacity: 0;/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*visibility: hidden;/);
+  assert.match(html, /doc-toolbar-actions-panel \{[^}]*transform: translate\(-0\.42rem, 0\.34rem\);/);
+  assert.match(html, /doc-toolbar-action-entry \{[^}]*transition-delay: calc\(var\(--cascade-down, 0\) \* 30ms\);/);
+  assert.match(html, /doc-toolbar-menu\.is-open \.doc-toolbar-action-entry \{[^}]*transition-delay: calc\(var\(--cascade-up, 0\) \* 34ms\);/);
+  assert.match(html, /doc-toolbar-item \{[^}]*width: 100%;[^}]*text-align: left;/);
+  assert.match(html, /doc-toolbar-panel-close \{[^}]*align-self: flex-end;[^}]*width: 1\.65rem;[^}]*height: 1\.65rem;/);
   assert.match(html, /<div class="doc-toolbar-meta">\s*<span class="doc-toolbar-brand">Made readable with <a href="\/">plsreadme<\/a><\/span>\s*<\/div>/);
   assert.match(html, /doc-toolbar-meta \{[^}]*display: inline-flex;[^}]*align-self: flex-start;[^}]*width: fit-content;/);
   assert.match(html, /<div class="doc-toolbar-auth-floating">\s*<div class="viewer-auth-shell doc-toolbar-auth-shell" data-auth-root data-auth-variant="read-link"><\/div>\s*<\/div>/);
   assert.match(html, /doc-toolbar-auth-floating \{[^}]*z-index: 45;[^}]*pointer-events: auto;/);
   assert.match(html, /doc-toolbar-auth-shell \.auth-menu-trigger \{[^}]*pointer-events: auto;/);
   assert.match(html, /doc-toolbar-auth-shell \.auth-menu-dropdown \{[^}]*top: auto;[^}]*bottom: calc\(100% \+ 0\.35rem\);[^}]*z-index: 80;/);
+  assert.match(html, /class="lucide-icon"/);
 });
 
 test("GET /:id/versions returns 404 for missing docs", async () => {

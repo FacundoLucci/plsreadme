@@ -433,18 +433,22 @@ export function generateHtmlTemplate(
     .preview-save-btn[data-state="created"] { border-color: #86efac; color: #166534; background: #f0fdf4; cursor: default; }
     .preview-save-status { font-size: 0.72rem; color: var(--text-muted); }
     .preview-save-status button { margin-left: 0.35rem; border: none; background: none; color: #2563eb; font-weight: 600; cursor: pointer; padding: 0; }
+    .lucide-icon { width: 0.92rem; height: 0.92rem; stroke: currentColor; stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; flex: 0 0 auto; }
     .auth-shell-inner { display: flex; align-items: center; gap: 0.45rem; }
-    .auth-link-button { border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--surface); color: var(--text-main); padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+    .auth-link-button { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid var(--border); border-radius: var(--control-radius); background: var(--surface); color: var(--text-main); padding: 0.38rem 0.78rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .auth-link-button:hover { border-color: #93c5fd; background: #eff6ff; }
     .auth-link-button-secondary { background: transparent; color: var(--text-muted); }
+    .auth-link-button-icon { color: currentColor; }
     .auth-menu { position: relative; }
     .auth-menu-trigger { display: inline-flex; align-items: center; gap: 0.35rem; border: 1px solid #dbeafe; border-radius: var(--control-radius); background: #eff6ff; color: #1e3a8a; padding: 0.16rem 0.26rem 0.16rem 0.2rem; cursor: pointer; }
     .auth-menu-trigger:hover { border-color: #93c5fd; background: #dbeafe; }
-    .auth-menu-caret { font-size: 0.68rem; color: #1d4ed8; }
+    .auth-menu-caret { display: inline-flex; align-items: center; color: #1d4ed8; }
     .auth-menu-dropdown { position: absolute; right: 0; top: calc(100% + 0.35rem); min-width: 150px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); box-shadow: var(--panel-shadow); display: none; padding: 0.22rem; z-index: 40; }
     .auth-menu.is-open .auth-menu-dropdown { display: block; }
-    .auth-menu-item { display: block; width: 100%; border: none; border-radius: 6px; background: transparent; color: var(--text-main); text-decoration: none; text-align: left; font-size: 0.75rem; font-weight: 600; padding: 0.4rem 0.52rem; cursor: pointer; }
+    .auth-menu-item { display: flex; align-items: center; gap: 0.38rem; width: 100%; border: none; border-radius: 6px; background: transparent; color: var(--text-main); text-decoration: none; text-align: left; font-size: 0.75rem; font-weight: 600; padding: 0.4rem 0.52rem; cursor: pointer; }
+    .auth-menu-item-icon { color: var(--text-muted); }
     .auth-menu-item:hover { background: var(--surface-muted); }
+    .auth-menu-item:hover .auth-menu-item-icon { color: currentColor; }
     .auth-menu-item-button { font-family: inherit; }
     .auth-avatar { width: 1.5rem; height: 1.5rem; border-radius: 999px; overflow: hidden; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #bfdbfe; background: #dbeafe; color: #1e3a8a; flex: 0 0 auto; }
     .auth-avatar-img { width: 100%; height: 100%; object-fit: cover; }
@@ -578,20 +582,25 @@ export function generateHtmlTemplate(
     @keyframes flash-highlight { 0% { background: rgba(59,130,246,0.3); } 100% { background: transparent; } }
     .flash-highlight { animation: flash-highlight 1.2s ease-out; }
     .comment-badge { position: absolute; top: -6px; right: -6px; min-width: 18px; height: 18px; line-height: 18px; text-align: center; font-size: 0.7rem; font-weight: 600; color: #fff; background: #3b82f6; border-radius: 9px; padding: 0 5px; box-sizing: border-box; cursor: pointer; z-index: 2; user-select: none; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 31rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.32rem; }
-    .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: auto; max-width: 100%; align-self: flex-start; }
-    .doc-toolbar-menu > summary { list-style: none; }
-    .doc-toolbar-menu > summary::-webkit-details-marker { display: none; }
-    .doc-toolbar-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; font-weight: 600; user-select: none; min-height: 2.5rem; padding: 0.3rem 0.78rem; border-radius: 11px; line-height: 1.2; transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease; }
-    .doc-toolbar-toggle::after { content: '▾'; font-size: 0.68rem; line-height: 1; }
-    .doc-toolbar-menu[open] .doc-toolbar-toggle::after { content: '▴'; }
-    .doc-toolbar-menu[open] .doc-toolbar-toggle { transform: translateY(-0.18rem); border-color: #bfdbfe; background: #eff6ff; border-top-left-radius: 0; border-top-right-radius: 0; }
-    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% - 0.2rem); display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.42rem; width: min(calc(100vw - 1.6rem), 31rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.86rem 0.58rem 0.58rem; border: 1px solid var(--border); border-radius: 12px; border-bottom-left-radius: 0; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; visibility: hidden; pointer-events: none; transform: translateY(0.32rem) scale(0.98); transform-origin: bottom left; transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s; }
-    .doc-toolbar-menu[open] .doc-toolbar-actions-panel { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0) scale(1); transition-delay: 0s; }
-    .doc-toolbar-actions-panel > * { min-width: 0; flex: 0 0 auto; }
-    .doc-toolbar-panel-close { position: absolute; top: 0.32rem; right: 0.32rem; width: 1.5rem; height: 1.5rem; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-muted); font-size: 1.06rem; line-height: 1; cursor: pointer; }
+    .doc-toolbar { position: fixed; left: 0.8rem; right: 0.8rem; bottom: 0.8rem; z-index: 35; width: calc(100vw - 1.6rem); max-width: 17rem; display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; }
+    .doc-toolbar-menu { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: min(100%, 14.5rem); max-width: 100%; align-self: flex-start; }
+    .doc-toolbar-toggle { display: inline-flex; align-items: center; justify-content: space-between; width: 100%; min-height: 2.34rem; min-width: 11.2rem; padding: 0.42rem 0.72rem 0.42rem 0.82rem; border-radius: var(--control-radius); font-size: 0.76rem; font-weight: 650; letter-spacing: 0.01em; line-height: 1.2; user-select: none; transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease; }
+    .doc-toolbar-toggle:hover { border-color: #93c5fd; background: #eff6ff; }
+    .doc-toolbar-toggle-label { display: inline-flex; align-items: center; gap: 0.4rem; min-width: 0; white-space: nowrap; }
+    .doc-toolbar-toggle-chevron { margin-left: auto; display: inline-flex; align-items: center; color: var(--text-muted); transition: transform 0.2s ease, color 0.2s ease; }
+    .doc-toolbar-menu.is-open .doc-toolbar-toggle { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; }
+    .doc-toolbar-menu.is-open .doc-toolbar-toggle-chevron { transform: rotate(180deg); color: #1d4ed8; }
+    .doc-toolbar-actions-panel { position: absolute; left: 0; bottom: calc(100% + 0.42rem); display: flex; flex-direction: column; align-items: stretch; gap: 0.34rem; width: min(calc(100vw - 1.6rem), 16.5rem); max-width: calc(100vw - 1.6rem); box-sizing: border-box; padding: 0.5rem; border: 1px solid var(--border); border-radius: 12px; background: rgba(253,252,249,0.98); box-shadow: var(--panel-shadow); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; visibility: hidden; pointer-events: none; transform: translate(-0.42rem, 0.34rem); transform-origin: bottom left; transition: opacity 0.22s ease, transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0.24s; }
+    .doc-toolbar-menu.is-open .doc-toolbar-actions-panel { opacity: 1; visibility: visible; pointer-events: auto; transform: translate(0, 0); transition-delay: 0s; }
+    .doc-toolbar-action-entry { opacity: 0; transform: translateX(-0.45rem); transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1); transition-delay: calc(var(--cascade-down, 0) * 30ms); }
+    .doc-toolbar-menu.is-open .doc-toolbar-action-entry { opacity: 1; transform: translateX(0); transition-delay: calc(var(--cascade-up, 0) * 34ms); }
+    .doc-toolbar-panel-close { align-self: flex-end; width: 1.65rem; height: 1.65rem; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-muted); cursor: pointer; }
     .doc-toolbar-panel-close:hover { border-color: var(--border); background: var(--surface-muted); color: var(--text-main); }
-    .doc-toolbar-item { display: inline-flex; align-items: center; justify-content: center; width: fit-content; max-width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.52rem 0.96rem; font-size: 0.75rem; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: center; white-space: nowrap; line-height: 1.25; flex: 0 0 auto; }
+    .doc-toolbar-item { display: inline-flex; align-items: center; justify-content: flex-start; width: 100%; max-width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.5rem 0.68rem; font-size: 0.74rem; font-weight: 600; color: var(--text-main); text-decoration: none; cursor: pointer; text-align: left; line-height: 1.25; }
+    .doc-toolbar-item:hover { border-color: #93c5fd; background: #eff6ff; color: #1e3a8a; }
+    .doc-toolbar-item-icon { margin-right: 0.42rem; color: var(--text-muted); }
+    .doc-toolbar-item:hover .doc-toolbar-item-icon { color: currentColor; }
+    .doc-toolbar-item-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     button.doc-toolbar-item { font-family: inherit; }
     .doc-toolbar-meta { display: inline-flex; align-items: center; justify-content: flex-start; align-self: flex-start; width: fit-content; max-width: 100%; gap: 0.55rem; border: 1px solid var(--border); border-radius: var(--control-radius); background: rgba(253,252,249,0.95); padding: 0.34rem 0.78rem; }
     .doc-toolbar-brand { display: inline-flex; align-items: center; gap: 0.18rem; color: var(--text-muted); font-size: 0.75rem; line-height: 1.25; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
@@ -607,8 +616,8 @@ export function generateHtmlTemplate(
     .doc-toolbar-auth-shell .auth-menu-dropdown { top: auto; bottom: calc(100% + 0.35rem); right: 0; max-width: min(17rem, calc(100vw - 1.2rem)); z-index: 80; pointer-events: auto; }
     .doc-toolbar-auth-shell .auth-user-chip,
     .doc-toolbar-auth-shell .auth-menu-caret { display: none; }
-    .doc-toolbar-auth-shell .auth-link-button { padding: 0.26rem 0.65rem; font-size: 0.72rem; border-radius: var(--control-radius); }
-    .doc-toolbar-version { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; font-weight: 700; }
+    .doc-toolbar-auth-shell .auth-link-button { padding: 0.26rem 0.68rem; font-size: 0.72rem; border-radius: var(--control-radius); }
+    .doc-toolbar-history { border-color: #bfdbfe; background: #eff6ff; color: #1e3a8a; font-weight: 700; }
     .doc-toolbar-feature { border-color: #a78bfa; color: #7c3aed; }
     /* Onboarding tip */
     @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -627,8 +636,8 @@ export function generateHtmlTemplate(
       .anchor-dot { left: -10px; }
     }
     @media (min-width: 981px) {
-      .doc-toolbar { left: 1rem; right: auto; width: min(31rem, calc(100vw - 2rem)); max-width: none; }
-      .doc-toolbar-actions-panel { width: min(31rem, calc(100vw - 2rem)); max-width: calc(100vw - 2rem); }
+      .doc-toolbar { left: 1rem; right: auto; width: min(17.5rem, calc(100vw - 2rem)); max-width: none; }
+      .doc-toolbar-actions-panel { width: min(17.5rem, calc(100vw - 2rem)); max-width: calc(100vw - 2rem); }
       .doc-toolbar-auth-floating { right: 1rem; }
       .onboarding-tip { bottom: 4.2rem; }
     }
@@ -669,6 +678,7 @@ export function generateHtmlTemplate(
       .auth-menu-trigger { border-color: #1e40af; background: rgba(30, 64, 175, 0.25); color: #bfdbfe; }
       .auth-menu-trigger:hover { border-color: #2563eb; background: rgba(37, 99, 235, 0.32); }
       .auth-menu-caret { color: #93c5fd; }
+      .auth-menu-item-icon { color: #93a0ad; }
       .auth-menu-dropdown { background: #151923; border-color: var(--border); }
       .auth-menu-item { color: var(--text-main); }
       .auth-menu-item:hover { background: #262d3a; }
@@ -684,18 +694,20 @@ export function generateHtmlTemplate(
       .doc-content :is(h1,h2,h3,h4,h5,h6,p,li,blockquote,pre)[id]:hover { background: rgba(96,165,250,0.15); }
       .doc-content .anchor-selected { background: rgba(96,165,250,0.22); }
       .general-btn,.doc-toolbar-item { background: #191d26; border-color: var(--border); color: var(--text-main); }
+      .doc-toolbar-item:hover { border-color: #1d4ed8; background: #232a38; color: #bfdbfe; }
       .review-mode-controls { background: #191d26; border-color: var(--border); }
       .review-mode-btn { color: #a1a8b6; }
       .review-mode-btn:hover { color: #e8ebf0; background: #2b303c; }
       .review-mode-btn.is-active { background: rgba(30,64,175,0.32); color: #bfdbfe; }
       .review-mode-note { color: #a1a8b6; }
-      .doc-toolbar-menu[open] .doc-toolbar-toggle { border-color: #1d4ed8; background: rgba(30,64,175,0.3); color: #bfdbfe; }
+      .doc-toolbar-menu.is-open .doc-toolbar-toggle { border-color: #1d4ed8; background: rgba(30,64,175,0.3); color: #bfdbfe; }
+      .doc-toolbar-menu.is-open .doc-toolbar-toggle-chevron { color: #93c5fd; }
       .doc-toolbar-meta { background: #191d26; border-color: var(--border); }
       .doc-toolbar-actions-panel { background: rgba(21,25,35,0.96); border-color: var(--border); }
       .doc-toolbar-panel-close:hover { background: #262d3a; border-color: var(--border); }
       .doc-toolbar-brand { color: #a1a8b6; }
       .doc-toolbar-brand a { color: #dbe2ef; }
-      .doc-toolbar-version { border-color: #1d4ed8; background: rgba(30,64,175,0.28); color: #bfdbfe; }
+      .doc-toolbar-history { border-color: #1d4ed8; background: rgba(30,64,175,0.28); color: #bfdbfe; }
       .doc-toolbar-feature { border-color: #7c3aed; color: #a78bfa; }
       .comment-author { color: #f2f4f8; }
       #inline-comment-box { background: var(--surface); border-color: var(--border); }
@@ -723,12 +735,15 @@ export function generateHtmlTemplate(
     }
     @media (prefers-reduced-motion: reduce) {
       .doc-toolbar-toggle,
+      .doc-toolbar-toggle-chevron,
       .doc-toolbar-actions-panel,
+      .doc-toolbar-action-entry,
       .comment-group-hover-highlight,
       .comment-group-header { transition: none; }
-      .doc-toolbar-menu[open] .doc-toolbar-toggle { transform: none; }
       .doc-toolbar-actions-panel,
-      .doc-toolbar-menu[open] .doc-toolbar-actions-panel { transform: none; }
+      .doc-toolbar-menu.is-open .doc-toolbar-actions-panel { transform: none; }
+      .doc-toolbar-action-entry,
+      .doc-toolbar-menu.is-open .doc-toolbar-action-entry { transform: none; }
     }
   </style>
 </head>
@@ -776,16 +791,36 @@ export function generateHtmlTemplate(
   </div>
   <div class="onboarding-tip" id="onboarding-tip" style="display:none"><span>\u{1F4AC} Click any paragraph to leave a comment</span><button class="tip-dismiss" id="tip-dismiss" aria-label="Dismiss">\u00D7</button></div>
   <div class="doc-toolbar" aria-label="Document actions toolbar">
-    <details class="doc-toolbar-menu" id="doc-toolbar-menu" open>
-      <summary class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu" aria-controls="doc-toolbar-actions-panel" aria-expanded="true">Actions</summary>
+    <div class="doc-toolbar-menu" id="doc-toolbar-menu">
+      <button type="button" class="doc-toolbar-item doc-toolbar-toggle" id="doc-toolbar-toggle" aria-haspopup="menu" aria-controls="doc-toolbar-actions-panel" aria-expanded="false">
+        <span class="doc-toolbar-toggle-label">
+          <svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>Current v${docVersion}</span>
+        </span>
+        <span class="doc-toolbar-toggle-chevron" aria-hidden="true"><svg class="lucide-icon" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"></path></svg></span>
+      </button>
       <div class="doc-toolbar-actions-panel" id="doc-toolbar-actions-panel" aria-label="Document actions">
-        <button type="button" class="doc-toolbar-panel-close" id="doc-toolbar-close" aria-label="Close actions panel">\u00D7</button>
-        <a href="/v/${docId}/history" class="doc-toolbar-item doc-toolbar-version">Current v${docVersion}</a>
-        <button type="button" class="doc-toolbar-item" id="toolbar-copy-link">Copy link</button>
-        <a href="/v/${docId}/raw" class="doc-toolbar-item">Raw</a>
-        <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-feature">\u{1F4A1} Feature Request</a>
+        <button type="button" class="doc-toolbar-panel-close" id="doc-toolbar-close" aria-label="Close actions panel">
+          <svg class="lucide-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        </button>
+        <a href="/v/${docId}/history" class="doc-toolbar-item doc-toolbar-action-entry doc-toolbar-history" style="--cascade-up: 3; --cascade-down: 0;">
+          <span class="doc-toolbar-item-icon" aria-hidden="true"><svg class="lucide-icon" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"></path><path d="M3 3v6h6"></path><path d="M12 7v5l3 3"></path></svg></span>
+          <span class="doc-toolbar-item-label">History</span>
+        </a>
+        <button type="button" class="doc-toolbar-item doc-toolbar-action-entry" id="toolbar-copy-link" style="--cascade-up: 2; --cascade-down: 1;">
+          <span class="doc-toolbar-item-icon" aria-hidden="true"><svg class="lucide-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></span>
+          <span class="doc-toolbar-item-label">Copy link</span>
+        </button>
+        <a href="/v/${docId}/raw" class="doc-toolbar-item doc-toolbar-action-entry" style="--cascade-up: 1; --cascade-down: 2;">
+          <span class="doc-toolbar-item-icon" aria-hidden="true"><svg class="lucide-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg></span>
+          <span class="doc-toolbar-item-label">Raw markdown</span>
+        </a>
+        <a href="https://github.com/FacundoLucci/plsreadme/issues/new?labels=feature-request&title=Feature+request:+&body=Describe+the+feature+you%27d+like+to+see" target="_blank" rel="noopener" class="doc-toolbar-item doc-toolbar-action-entry doc-toolbar-feature" style="--cascade-up: 0; --cascade-down: 3;">
+          <span class="doc-toolbar-item-icon" aria-hidden="true"><svg class="lucide-icon" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5a6 6 0 1 0-9 0c.8.8 1.3 1.5 1.5 2.5"></path><path d="M9 18h6"></path><path d="M10 22h4"></path></svg></span>
+          <span class="doc-toolbar-item-label">Feature request</span>
+        </a>
       </div>
-    </details>
+    </div>
     <div class="doc-toolbar-meta">
       <span class="doc-toolbar-brand">Made readable with <a href="/">plsreadme</a></span>
     </div>
@@ -808,22 +843,44 @@ export function generateHtmlTemplate(
       var toolbarToggle = document.getElementById('doc-toolbar-toggle');
       var toolbarCopyLinkBtn = document.getElementById('toolbar-copy-link');
       var toolbarCloseBtn = document.getElementById('doc-toolbar-close');
-      var toolbarActionLinks = document.querySelectorAll('.doc-toolbar-actions-panel a');
+      var toolbarActionItems = document.querySelectorAll('.doc-toolbar-action-entry');
+
+      function isToolbarMenuOpen() {
+        return !!(toolbarMenu && toolbarMenu.classList.contains('is-open'));
+      }
 
       function syncToolbarAriaExpanded() {
-        if (!toolbarMenu || !toolbarToggle) return;
-        toolbarToggle.setAttribute('aria-expanded', toolbarMenu.open ? 'true' : 'false');
+        if (!toolbarToggle) return;
+        toolbarToggle.setAttribute('aria-expanded', isToolbarMenuOpen() ? 'true' : 'false');
+      }
+
+      function openToolbarMenu() {
+        if (!toolbarMenu || isToolbarMenuOpen()) return;
+        toolbarMenu.classList.add('is-open');
+        syncToolbarAriaExpanded();
       }
 
       function closeToolbarMenu() {
-        if (toolbarMenu && toolbarMenu.open) {
-          toolbarMenu.open = false;
+        if (!toolbarMenu || !isToolbarMenuOpen()) return;
+        toolbarMenu.classList.remove('is-open');
+        syncToolbarAriaExpanded();
+      }
+
+      function toggleToolbarMenu() {
+        if (isToolbarMenuOpen()) {
+          closeToolbarMenu();
+        } else {
+          openToolbarMenu();
         }
       }
 
-      if (toolbarMenu) {
-        syncToolbarAriaExpanded();
-        toolbarMenu.addEventListener('toggle', syncToolbarAriaExpanded);
+      syncToolbarAriaExpanded();
+
+      if (toolbarToggle) {
+        toolbarToggle.addEventListener('click', function(event) {
+          event.preventDefault();
+          toggleToolbarMenu();
+        });
       }
 
       if (toolbarCopyLinkBtn) {
@@ -842,20 +899,21 @@ export function generateHtmlTemplate(
         });
       }
 
-      toolbarActionLinks.forEach(function(linkEl) {
-        linkEl.addEventListener('click', closeToolbarMenu);
+      toolbarActionItems.forEach(function(actionEl) {
+        if (actionEl === toolbarCopyLinkBtn) return;
+        actionEl.addEventListener('click', closeToolbarMenu);
       });
 
       document.addEventListener('click', function(event) {
-        if (!toolbarMenu || !toolbarMenu.open) return;
+        if (!isToolbarMenuOpen()) return;
         var target = event.target;
-        if (target instanceof Node && !toolbarMenu.contains(target)) {
+        if (target instanceof Node && toolbarMenu && !toolbarMenu.contains(target)) {
           closeToolbarMenu();
         }
       });
 
       document.addEventListener('keydown', function(event) {
-        if (event.key === 'Escape' && toolbarMenu && toolbarMenu.open) {
+        if (event.key === 'Escape' && isToolbarMenuOpen()) {
           closeToolbarMenu();
           if (toolbarToggle && typeof toolbarToggle.focus === 'function') {
             toolbarToggle.focus();
