@@ -432,3 +432,8 @@ MIT — do whatever you want with it.
 <p align="center">
   <sub>Built by <a href="https://github.com/FacundoLucci">Facundo Lucci</a></sub>
 </p>
+
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/facundolucci-plsreadme).
+
