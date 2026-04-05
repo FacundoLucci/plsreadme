@@ -1,20 +1,31 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
+import { authRoutes } from "../worker/routes/auth.ts";
 import { linksRoutes } from "../worker/routes/links.ts";
 import { docsRoutes, generateHtmlTemplate } from "../worker/routes/docs.ts";
 import {
+  DEMO_GRANT_COOKIE_NAME,
   MAX_PAYLOAD_BYTES,
   MAX_SINGLE_LINE_CHARS,
 } from "../worker/security.ts";
 
 type QueryRecord = { sql: string; params: unknown[] };
+type DemoGrantRow = {
+  ip_hash: string;
+  user_agent_hash: string;
+  expires_at: string;
+  used_at: string | null;
+};
+
+const TEST_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0)";
 
 class MockDB {
   public preparedSql: string[] = [];
   public runs: QueryRecord[] = [];
   public firsts: QueryRecord[] = [];
   public rateCount = 0;
+  public demoGrants = new Map<string, DemoGrantRow>();
 
   prepare(sql: string) {
     this.preparedSql.push(sql);
@@ -28,6 +39,40 @@ class MockDB {
       },
       async run() {
         db.runs.push({ sql, params: this.params });
+
+        if (sql.startsWith("INSERT INTO demo_grants")) {
+          const [tokenHash, ipHash, userAgentHash, , expiresAt] = this.params as [
+            string,
+            string,
+            string,
+            string,
+            string,
+          ];
+          db.demoGrants.set(tokenHash, {
+            ip_hash: ipHash,
+            user_agent_hash: userAgentHash,
+            expires_at: expiresAt,
+            used_at: null,
+          });
+        }
+
+        if (sql.startsWith("DELETE FROM demo_grants")) {
+          const [nowIso] = this.params as [string];
+          for (const [tokenHash, row] of db.demoGrants.entries()) {
+            if (row.expires_at <= nowIso || row.used_at) {
+              db.demoGrants.delete(tokenHash);
+            }
+          }
+        }
+
+        if (sql.startsWith("UPDATE demo_grants SET used_at")) {
+          const [usedAt, tokenHash] = this.params as [string, string];
+          const row = db.demoGrants.get(tokenHash);
+          if (row && !row.used_at) {
+            row.used_at = usedAt;
+          }
+        }
+
         return { success: true };
       },
       async first<T>() {
@@ -35,6 +80,11 @@ class MockDB {
 
         if (sql.includes("SELECT COUNT(*) as count FROM request_rate_limits")) {
           return { count: db.rateCount } as T;
+        }
+
+        if (sql.includes("SELECT ip_hash, user_agent_hash, expires_at, used_at FROM demo_grants")) {
+          const [tokenHash] = this.params as [string];
+          return (db.demoGrants.get(tokenHash) ?? null) as T;
         }
 
         return null;
@@ -74,10 +124,35 @@ function createBaseEnv(db: MockDB) {
   return { env, puts };
 }
 
+function extractDemoGrantCookie(setCookie: string | null): string | null {
+  if (!setCookie) return null;
+  const match = setCookie.match(new RegExp(`${DEMO_GRANT_COOKIE_NAME}=([^;]+)`));
+  if (!match) return null;
+  return `${DEMO_GRANT_COOKIE_NAME}=${match[1]}`;
+}
+
+async function issueDemoGrantCookie(env: any): Promise<string> {
+  const response = await authRoutes.request(
+    "http://local/demo-grant",
+    {
+      method: "GET",
+      headers: {
+        "user-agent": TEST_USER_AGENT,
+      },
+    },
+    env
+  );
+
+  const cookie = extractDemoGrantCookie(response.headers.get("set-cookie"));
+  assert.ok(cookie, "expected anonymous demo grant cookie");
+  return cookie!;
+}
+
 test("SQLi-like markdown is handled as data and insert query stays parameterized", async () => {
   const db = new MockDB();
   const { env, puts } = createBaseEnv(db);
   const markdown = "# title\n'); DROP TABLE docs; --";
+  const demoGrantCookie = await issueDemoGrantCookie(env);
 
   const res = await linksRoutes.request(
     "http://local/",
@@ -86,6 +161,8 @@ test("SQLi-like markdown is handled as data and insert query stays parameterized
       headers: {
         "content-type": "application/json",
         "content-length": String(new TextEncoder().encode(markdown).length),
+        "user-agent": TEST_USER_AGENT,
+        cookie: demoGrantCookie,
       },
       body: JSON.stringify({ markdown }),
     },
@@ -147,6 +224,7 @@ test("single-line markdown limit rejects pathological unbroken lines", async () 
   const db = new MockDB();
   const { env, puts } = createBaseEnv(db);
   const markdown = `# ok\n${"a".repeat(MAX_SINGLE_LINE_CHARS + 1)}`;
+  const demoGrantCookie = await issueDemoGrantCookie(env);
 
   const res = await linksRoutes.request(
     "http://local/",
@@ -155,6 +233,8 @@ test("single-line markdown limit rejects pathological unbroken lines", async () 
       headers: {
         "content-type": "application/json",
         "content-length": String(new TextEncoder().encode(markdown).length),
+        "user-agent": TEST_USER_AGENT,
+        cookie: demoGrantCookie,
       },
       body: JSON.stringify({ markdown }),
     },

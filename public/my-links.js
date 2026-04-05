@@ -7,6 +7,7 @@
   const authRequiredEl = document.getElementById("my-links-auth-required");
   const emptyEl = document.getElementById("my-links-empty");
   const sectionsEl = document.getElementById("my-links-sections");
+  const accountToolsEl = document.getElementById("my-links-account-tools");
 
   const createdCountEl = document.getElementById("my-created-count");
   const createdEmptyEl = document.getElementById("my-created-empty");
@@ -18,10 +19,22 @@
   const savedTableEl = document.getElementById("my-saved-table");
   const savedBodyEl = document.getElementById("my-saved-body");
 
+  const apiKeyCountEl = document.getElementById("mcp-api-key-count");
+  const apiKeyStatusEl = document.getElementById("mcp-api-key-status");
+  const apiKeyFormEl = document.getElementById("mcp-api-key-form");
+  const apiKeyNameEl = document.getElementById("mcp-api-key-name");
+  const apiKeyFlashEl = document.getElementById("mcp-api-key-flash");
+  const apiKeyTokenEl = document.getElementById("mcp-api-key-token");
+  const apiKeyCopyEl = document.getElementById("mcp-api-key-copy");
+  const apiKeyEmptyEl = document.getElementById("mcp-api-key-empty");
+  const apiKeyTableEl = document.getElementById("mcp-api-key-table");
+  const apiKeyBodyEl = document.getElementById("mcp-api-key-body");
+
   let search = "";
   let sort = sortSelect?.value || "created_desc";
   let isLoading = false;
   let trackedView = false;
+  let latestIssuedApiKey = "";
 
   const urlForHighlight = new URL(window.location.href);
   let highlightedDocId = urlForHighlight.searchParams.get("created");
@@ -44,6 +57,13 @@
     if (authRequiredEl) authRequiredEl.hidden = mode !== "auth";
     if (emptyEl) emptyEl.hidden = mode !== "empty";
     if (sectionsEl) sectionsEl.hidden = mode !== "sections";
+    if (accountToolsEl) accountToolsEl.hidden = mode === "auth";
+  }
+
+  function setApiKeyStatus(message) {
+    if (!apiKeyStatusEl) return;
+    apiKeyStatusEl.textContent = message;
+    apiKeyStatusEl.hidden = !message;
   }
 
   function formatDate(isoDate) {
@@ -100,6 +120,168 @@
           button.textContent = original;
         }, 1200);
       });
+    }
+  }
+
+  function renderApiKeyRows(items) {
+    if (!apiKeyBodyEl) return;
+
+    apiKeyBodyEl.innerHTML = items
+      .map((item) => {
+        const lastUsed = item.lastUsedAt
+          ? `${escapeHtml(formatDate(item.lastUsedAt))}${item.lastUsedSource ? ` · ${escapeHtml(item.lastUsedSource)}` : ""}`
+          : '<span class="ml-pill">Never used</span>';
+
+        return `
+          <tr>
+            <td>
+              <div class="ml-key-name">
+                <span class="ml-title-main">${escapeHtml(item.name)}</span>
+                <span class="ml-key-prefix">${escapeHtml(item.tokenPrefix)}</span>
+              </div>
+            </td>
+            <td>${escapeHtml(formatDate(item.createdAt))}</td>
+            <td>${lastUsed}</td>
+            <td>
+              <div class="ml-actions">
+                <button type="button" class="ml-action-btn" data-revoke-api-key="${escapeHtml(item.id)}">Revoke</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    const revokeButtons = apiKeyBodyEl.querySelectorAll("[data-revoke-api-key]");
+    for (const button of revokeButtons) {
+      button.addEventListener("click", () => {
+        const keyId = button.getAttribute("data-revoke-api-key");
+        if (!keyId) return;
+        void revokeApiKey(keyId);
+      });
+    }
+  }
+
+  function renderApiKeys(items) {
+    const total = Number(items?.length || 0);
+    if (apiKeyCountEl) {
+      apiKeyCountEl.textContent = `${total} key${total === 1 ? "" : "s"}`;
+    }
+
+    if (!total) {
+      if (apiKeyEmptyEl) apiKeyEmptyEl.hidden = false;
+      if (apiKeyTableEl) apiKeyTableEl.hidden = true;
+      if (apiKeyBodyEl) apiKeyBodyEl.innerHTML = "";
+      return;
+    }
+
+    if (apiKeyEmptyEl) apiKeyEmptyEl.hidden = true;
+    if (apiKeyTableEl) apiKeyTableEl.hidden = false;
+    renderApiKeyRows(items);
+  }
+
+  function showIssuedApiKey(token) {
+    latestIssuedApiKey = token || "";
+    if (apiKeyTokenEl) {
+      apiKeyTokenEl.textContent = latestIssuedApiKey;
+    }
+    if (apiKeyFlashEl) {
+      apiKeyFlashEl.hidden = !latestIssuedApiKey;
+    }
+  }
+
+  async function fetchApiKeys(token) {
+    try {
+      setApiKeyStatus("Loading MCP API keys…");
+      const response = await fetch("/api/auth/mcp-api-keys", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
+        setApiKeyStatus("");
+        return false;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Request failed (${response.status})`);
+      }
+
+      const data = await response.json();
+      renderApiKeys(Array.isArray(data.items) ? data.items : []);
+      setApiKeyStatus("");
+      return true;
+    } catch (error) {
+      console.error("Failed to load MCP API keys", error);
+      setApiKeyStatus("Could not load MCP API keys. Refresh and try again.");
+      return true;
+    }
+  }
+
+  async function createApiKey(name) {
+    const token = await getAuthToken();
+    if (!token) {
+      setViewMode("auth");
+      return;
+    }
+
+    setApiKeyStatus("Creating API key…");
+
+    try {
+      const response = await fetch("/api/auth/mcp-api-keys", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || `Request failed (${response.status})`);
+      }
+
+      showIssuedApiKey(data.token || "");
+      if (apiKeyNameEl) apiKeyNameEl.value = "";
+      setApiKeyStatus("API key created. Copy it now; it will not be shown again.");
+      await fetchApiKeys(token);
+    } catch (error) {
+      setApiKeyStatus(error instanceof Error ? error.message : "Could not create API key.");
+    }
+  }
+
+  async function revokeApiKey(keyId) {
+    const token = await getAuthToken();
+    if (!token) {
+      setViewMode("auth");
+      return;
+    }
+
+    setApiKeyStatus("Revoking API key…");
+
+    try {
+      const response = await fetch(`/api/auth/mcp-api-keys/${encodeURIComponent(keyId)}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || `Request failed (${response.status})`);
+      }
+
+      setApiKeyStatus("API key revoked.");
+      await fetchApiKeys(token);
+    } catch (error) {
+      setApiKeyStatus(error instanceof Error ? error.message : "Could not revoke API key.");
     }
   }
 
@@ -198,6 +380,7 @@
       }
 
       const data = await response.json();
+      const keysVisible = await fetchApiKeys(token);
       const createdItems = Array.isArray(data.created?.items)
         ? data.created.items
         : Array.isArray(data.items)
@@ -240,6 +423,10 @@
         setViewMode("sections");
       }
 
+      if (keysVisible && accountToolsEl) {
+        accountToolsEl.hidden = false;
+      }
+
       setStatus("");
     } catch (error) {
       console.error("Failed to load my links", error);
@@ -271,6 +458,36 @@
     sortSelect.addEventListener("change", () => {
       sort = sortSelect.value || "created_desc";
       void fetchMyLinks();
+    });
+  }
+
+  if (apiKeyFormEl) {
+    apiKeyFormEl.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const name = (apiKeyNameEl?.value || "").trim();
+      if (!name) {
+        setApiKeyStatus("Enter a key name before creating it.");
+        if (apiKeyNameEl) apiKeyNameEl.focus();
+        return;
+      }
+      void createApiKey(name);
+    });
+  }
+
+  if (apiKeyCopyEl) {
+    apiKeyCopyEl.addEventListener("click", async () => {
+      if (!latestIssuedApiKey) return;
+      const original = apiKeyCopyEl.textContent;
+      try {
+        await navigator.clipboard.writeText(latestIssuedApiKey);
+        apiKeyCopyEl.textContent = "Copied";
+      } catch {
+        apiKeyCopyEl.textContent = "Copy failed";
+      }
+
+      setTimeout(() => {
+        apiKeyCopyEl.textContent = original;
+      }, 1200);
     });
   }
 

@@ -1,5 +1,5 @@
 import type { Context, MiddlewareHandler } from "hono";
-import type { Env } from "./types";
+import type { Env } from "./types.ts";
 
 const textEncoder = new TextEncoder();
 const JWKS_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -95,27 +95,38 @@ function looksLikeJwt(token: string): boolean {
   return parts.length === 3 && parts.every((part) => part.length > 0);
 }
 
-function getRequestToken(c: Context<{ Bindings: Env }>): {
+export function getBearerTokenFromHeaders(headers: Headers): string | null {
+  const authHeader = headers.get("authorization")?.trim() ?? "";
+  if (!authHeader.toLowerCase().startsWith("bearer ")) {
+    return null;
+  }
+
+  const token = authHeader.slice("bearer ".length).trim();
+  return token || null;
+}
+
+export function getBearerTokenFromRequest(request: Request): string | null {
+  return getBearerTokenFromHeaders(request.headers);
+}
+
+function getRequestTokenFromHeaders(headers: Headers): {
   token: string | null;
   source: TokenSource;
 } {
-  const authHeader = c.req.header("authorization")?.trim() ?? "";
-  const cookieHeader = c.req.header("cookie") ?? "";
+  const cookieHeader = headers.get("cookie") ?? "";
   const sessionCookie = parseCookieValue(cookieHeader, "__session");
+  const bearerToken = getBearerTokenFromHeaders(headers);
 
-  if (authHeader.toLowerCase().startsWith("bearer ")) {
-    const token = authHeader.slice("bearer ".length).trim();
-    if (token) {
-      if (looksLikeJwt(token)) {
-        return { token, source: "authorization" };
-      }
-
-      if (sessionCookie) {
-        return { token: sessionCookie, source: "cookie" };
-      }
-
-      return { token: null, source: "none" };
+  if (bearerToken) {
+    if (looksLikeJwt(bearerToken)) {
+      return { token: bearerToken, source: "authorization" };
     }
+
+    if (sessionCookie) {
+      return { token: sessionCookie, source: "cookie" };
+    }
+
+    return { token: null, source: "none" };
   }
 
   if (sessionCookie) {
@@ -208,8 +219,11 @@ async function verifySignature(token: string, jwk: Jwk): Promise<boolean> {
   return crypto.subtle.verify("RSASSA-PKCS1-v1_5", key, signature, data);
 }
 
-async function resolveRequestAuthUncached(c: Context<{ Bindings: Env }>): Promise<RequestAuth> {
-  const { token, source } = getRequestToken(c);
+export async function resolveRequestAuthFromRequest(
+  request: Request,
+  env: Pick<Env, "CLERK_JWT_ISSUER" | "CLERK_JWT_AUDIENCE">
+): Promise<RequestAuth> {
+  const { token, source } = getRequestTokenFromHeaders(request.headers);
 
   if (!token) {
     return {
@@ -222,7 +236,7 @@ async function resolveRequestAuthUncached(c: Context<{ Bindings: Env }>): Promis
     };
   }
 
-  const issuer = c.env.CLERK_JWT_ISSUER?.trim();
+  const issuer = env.CLERK_JWT_ISSUER?.trim();
   if (!issuer) {
     return {
       isAuthenticated: false,
@@ -271,7 +285,7 @@ async function resolveRequestAuthUncached(c: Context<{ Bindings: Env }>): Promis
       throw new Error("JWT not active yet");
     }
 
-    const expectedAudience = c.env.CLERK_JWT_AUDIENCE?.trim();
+    const expectedAudience = env.CLERK_JWT_AUDIENCE?.trim();
     if (expectedAudience && !audienceMatches(payload.aud, expectedAudience)) {
       throw new Error("JWT audience mismatch");
     }
@@ -311,6 +325,10 @@ async function resolveRequestAuthUncached(c: Context<{ Bindings: Env }>): Promis
       reason: "invalid_token",
     };
   }
+}
+
+async function resolveRequestAuthUncached(c: Context<{ Bindings: Env }>): Promise<RequestAuth> {
+  return resolveRequestAuthFromRequest(c.req.raw, c.env);
 }
 
 function getCachedAuth(c: Context<{ Bindings: Env }>): RequestAuth | null {

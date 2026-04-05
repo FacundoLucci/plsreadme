@@ -3,10 +3,17 @@ import type { Env } from "./types";
 export const MAX_PAYLOAD_BYTES = 256 * 1024;
 export const MAX_TOTAL_CHARS = 220_000;
 export const MAX_SINGLE_LINE_CHARS = 16_384;
+export const DEMO_GRANT_COOKIE_NAME = "plsreadme_demo_grant";
+export const DEMO_GRANT_TTL_MS = 10 * 60 * 1000;
 
 const DEFAULT_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 export const WRITE_RATE_LIMITS = {
+  convert: {
+    endpointKey: "convert",
+    maxRequests: 10,
+    windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
+  },
   createLink: {
     endpointKey: "create-link",
     maxRequests: 30,
@@ -15,6 +22,21 @@ export const WRITE_RATE_LIMITS = {
   renderCreate: {
     endpointKey: "render-create",
     maxRequests: 30,
+    windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
+  },
+  createLinkAnonymous: {
+    endpointKey: "create-link-anonymous",
+    maxRequests: 12,
+    windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
+  },
+  createLinkAuthenticated: {
+    endpointKey: "create-link-authenticated",
+    maxRequests: 60,
+    windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
+  },
+  demoGrant: {
+    endpointKey: "demo-grant",
+    maxRequests: 40,
     windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
   },
   renderUpdate: {
@@ -35,6 +57,16 @@ export const WRITE_RATE_LIMITS = {
   saveLink: {
     endpointKey: "save-link",
     maxRequests: 120,
+    windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
+  },
+  mcpApiKey: {
+    endpointKey: "mcp-api-key",
+    maxRequests: 24,
+    windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
+  },
+  mcpCreate: {
+    endpointKey: "mcp-create",
+    maxRequests: 60,
     windowMs: DEFAULT_RATE_LIMIT_WINDOW_MS,
   },
 } as const;
@@ -81,6 +113,13 @@ export interface AbuseLogEntry {
   maxLineChars?: number | null;
 }
 
+export type DemoGrantFailureReason =
+  | "missing"
+  | "not_found"
+  | "already_used"
+  | "expired"
+  | "binding_mismatch";
+
 let securityTablesReady = false;
 
 async function ensureSecurityTables(env: Env): Promise<void> {
@@ -102,6 +141,14 @@ async function ensureSecurityTables(env: Env): Promise<void> {
     "CREATE INDEX IF NOT EXISTS idx_abuse_audit_log_created ON abuse_audit_log(created_at)"
   ).run();
 
+  await env.DB.prepare(
+    "CREATE TABLE IF NOT EXISTS demo_grants (token_hash TEXT PRIMARY KEY, ip_hash TEXT NOT NULL, user_agent_hash TEXT NOT NULL, created_at TEXT NOT NULL, expires_at TEXT NOT NULL, used_at TEXT)"
+  ).run();
+
+  await env.DB.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_demo_grants_expires_at ON demo_grants(expires_at)"
+  ).run();
+
   securityTablesReady = true;
 }
 
@@ -120,6 +167,174 @@ export function getClientIp(req: { header(name: string): string | undefined }): 
   }
 
   return "unknown";
+}
+
+function normalizeUserAgent(userAgent: string | undefined): string {
+  return (userAgent || "unknown").trim().slice(0, 512) || "unknown";
+}
+
+function cookieSecureSuffix(requestUrl: string): string {
+  try {
+    return new URL(requestUrl).protocol === "https:" ? "; Secure" : "";
+  } catch {
+    return "";
+  }
+}
+
+export function readCookieValue(cookieHeader: string | undefined, cookieName: string): string | null {
+  if (!cookieHeader) return null;
+
+  const pairs = cookieHeader.split(";");
+  for (const pair of pairs) {
+    const [rawName, ...rest] = pair.trim().split("=");
+    if (rawName !== cookieName) continue;
+    const value = rest.join("=").trim();
+    if (!value) return null;
+
+    try {
+      return decodeURIComponent(value);
+    } catch {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+export function buildDemoGrantCookie(token: string, requestUrl: string): string {
+  return [
+    `${DEMO_GRANT_COOKIE_NAME}=${encodeURIComponent(token)}`,
+    `Max-Age=${Math.floor(DEMO_GRANT_TTL_MS / 1000)}`,
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+  ].join("; ") + cookieSecureSuffix(requestUrl);
+}
+
+export function clearDemoGrantCookie(requestUrl: string): string {
+  return [
+    `${DEMO_GRANT_COOKIE_NAME}=`,
+    "Max-Age=0",
+    "Expires=Thu, 01 Jan 1970 00:00:00 GMT",
+    "Path=/",
+    "HttpOnly",
+    "SameSite=Lax",
+  ].join("; ") + cookieSecureSuffix(requestUrl);
+}
+
+async function cleanupExpiredDemoGrants(env: Env, nowIso: string): Promise<void> {
+  await ensureSecurityTables(env);
+  await env.DB.prepare("DELETE FROM demo_grants WHERE expires_at <= ? OR used_at IS NOT NULL")
+    .bind(nowIso)
+    .run();
+}
+
+export async function issueDemoGrant(
+  env: Env,
+  {
+    ipHash,
+    userAgent,
+  }: {
+    ipHash: string;
+    userAgent: string | undefined;
+  }
+): Promise<{ token: string; expiresAt: string; ttlSeconds: number }> {
+  await ensureSecurityTables(env);
+
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const expiresAt = new Date(now.getTime() + DEMO_GRANT_TTL_MS).toISOString();
+  const token = `dg_${crypto.randomUUID().replace(/-/g, "")}`;
+  const tokenHash = await sha256(token);
+  const userAgentHash = await sha256(normalizeUserAgent(userAgent));
+
+  await cleanupExpiredDemoGrants(env, nowIso);
+  await env.DB.prepare(
+    "INSERT INTO demo_grants (token_hash, ip_hash, user_agent_hash, created_at, expires_at, used_at) VALUES (?, ?, ?, ?, ?, NULL)"
+  )
+    .bind(tokenHash, ipHash, userAgentHash, nowIso, expiresAt)
+    .run();
+
+  return {
+    token,
+    expiresAt,
+    ttlSeconds: Math.floor(DEMO_GRANT_TTL_MS / 1000),
+  };
+}
+
+export async function consumeDemoGrant(
+  env: Env,
+  {
+    token,
+    ipHash,
+    userAgent,
+  }: {
+    token: string | null;
+    ipHash: string;
+    userAgent: string | undefined;
+  }
+): Promise<{ valid: true } | { valid: false; reason: DemoGrantFailureReason }> {
+  if (!token) {
+    return { valid: false, reason: "missing" };
+  }
+
+  await ensureSecurityTables(env);
+
+  const nowIso = new Date().toISOString();
+  const tokenHash = await sha256(token);
+  const expectedUserAgentHash = await sha256(normalizeUserAgent(userAgent));
+  const grant = await env.DB.prepare(
+    "SELECT ip_hash, user_agent_hash, expires_at, used_at FROM demo_grants WHERE token_hash = ?"
+  )
+    .bind(tokenHash)
+    .first<{
+      ip_hash: string;
+      user_agent_hash: string;
+      expires_at: string;
+      used_at: string | null;
+    }>();
+
+  if (!grant) {
+    return { valid: false, reason: "not_found" };
+  }
+
+  if (grant.used_at) {
+    return { valid: false, reason: "already_used" };
+  }
+
+  if (grant.expires_at <= nowIso) {
+    await cleanupExpiredDemoGrants(env, nowIso);
+    return { valid: false, reason: "expired" };
+  }
+
+  if (grant.ip_hash !== ipHash || grant.user_agent_hash !== expectedUserAgentHash) {
+    return { valid: false, reason: "binding_mismatch" };
+  }
+
+  await env.DB.prepare("UPDATE demo_grants SET used_at = ? WHERE token_hash = ? AND used_at IS NULL")
+    .bind(nowIso, tokenHash)
+    .run();
+
+  return { valid: true };
+}
+
+export function buildDemoGrantErrorPayload(
+  reason: DemoGrantFailureReason,
+  signInUrl: string
+): Record<string, unknown> {
+  const isMissing = reason === "missing";
+  const error = isMissing
+    ? "Browser verification required before creating an anonymous demo link."
+    : "Your browser verification expired or no longer matches this session.";
+
+  return {
+    error,
+    code: isMissing ? "demo_grant_required" : "demo_grant_invalid",
+    reason,
+    recommendation:
+      "Refresh browser verification and try again, or sign in to keep sharing from your account.",
+    signInUrl,
+  };
 }
 
 export function parseContentLength(value: string | undefined): number | null {

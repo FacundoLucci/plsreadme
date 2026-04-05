@@ -16,6 +16,7 @@
     "test": "node --experimental-strip-types --test tests/**/*.test.ts"
   },
   "dependencies": {
+    "@cloudflare/workers-oauth-provider": "^0.4.0",
     "@modelcontextprotocol/sdk": "^1.25.1",
     "agents": "^0.3.0",
     "ai": "^6.0.1",

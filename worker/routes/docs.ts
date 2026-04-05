@@ -14,8 +14,14 @@ import {
   validateContentLength,
   validateMarkdown,
 } from "../security.ts";
-import { getRequestAuth } from "../auth.ts";
+import { getBearerTokenFromRequest, getRequestAuth } from "../auth.ts";
+import {
+  MCP_LOCAL_API_KEY_SOURCE,
+  resolvePersonalMcpApiKeyFromRequest,
+} from "../mcp-api-keys.ts";
 import { ensureOwnershipSchema } from "../ownership.ts";
+import { createStoredDoc, DocValidationError } from "../doc-pipeline.ts";
+import { isLikelyHumanDocumentView, recordDocumentView } from "../doc-telemetry.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -1754,9 +1760,35 @@ app.post("/", async (c) => {
     }
 
     const requestAuth = await getRequestAuth(c);
+    const bearerToken = getBearerTokenFromRequest(c.req.raw);
+    const apiKeyAuth = !requestAuth.isAuthenticated
+      ? await resolvePersonalMcpApiKeyFromRequest(c.req.raw, c.env, MCP_LOCAL_API_KEY_SOURCE)
+      : null;
+
+    if (!requestAuth.isAuthenticated && bearerToken && !apiKeyAuth) {
+      return c.json(
+        {
+          error: "Invalid personal plsreadme API key.",
+          code: "invalid_api_key",
+        },
+        401
+      );
+    }
+
+    const ownerUserId = requestAuth.isAuthenticated
+      ? requestAuth.userId
+      : apiKeyAuth?.userId ?? null;
+    const createSource = requestAuth.isAuthenticated
+      ? "web_signed_in"
+      : apiKeyAuth?.usageSource ?? "mcp_local_anonymous";
+    const authMode = requestAuth.isAuthenticated
+      ? "clerk_session"
+      : apiKeyAuth
+        ? "personal_api_key"
+        : "anonymous";
     const rateLimitActorKey = await resolveRateLimitActorKey({
       ipHash,
-      userId: requestAuth.isAuthenticated ? requestAuth.userId : null,
+      userId: ownerUserId,
     });
 
     const rateLimit = await checkAndConsumeRateLimit(
@@ -1832,16 +1864,8 @@ app.post("/", async (c) => {
       return c.json(failureToErrorPayload(failure), failure.status);
     }
 
-    // Generate ID, admin token, and hash
-    const id = nanoid(12);
+    // Generate admin token for update/delete operations.
     const adminToken = `sk_${nanoid(24)}`;
-    const hash = await sha256(markdown);
-    const r2Key = `md/${id}.md`;
-    const title = extractTitle(markdown);
-    const now = new Date().toISOString();
-
-    await ensureOwnershipSchema(c.env);
-    const ownerUserId = requestAuth.isAuthenticated ? requestAuth.userId : null;
 
     let isFirstSavedLink = false;
     if (ownerUserId) {
@@ -1853,44 +1877,30 @@ app.post("/", async (c) => {
       isFirstSavedLink = (Number(existingCount?.count ?? 0) || 0) === 0;
     }
 
-    // Store in R2
-    await c.env.DOCS_BUCKET.put(r2Key, markdown, {
-      httpMetadata: {
-        contentType: "text/markdown",
-      },
-      customMetadata: {
-        created_at: now,
-        sha256: hash,
-      },
+    const created = await createStoredDoc(c.env, {
+      markdown,
+    }, {
+      source: createSource,
+      authMode,
+      ownerUserId,
+      adminToken,
+      clientName: createSource.startsWith("mcp_local_") ? "local_npm_mcp" : "website",
+      actorEmail: requestAuth.email,
+      actorSessionId: requestAuth.sessionId,
+      apiKeyId: apiKeyAuth?.keyId ?? null,
+      apiKeyName: apiKeyAuth?.keyName ?? null,
     });
-
-    // Store metadata in D1
-    await c.env.DB.prepare(
-      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, admin_token, owner_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    )
-      .bind(
-        id,
-        r2Key,
-        "text/markdown",
-        metrics.payloadBytes,
-        now,
-        hash,
-        title,
-        adminToken,
-        ownerUserId
-      )
-      .run();
 
     // Send Discord notification (optional, best-effort)
     const linkWebhookUrl = c.env.DISCORD_LINK_WEBHOOK_URL;
     if (linkWebhookUrl) {
       const baseUrl = new URL(c.req.url).origin;
       const notifyPromise = sendDiscordLinkCreatedNotification(linkWebhookUrl, {
-        id,
-        title,
-        url: `${baseUrl}/v/${id}`,
-        rawUrl: `${baseUrl}/v/${id}/raw`,
-        bytes: metrics.payloadBytes,
+        id: created.id,
+        title: created.title,
+        url: `${baseUrl}/v/${created.id}`,
+        rawUrl: `${baseUrl}/v/${created.id}/raw`,
+        bytes: created.bytes,
       });
 
       const execCtx = (c as any).executionCtx as ExecutionContext | undefined;
@@ -1902,35 +1912,36 @@ app.post("/", async (c) => {
       }
     }
 
-    // Track analytics event
-    try {
-      await c.env.ANALYTICS.writeDataPoint({
-        blobs: ["doc_create", id],
-        doubles: [metrics.payloadBytes],
-        indexes: [clientIp],
-      });
-
-      if (ownerUserId && isFirstSavedLink) {
+    if (ownerUserId && isFirstSavedLink) {
+      try {
         await c.env.ANALYTICS.writeDataPoint({
-          blobs: ["first_saved_link", ownerUserId, id],
+          blobs: ["first_saved_link", ownerUserId, created.id],
           doubles: [Date.now()],
           indexes: [ownerUserId.slice(0, 32)],
         });
+      } catch (e) {
+        console.error("Analytics error:", e);
       }
-    } catch (e) {
-      // Silent fail on analytics
-      console.error("Analytics error:", e);
     }
 
     // Return success
     const baseUrl = new URL(c.req.url).origin;
     return c.json({
-      id,
-      url: `${baseUrl}/v/${id}`,
-      raw_url: `${baseUrl}/v/${id}/raw`,
+      id: created.id,
+      url: `${baseUrl}/v/${created.id}`,
+      raw_url: `${baseUrl}/v/${created.id}/raw`,
       admin_token: adminToken,
+      ownership: {
+        owned: Boolean(ownerUserId),
+        owner_user_id: ownerUserId,
+        source: createSource,
+        auth_mode: authMode,
+      },
     });
   } catch (error) {
+    if (error instanceof DocValidationError) {
+      return c.json(failureToErrorPayload(error.failure), error.failure.status);
+    }
     console.error("Error creating document:", error);
     return c.json({ error: "Failed to create document" }, 500);
   }
@@ -2044,12 +2055,9 @@ app.get("/:id", async (c) => {
       );
     }
 
-    // Increment view_count
-    await c.env.DB.prepare(
-      "UPDATE docs SET view_count = view_count + 1 WHERE id = ?"
-    )
-      .bind(id)
-      .run();
+    await recordDocumentView(c.env, id, {
+      likelyHuman: isLikelyHumanDocumentView(c.req.raw),
+    });
 
     // Fetch content from R2
     const object = await c.env.DOCS_BUCKET.get(doc.r2_key);

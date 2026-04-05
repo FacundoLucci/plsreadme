@@ -1,21 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
-import { nanoid } from 'nanoid';
-import type { Env } from './types';
-
-const MAX_FILE_SIZE = 200 * 1024; // 200 KB
-
-// Helper: Extract title from markdown
-function extractTitle(markdown: string): string | null {
-  for (const line of markdown.split('\n')) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('# ')) {
-      return trimmed.substring(2).trim();
-    }
-  }
-  return null;
-}
+import { createHostedMcpDoc, getHostedMcpGrantProps, HostedMcpRateLimitError } from './mcp-create.ts';
+import { DocValidationError } from './doc-pipeline.ts';
+import type { HostedMcpGrantProps } from './mcp-oauth.ts';
+import type { Env } from './types.ts';
 
 // Send Discord notification (link/doc creation)
 async function sendDiscordLinkCreatedNotification(
@@ -63,7 +52,9 @@ async function sendDiscordLinkCreatedNotification(
   }
 }
 
-export class OutframerMCP extends McpAgent {
+const LOCAL_MCP_FALLBACK = 'npx -y plsreadme-mcp';
+
+export class OutframerMCP extends McpAgent<Env, unknown, HostedMcpGrantProps> {
   server = new McpServer({
     name: 'plsreadme',
     version: '0.2.0',
@@ -90,6 +81,24 @@ Pass the markdown content directly. If sharing a file, read it first and pass th
       },
       async ({ markdown, title }) => {
         const env = this.env as Env;
+        const grant = getHostedMcpGrantProps(this.props);
+
+        if (!grant) {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: [
+                  '❌ Hosted remote MCP requires browser login before it can create owned docs.',
+                  '',
+                  'Reconnect this server from your editor to complete browser login, or configure a personal plsreadme API key if your client cannot finish interactive auth.',
+                  `Local fallback: ${LOCAL_MCP_FALLBACK}`,
+                ].join('\n'),
+              },
+            ],
+            isError: true,
+          };
+        }
 
         // Validate input
         if (!markdown || markdown.trim().length === 0) {
@@ -104,60 +113,56 @@ Pass the markdown content directly. If sharing a file, read it first and pass th
           };
         }
 
-        if (markdown.length > MAX_FILE_SIZE) {
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `❌ Content is too large (${Math.round(markdown.length / 1024)}KB). Maximum size is ${MAX_FILE_SIZE / 1024}KB. Try shortening the content.`,
-              },
-            ],
-            isError: true,
-          };
-        }
-
-        // Generate ID and metadata
-        const id = nanoid(10);
-        const r2Key = `md/${id}.md`;
-        const extractedTitle = title || extractTitle(markdown);
-        const now = new Date().toISOString();
-
-        // Store in R2
-        await env.DOCS_BUCKET.put(r2Key, markdown, {
-          httpMetadata: { contentType: 'text/markdown' },
-          customMetadata: { created_at: now },
-        });
-
-        // Store metadata in D1
-        await env.DB.prepare(
-          'INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title) VALUES (?, ?, ?, ?, ?, ?, ?)'
-        )
-          .bind(id, r2Key, 'text/markdown', markdown.length, now, null, extractedTitle)
-          .run();
-
-        // Track analytics (best-effort)
+        let result;
         try {
-          await env.ANALYTICS.writeDataPoint({
-            blobs: ['mcp_doc_create', id],
-            doubles: [markdown.length],
-            indexes: ['mcp-server'],
-          });
-        } catch (e) {
-          console.error('Analytics error:', e);
-        }
+          result = await createHostedMcpDoc(
+            env,
+            {
+              markdown,
+              title,
+            },
+            grant
+          );
+        } catch (error) {
+          if (error instanceof DocValidationError) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `❌ ${error.failure.message}`,
+                },
+              ],
+              isError: true,
+            };
+          }
 
-        const url = `https://plsreadme.com/v/${id}`;
-        const rawUrl = `https://plsreadme.com/v/${id}/raw`;
+          if (error instanceof HostedMcpRateLimitError) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: [
+                    `❌ ${error.message}`,
+                    `Retry after about ${error.retryAfterSeconds} seconds.`,
+                  ].join('\n'),
+                },
+              ],
+              isError: true,
+            };
+          }
+
+          throw error;
+        }
 
         // Discord notification (best-effort, fire and forget)
         const linkWebhookUrl = env.DISCORD_LINK_WEBHOOK_URL;
         if (linkWebhookUrl) {
           sendDiscordLinkCreatedNotification(linkWebhookUrl, {
-            id,
-            title: extractedTitle,
-            url,
-            rawUrl,
-            bytes: markdown.length,
+            id: result.id,
+            title: result.title,
+            url: result.url,
+            rawUrl: result.rawUrl,
+            bytes: result.bytes,
           }).catch(() => {});
         }
 
@@ -168,9 +173,13 @@ Pass the markdown content directly. If sharing a file, read it first and pass th
               text: [
                 `✅ Shared successfully!`,
                 ``,
-                `📄 ${extractedTitle || 'Untitled'}`,
-                `🔗 ${url}`,
-                `📝 Raw: ${rawUrl}`,
+                grant.authMode === 'remote_api_key'
+                  ? `🔐 Owned by API key ${grant.apiKeyName ? `"${grant.apiKeyName}"` : grant.apiKeyId || grant.userId}`
+                  : `🔐 Owned by ${grant.email || grant.userId}`,
+                `🏷️ ${grant.source}`,
+                `📄 ${result.title || 'Untitled'}`,
+                `🔗 ${result.url}`,
+                `📝 Raw: ${result.rawUrl}`,
               ].join('\n'),
             },
           ],

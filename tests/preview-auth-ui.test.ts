@@ -93,8 +93,8 @@ test("auth dropdown close handler preserves keyboard accessibility", async () =>
 test("auth redirects preserve returnBackUrl from preview actions", async () => {
   const script = await loadAuthShellScript();
 
-  assert.match(script, /redirectToSignIn\(\{\s*returnBackUrl: window\.location\.href,/);
-  assert.match(script, /redirectToSignUp\(\{\s*returnBackUrl: window\.location\.href,/);
+  assert.match(script, /window\.location\.href = fallbackAuthUrl\(config\?\.signInUrl \|\| "\/sign-in"\);/);
+  assert.match(script, /window\.location\.href = fallbackAuthUrl\(config\?\.signUpUrl \|\| "\/sign-up"\);/);
   assert.match(script, /searchParams\.set\("redirect_url", returnTo\)/);
 });
 

@@ -178,6 +178,73 @@
         font-size: 0.86rem;
       }
 
+      .ml-api-intro {
+        padding: 1rem;
+        color: var(--ml-text-muted);
+        border-bottom: 1px solid var(--ml-border);
+        font-size: 0.92rem;
+        line-height: 1.55;
+      }
+
+      .ml-api-form {
+        padding: 1rem;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.75rem;
+        border-bottom: 1px solid var(--ml-border);
+      }
+
+      .ml-api-flash {
+        margin: 1rem;
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        background: rgba(37, 99, 235, 0.08);
+        display: grid;
+        gap: 0.7rem;
+      }
+
+      .ml-api-flash[hidden] {
+        display: none;
+      }
+
+      .ml-api-token {
+        margin: 0;
+        padding: 0.85rem 0.95rem;
+        border-radius: 10px;
+        overflow-x: auto;
+        background: rgba(15, 23, 42, 0.92);
+        color: #e2e8f0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.78rem;
+      }
+
+      .ml-api-flash-copy {
+        justify-self: start;
+      }
+
+      .ml-key-name {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+
+      .ml-key-prefix {
+        color: var(--ml-text-muted);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.74rem;
+      }
+
+      .ml-pill {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--ml-border-strong);
+        border-radius: 999px;
+        padding: 0.2rem 0.45rem;
+        font-size: 0.72rem;
+        color: var(--ml-text-muted);
+      }
+
       .ml-table {
         width: 100%;
         border-collapse: collapse;
@@ -251,6 +318,10 @@
           grid-template-columns: 1fr;
         }
 
+        .ml-api-form {
+          grid-template-columns: 1fr;
+        }
+
         .ml-table thead {
           display: none;
         }
@@ -316,6 +387,58 @@
       <div id="my-links-auth-required" class="ml-auth-required" hidden>
         Sign in to view your links. Use the auth controls in the top-right.
       </div>
+
+      <section id="my-links-account-tools" class="ml-section-grid" hidden>
+        <article class="ml-panel">
+          <div class="ml-panel-head">
+            <h2 class="ml-panel-title">MCP API keys</h2>
+            <span id="mcp-api-key-count" class="ml-panel-count">0</span>
+          </div>
+          <div class="ml-api-intro">
+            Use a personal plsreadme API key only when your editor cannot finish browser sign-in.
+            Local npm MCP uses <code>PLSREADME_API_KEY</code>. Legacy anonymous local mode now
+            requires an explicit <code>PLSREADME_ALLOW_ANONYMOUS=1</code> opt-in.
+          </div>
+          <form id="mcp-api-key-form" class="ml-api-form">
+            <input
+              id="mcp-api-key-name"
+              class="ml-input"
+              type="text"
+              maxlength="64"
+              placeholder="Key name (for example: Claude Desktop on MacBook)"
+              autocomplete="off"
+            />
+            <button id="mcp-api-key-create" type="submit" class="ml-action-btn">
+              Create key
+            </button>
+          </form>
+          <div id="mcp-api-key-status" class="ml-status" hidden></div>
+          <div id="mcp-api-key-flash" class="ml-api-flash" hidden>
+            <strong>Copy this API key now.</strong>
+            <p style="margin:0; color:var(--ml-text-muted);">
+              It is shown only once. Store it in your MCP client config, then revoke it here if it ever leaks.
+            </p>
+            <pre id="mcp-api-key-token" class="ml-api-token"></pre>
+            <button id="mcp-api-key-copy" type="button" class="ml-action-btn ml-api-flash-copy">
+              Copy key
+            </button>
+          </div>
+          <div id="mcp-api-key-empty" class="ml-empty-section" hidden>
+            No personal MCP API keys yet.
+          </div>
+          <table id="mcp-api-key-table" class="ml-table" hidden>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Created</th>
+                <th>Last used</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="mcp-api-key-body"></tbody>
+          </table>
+        </article>
+      </section>
 
       <div id="my-links-empty" class="ml-empty-all" hidden>
         No links matched your filters. <a href="/app.html">Create a new link</a> or save one from a preview page.

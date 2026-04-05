@@ -1,9 +1,13 @@
+import type { OAuthHelpers } from "@cloudflare/workers-oauth-provider";
+
 export interface Env {
   DB: D1Database;
   ANALYTICS: AnalyticsEngineDataset;
   ASSETS: Fetcher;
   DOCS_BUCKET: R2Bucket;
   MCP_OBJECT: DurableObjectNamespace;
+  OAUTH_KV?: KVNamespace; // Required in deployed environments for hosted remote MCP OAuth token storage
+  OAUTH_PROVIDER?: OAuthHelpers;
   DISCORD_WEBHOOK_URL?: string;        // Optional Discord webhook (used for waitlist notifications)
   DISCORD_LINK_WEBHOOK_URL?: string;   // Optional Discord webhook (used for link/doc creation notifications)
   RESEND_API_KEY?: string;       // Optional Resend API key for email notifications
@@ -80,8 +84,8 @@ export interface DocRecord {
   sha256: string | null;
   title: string | null;
   view_count: number;
+  raw_view_count: number;
   admin_token: string | null;
   doc_version: number;
   owner_user_id: string | null;
 }
-

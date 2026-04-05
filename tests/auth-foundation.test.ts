@@ -67,6 +67,7 @@ test("/api/auth/config reports auth enabled when clerk keys are configured", asy
 
   assert.equal(body.enabled, true);
   assert.equal(body.publishableKey, "pk_test_example");
+  assert.equal(body.frontendApiUrl, "https://clerk.example.dev");
   assert.deepEqual(body.providers, ["github", "google", "email"]);
 });
 

@@ -1,10 +1,14 @@
 (function () {
   const ROOT_SELECTOR = "[data-auth-root]";
-  const CLERK_BROWSER_SDK_URL =
+  const DEFAULT_CLERK_BROWSER_SDK_URL =
     "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js";
 
   if (typeof window.plsreadmeGetAuthToken !== "function") {
     window.plsreadmeGetAuthToken = async () => null;
+  }
+
+  if (!window.plsreadmeAuthActions || typeof window.plsreadmeAuthActions !== "object") {
+    window.plsreadmeAuthActions = {};
   }
 
   function getRoots() {
@@ -35,6 +39,14 @@
       window.plsreadmeGetAuthToken = fn;
     } catch {
       window.plsreadmeGetAuthToken = async () => null;
+    }
+  }
+
+  function setAuthActions(actions) {
+    try {
+      window.plsreadmeAuthActions = actions || {};
+    } catch {
+      window.plsreadmeAuthActions = {};
     }
   }
 
@@ -83,13 +95,24 @@
     return response.json();
   }
 
-  async function ensureClerkScript(publishableKey) {
+  function buildClerkBrowserSdkUrl(frontendApiUrl) {
+    const trimmed = typeof frontendApiUrl === "string" ? frontendApiUrl.trim().replace(/\/+$/, "") : "";
+    if (!trimmed) {
+      return DEFAULT_CLERK_BROWSER_SDK_URL;
+    }
+
+    return `${trimmed}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
+  }
+
+  async function ensureClerkScript(publishableKey, frontendApiUrl) {
     if (publishableKey) {
       window.__clerk_publishable_key = publishableKey;
     }
 
+    const scriptUrl = buildClerkBrowserSdkUrl(frontendApiUrl);
+
     await new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src=\"${CLERK_BROWSER_SDK_URL}\"]`);
+      const existing = document.querySelector(`script[src="${scriptUrl}"]`);
       if (existing) {
         existing.addEventListener("load", () => resolve(), { once: true });
         existing.addEventListener("error", () => reject(new Error("Failed to load Clerk SDK")), {
@@ -104,7 +127,7 @@
       }
 
       const script = document.createElement("script");
-      script.src = CLERK_BROWSER_SDK_URL;
+      script.src = scriptUrl;
       script.async = true;
       script.crossOrigin = "anonymous";
       if (publishableKey) {
@@ -120,8 +143,8 @@
     });
   }
 
-  async function getClerkClient(publishableKey) {
-    await ensureClerkScript(publishableKey);
+  async function getClerkClient(publishableKey, frontendApiUrl) {
+    await ensureClerkScript(publishableKey, frontendApiUrl);
 
     if (!window.Clerk || typeof window.Clerk.load !== "function") {
       throw new Error("Clerk SDK API not available");
@@ -195,32 +218,12 @@
     }
   }
 
-  async function goToSignIn(clerk, config) {
-    try {
-      await clerk.redirectToSignIn({
-        returnBackUrl: window.location.href,
-        signInUrl: config?.signInUrl || undefined,
-      });
-    } catch (error) {
-      console.warn("Clerk sign-in redirect failed", error);
-      if (config?.signInUrl) {
-        window.location.href = fallbackAuthUrl(config.signInUrl);
-      }
-    }
+  async function goToSignIn(_clerk, config) {
+    window.location.href = fallbackAuthUrl(config?.signInUrl || "/sign-in");
   }
 
-  async function goToSignUp(clerk, config) {
-    try {
-      await clerk.redirectToSignUp({
-        returnBackUrl: window.location.href,
-        signUpUrl: config?.signUpUrl || undefined,
-      });
-    } catch (error) {
-      console.warn("Clerk sign-up redirect failed", error);
-      if (config?.signUpUrl) {
-        window.location.href = fallbackAuthUrl(config.signUpUrl);
-      }
-    }
+  async function goToSignUp(_clerk, config) {
+    window.location.href = fallbackAuthUrl(config?.signUpUrl || "/sign-up");
   }
 
   function bindSignedOutActions(clerk, config) {
@@ -392,6 +395,14 @@
     renderRoots(() => '<span class="auth-status">Loading auth…</span>');
     publishAuthState({ authenticated: false, reason: "loading" });
     setTokenGetter(async () => null);
+    setAuthActions({
+      signIn() {
+        window.location.href = fallbackAuthUrl("/sign-in");
+      },
+      signUp() {
+        window.location.href = fallbackAuthUrl("/sign-up");
+      },
+    });
 
     let config;
 
@@ -407,11 +418,27 @@
     if (!config?.enabled || !config?.publishableKey) {
       renderRoots(() => "");
       publishAuthState({ authenticated: false, reason: "disabled" });
+      setAuthActions({
+        signIn() {
+          window.location.href = fallbackAuthUrl(config?.signInUrl || "/sign-in");
+        },
+        signUp() {
+          window.location.href = fallbackAuthUrl(config?.signUpUrl || "/sign-up");
+        },
+      });
       return;
     }
 
     try {
-      const clerk = await getClerkClient(config.publishableKey);
+      const clerk = await getClerkClient(config.publishableKey, config.frontendApiUrl);
+      setAuthActions({
+        signIn() {
+          void goToSignIn(clerk, config);
+        },
+        signUp() {
+          void goToSignUp(clerk, config);
+        },
+      });
       const backendSession = await getBackendSession(clerk);
       const backendAuthenticated = !!(backendSession && backendSession.authenticated === true);
 

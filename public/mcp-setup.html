@@ -3,8 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>plsreadme MCP Server – Share markdown from your AI editor</title>
-    <meta name="description" content="Install the plsreadme MCP server in Cursor, Claude Desktop, VS Code, Windsurf, or any MCP client. Share markdown as clean web links right from your editor." />
+    <title>plsreadme MCP Server – Browser login for supported editors</title>
+    <meta name="description" content="Connect the plsreadme hosted MCP server with browser login in supported editors, or fall back to the local npm MCP package." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://plsreadme.com/mcp-setup" />
     <meta property="og:title" content="plsreadme MCP Server" />
@@ -192,6 +192,114 @@
         border-color: var(--color-accent);
       }
 
+      .auth-bridge-card,
+      .compat-card,
+      .remote-card {
+        padding: var(--space-lg);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: 14px;
+      }
+
+      .auth-bridge-card {
+        display: grid;
+        gap: var(--space-md);
+      }
+
+      .auth-bridge-shell {
+        min-height: 2.5rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .auth-state-note {
+        color: var(--color-text-muted);
+        line-height: 1.6;
+      }
+
+      .auth-state-note[hidden] {
+        display: none;
+      }
+
+      .auth-state-note code {
+        font-family: var(--font-mono);
+        font-size: 0.88em;
+        background: var(--color-bg);
+        padding: 0.12rem 0.36rem;
+        border-radius: 6px;
+        border: 1px solid var(--color-border);
+      }
+
+      .compat-meta {
+        color: var(--color-text-subtle);
+        margin-bottom: var(--space-lg);
+      }
+
+      .compat-grid,
+      .remote-grid {
+        display: grid;
+        gap: var(--space-lg);
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .compat-card {
+        display: grid;
+        gap: var(--space-sm);
+      }
+
+      .compat-card h3,
+      .remote-card h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .compat-status {
+        width: fit-content;
+        padding: 0.28rem 0.58rem;
+        border-radius: 999px;
+        font-size: 0.76rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      .compat-status-supported {
+        color: #166534;
+        background: rgba(34, 197, 94, 0.14);
+      }
+
+      .compat-status-fallback {
+        color: #92400e;
+        background: rgba(245, 158, 11, 0.16);
+      }
+
+      .remote-card {
+        display: grid;
+        gap: var(--space-sm);
+      }
+
+      .remote-card p {
+        color: var(--color-text-muted);
+        margin: 0;
+      }
+
+      .remote-card .config-path {
+        margin-bottom: 0;
+      }
+
+      .remote-callout {
+        margin-top: var(--space-lg);
+        padding: var(--space-md) var(--space-lg);
+        border: 1px solid rgba(37, 99, 235, 0.22);
+        background: var(--color-accent-glow);
+        border-radius: 14px;
+        color: var(--color-text-muted);
+      }
+
+      .remote-callout code {
+        font-family: var(--font-mono);
+        font-size: 0.88em;
+      }
+
       /* Content Sections */
       .mcp-section {
         max-width: var(--max-width);
@@ -318,15 +426,141 @@
       <section class="mcp-hero">
         <span class="mcp-badge">⚡ MCP Server</span>
         <h1>plsreadme MCP Server</h1>
-        <p class="subtitle">Share markdown as clean web links — right from your AI editor</p>
+        <p class="subtitle">Share markdown as clean web links with browser login in supported editors</p>
         <p class="description">
-          Install the MCP server and your AI assistant can turn any markdown file or text into a shareable <code>plsrd.me</code> link — no copy-pasting needed.
+          Recommended path: add the hosted remote server, finish browser login once, and let your editor create account-owned docs. When that flow is unavailable, create a personal API key from <code>/my-links</code> and use either remote headers or the local <code>npx -y plsreadme-mcp</code> package.
         </p>
+      </section>
+
+      <section class="mcp-section">
+        <h2>Connect Your Editor</h2>
+        <div class="auth-bridge-card">
+          <div class="auth-bridge-shell" data-auth-root></div>
+          <p class="auth-state-note" id="mcp-guest-note">
+            Sign in here first if you want the hosted remote MCP flow. Supported clients will open browser login once, then new shares land in your account automatically.
+          </p>
+          <p class="auth-state-note" id="mcp-auth-note" hidden>
+            You’re signed in. Add the hosted MCP URL below in a supported client, approve the browser prompt once, and new shares will be tagged <code>mcp_remote_login</code>.
+          </p>
+        </div>
+        <div class="remote-callout">
+          Access tokens last about <code>1 hour</code>. Refresh tokens last about <code>30 days</code>. Reconnecting the same editor replaces the older grant. Signing out of the website does not revoke an existing editor grant by itself. If you need the fallback path, mint a personal API key from <a href="/my-links">My Links</a>.
+        </div>
+      </section>
+
+      <hr class="mcp-divider" />
+
+      <section class="mcp-section">
+        <h2>Compatibility Matrix</h2>
+        <p class="compat-meta">Current as of April 5, 2026, based on the latest Claude Code, Windsurf, Anthropic connector, Cursor, and VS Code MCP docs.</p>
+        <div class="compat-grid">
+          <article class="compat-card">
+            <span class="compat-status compat-status-supported">Remote login supported</span>
+            <h3>Claude Code</h3>
+            <p>Supports remote HTTP MCP and can authenticate remote servers with OAuth from the built-in <code>/mcp</code> flow.</p>
+          </article>
+          <article class="compat-card">
+            <span class="compat-status compat-status-supported">Remote config + headers supported</span>
+            <h3>Cursor</h3>
+            <p>Cursor documents remote MCP configs, per-server headers, and an MCP login flow in Cursor Agent. Use browser login first; fall back to a personal API key if your build does not complete the OAuth prompt.</p>
+          </article>
+          <article class="compat-card">
+            <span class="compat-status compat-status-supported">Remote login supported</span>
+            <h3>Windsurf</h3>
+            <p>Supports remote MCP over Streamable HTTP and SSE, and Windsurf’s docs explicitly note OAuth support for each transport.</p>
+          </article>
+          <article class="compat-card">
+            <span class="compat-status compat-status-supported">Remote login supported</span>
+            <h3>Claude Desktop / Claude web connectors</h3>
+            <p>Anthropic’s connector docs cover remote web connectors and browser OAuth permissions for supported paid plans.</p>
+          </article>
+          <article class="compat-card">
+            <span class="compat-status compat-status-fallback">Fallback ready</span>
+            <h3>VS Code / any client without working remote OAuth</h3>
+            <p>Use a personal API key with either remote headers or the local npm MCP package. Legacy anonymous local mode now requires explicit opt-in.</p>
+          </article>
+        </div>
+      </section>
+
+      <hr class="mcp-divider" />
+
+      <section class="mcp-section">
+        <h2>Recommended Remote Setup</h2>
+        <div class="remote-grid">
+          <article class="remote-card">
+            <h3>Claude Code</h3>
+            <p>Add the hosted MCP endpoint. Claude Code opens browser login on first authenticated use.</p>
+            <div class="config-path">Run in your terminal:</div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <pre>claude mcp add --transport http plsreadme https://plsreadme.com/mcp</pre>
+            </div>
+          </article>
+
+          <article class="remote-card">
+            <h3>Cursor / generic remote MCP JSON</h3>
+            <p>Use the hosted URL directly. On first connect, the client should open the browser authorization flow.</p>
+            <div class="config-path">Remote MCP JSON:</div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <pre>{
+  "mcpServers": {
+    "plsreadme": {
+      "url": "https://plsreadme.com/mcp"
+    }
+  }
+}</pre>
+            </div>
+          </article>
+
+          <article class="remote-card">
+            <h3>VS Code</h3>
+            <p>Use the remote MCP URL in your workspace or user-level MCP configuration. If your build does not offer browser auth yet, use the API key fallback below.</p>
+            <div class="config-path">.vscode/mcp.json</div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <pre>{
+  "servers": {
+    "plsreadme": {
+      "type": "http",
+      "url": "https://plsreadme.com/mcp"
+    }
+  }
+}</pre>
+            </div>
+          </article>
+
+          <article class="remote-card">
+            <h3>Windsurf</h3>
+            <p>Point the remote MCP config at the hosted URL. Windsurf’s MCP docs support OAuth on remote transports.</p>
+            <div class="config-path">~/.codeium/windsurf/mcp_config.json</div>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <pre>{
+  "mcpServers": {
+    "plsreadme": {
+      "serverUrl": "https://plsreadme.com/mcp"
+    }
+  }
+}</pre>
+            </div>
+          </article>
+        </div>
+        <div class="remote-callout">
+          If your client does not open the browser prompt, create a personal API key from <a href="/my-links">My Links</a> and use the remote header or local stdio fallback below.
+        </div>
       </section>
 
       <!-- Install -->
       <section class="install-section">
-        <h2>Setup</h2>
+        <h2>Local npm Fallback</h2>
+        <p class="compat-meta">
+          Step 1: sign in and create a personal API key from <a href="/my-links">My Links</a>.
+          Step 2: paste one of these configs. The local package now expects <code>PLSREADME_API_KEY</code> by default.
+        </p>
+        <p class="compat-meta">
+          Need the old anonymous behavior for a one-off workflow? Opt in explicitly with <code>PLSREADME_ALLOW_ANONYMOUS=1</code>.
+        </p>
 
         <div class="tabs" role="tablist">
           <button class="tab-btn active" data-tab="cursor" role="tab">Cursor</button>
@@ -347,7 +581,10 @@
   "mcpServers": {
     "plsreadme": {
       "command": "npx",
-      "args": ["-y", "plsreadme-mcp"]
+      "args": ["-y", "plsreadme-mcp"],
+      "env": {
+        "PLSREADME_API_KEY": "${env:PLSREADME_API_KEY}"
+      }
     }
   }
 }</pre>
@@ -363,7 +600,10 @@
   "mcpServers": {
     "plsreadme": {
       "command": "npx",
-      "args": ["-y", "plsreadme-mcp"]
+      "args": ["-y", "plsreadme-mcp"],
+      "env": {
+        "PLSREADME_API_KEY": "&lt;paste-your-personal-api-key&gt;"
+      }
     }
   }
 }</pre>
@@ -376,10 +616,21 @@
           <div class="code-block">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre>{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "plsreadme-api-key",
+      "description": "plsreadme personal API key",
+      "password": true
+    }
+  ],
   "servers": {
     "plsreadme": {
       "command": "npx",
-      "args": ["-y", "plsreadme-mcp"]
+      "args": ["-y", "plsreadme-mcp"],
+      "env": {
+        "PLSREADME_API_KEY": "${input:plsreadme-api-key}"
+      }
     }
   }
 }</pre>
@@ -388,14 +639,17 @@
 
         <!-- Windsurf -->
         <div class="tab-panel" id="tab-windsurf">
-          <div class="config-path">~/.windsurf/mcp.json</div>
+          <div class="config-path">~/.codeium/windsurf/mcp_config.json</div>
           <div class="code-block">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre>{
   "mcpServers": {
     "plsreadme": {
       "command": "npx",
-      "args": ["-y", "plsreadme-mcp"]
+      "args": ["-y", "plsreadme-mcp"],
+      "env": {
+        "PLSREADME_API_KEY": "${env:PLSREADME_API_KEY}"
+      }
     }
   }
 }</pre>
@@ -407,19 +661,24 @@
           <div class="config-path">Run in your terminal:</div>
           <div class="code-block">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-            <pre>claude mcp add plsreadme -- npx -y plsreadme-mcp</pre>
+            <pre>claude mcp add --transport stdio \
+  --env PLSREADME_API_KEY=$PLSREADME_API_KEY \
+  plsreadme -- npx -y plsreadme-mcp</pre>
           </div>
         </div>
 
         <!-- Remote -->
         <div class="tab-panel" id="tab-remote">
-          <div class="config-path">For any client supporting remote MCP (zero install):</div>
+          <div class="config-path">Remote API key fallback (generic HTTP headers):</div>
           <div class="code-block">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre>{
   "mcpServers": {
-    "plsreadme": {
-      "url": "https://plsreadme.com/mcp"
+    "plsreadme-api": {
+      "url": "https://plsreadme.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${env:PLSREADME_API_KEY}"
+      }
     }
   }
 }</pre>
@@ -428,7 +687,7 @@
 
         <!-- Universal -->
         <div class="tab-panel" id="tab-universal">
-          <div class="config-path">Auto-detects your editor:</div>
+          <div class="config-path">Auto-detects your editor after you export <code>PLSREADME_API_KEY</code>:</div>
           <div class="code-block">
             <button class="copy-btn" onclick="copyCode(this)">Copy</button>
             <pre>npx add-mcp plsreadme-mcp</pre>
@@ -492,6 +751,7 @@
       </footer>
     </div>
 
+    <script src="/clerk-auth-shell.js" defer></script>
     <script>
       // Tab switching
       document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -511,6 +771,25 @@
           setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
         });
       }
+
+      const guestNote = document.getElementById('mcp-guest-note');
+      const authNote = document.getElementById('mcp-auth-note');
+
+      function updateMcpAuthState(state) {
+        const authenticated = !!(state && state.authenticated === true);
+        if (guestNote) {
+          guestNote.hidden = authenticated;
+        }
+        if (authNote) {
+          authNote.hidden = !authenticated;
+        }
+      }
+
+      window.addEventListener('plsreadme:auth-state', event => {
+        updateMcpAuthState(event.detail);
+      });
+
+      updateMcpAuthState(window.plsreadmeAuthState || {});
     </script>
   </body>
 </html>

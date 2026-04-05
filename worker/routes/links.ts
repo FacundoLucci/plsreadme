@@ -1,20 +1,24 @@
 import { Hono } from "hono";
-import { nanoid } from "nanoid";
 import type { Env } from "../types";
 import {
+  buildDemoGrantErrorPayload,
+  clearDemoGrantCookie,
   WRITE_RATE_LIMITS,
   checkAndConsumeRateLimit,
+  consumeDemoGrant,
   failureToErrorPayload,
   getClientIp,
   logAbuseAttempt,
   parseContentLength,
+  readCookieValue,
   resolveRateLimitActorKey,
   sha256,
   validateContentLength,
   validateMarkdown,
+  DEMO_GRANT_COOKIE_NAME,
 } from "../security.ts";
 import { getRequestAuth } from "../auth.ts";
-import { ensureOwnershipSchema } from "../ownership.ts";
+import { createStoredDoc, DocValidationError } from "../doc-pipeline.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -69,18 +73,6 @@ async function sendDiscordLinkCreatedNotification(
   }
 }
 
-// Helper: Extract title from markdown
-function extractTitle(markdown: string): string | null {
-  const lines = markdown.split("\n");
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed.startsWith("# ")) {
-      return trimmed.substring(2).trim();
-    }
-  }
-  return null;
-}
-
 // POST /api/create-link
 app.post("/", async (c) => {
   const endpoint = "/api/create-link";
@@ -101,15 +93,47 @@ app.post("/", async (c) => {
     }
 
     const requestAuth = await getRequestAuth(c);
+    const isAuthenticated = !!(requestAuth.isAuthenticated && requestAuth.userId);
+
+    if (!isAuthenticated) {
+      const demoGrant = readCookieValue(c.req.header("cookie"), DEMO_GRANT_COOKIE_NAME);
+      const demoGrantCheck = await consumeDemoGrant(c.env, {
+        token: demoGrant,
+        ipHash,
+        userAgent: c.req.header("user-agent"),
+      });
+
+      if (!demoGrantCheck.valid) {
+        await logAbuseAttempt(c.env, {
+          endpoint,
+          ipHash,
+          reason: `demo_grant_${demoGrantCheck.reason}`,
+          contentLength,
+        });
+
+        const response = c.json(
+          buildDemoGrantErrorPayload(
+            demoGrantCheck.reason,
+            c.env.CLERK_SIGN_IN_URL?.trim() || "/sign-in"
+          ),
+          403
+        );
+        response.headers.append("Set-Cookie", clearDemoGrantCookie(c.req.url));
+        return response;
+      }
+    }
+
     const rateLimitActorKey = await resolveRateLimitActorKey({
       ipHash,
-      userId: requestAuth.isAuthenticated ? requestAuth.userId : null,
+      userId: isAuthenticated ? requestAuth.userId : null,
     });
 
     const rateLimit = await checkAndConsumeRateLimit(
       c.env,
       rateLimitActorKey,
-      WRITE_RATE_LIMITS.createLink
+      isAuthenticated
+        ? WRITE_RATE_LIMITS.createLinkAuthenticated
+        : WRITE_RATE_LIMITS.createLinkAnonymous
     );
     if (!rateLimit.allowed) {
       await logAbuseAttempt(c.env, {
@@ -157,15 +181,7 @@ app.post("/", async (c) => {
       return c.json(failureToErrorPayload(failure), failure.status);
     }
 
-    // Generate ID and hash
-    const id = nanoid(10);
-    const hash = await sha256(markdown);
-    const r2Key = `md/${id}.md`;
-    const title = extractTitle(markdown);
-    const now = new Date().toISOString();
-
-    await ensureOwnershipSchema(c.env);
-    const ownerUserId = requestAuth.isAuthenticated ? requestAuth.userId : null;
+    const ownerUserId = isAuthenticated ? requestAuth.userId : null;
 
     let isFirstSavedLink = false;
     if (ownerUserId) {
@@ -177,34 +193,25 @@ app.post("/", async (c) => {
       isFirstSavedLink = (Number(existingCount?.count ?? 0) || 0) === 0;
     }
 
-    // Store in R2
-    await c.env.DOCS_BUCKET.put(r2Key, markdown, {
-      httpMetadata: {
-        contentType: "text/markdown",
-      },
-      customMetadata: {
-        created_at: now,
-        sha256: hash,
-      },
+    const created = await createStoredDoc(c.env, { markdown }, {
+      source: ownerUserId ? "web_signed_in" : "web_demo",
+      authMode: ownerUserId ? "clerk_session" : "anonymous_demo",
+      ownerUserId,
+      clientName: "website",
+      actorEmail: requestAuth.email,
+      actorSessionId: requestAuth.sessionId,
     });
-
-    // Store metadata in D1 docs table
-    await c.env.DB.prepare(
-      "INSERT INTO docs (id, r2_key, content_type, bytes, created_at, sha256, title, view_count, owner_user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    )
-      .bind(id, r2Key, "text/markdown", metrics.payloadBytes, now, hash, title, 0, ownerUserId)
-      .run();
 
     // Send Discord notification (optional, best-effort)
     const linkWebhookUrl = c.env.DISCORD_LINK_WEBHOOK_URL;
     if (linkWebhookUrl) {
       const baseUrl = "https://plsrd.me";
       const notifyPromise = sendDiscordLinkCreatedNotification(linkWebhookUrl, {
-        id,
-        title,
-        url: `${baseUrl}/v/${id}`,
-        rawUrl: `${baseUrl}/v/${id}/raw`,
-        bytes: metrics.payloadBytes,
+        id: created.id,
+        title: created.title,
+        url: `${baseUrl}/v/${created.id}`,
+        rawUrl: `${baseUrl}/v/${created.id}/raw`,
+        bytes: created.bytes,
       });
 
       const execCtx = (c as any).executionCtx as ExecutionContext | undefined;
@@ -218,7 +225,7 @@ app.post("/", async (c) => {
     if (ownerUserId && isFirstSavedLink) {
       try {
         await c.env.ANALYTICS.writeDataPoint({
-          blobs: ["first_saved_link", ownerUserId, id],
+          blobs: ["first_saved_link", ownerUserId, created.id],
           doubles: [Date.now()],
           indexes: [ownerUserId.slice(0, 32)],
         });
@@ -229,11 +236,21 @@ app.post("/", async (c) => {
 
     // Return id and url
     const baseUrl = "https://plsrd.me";
-    return c.json({
-      id,
-      url: `${baseUrl}/v/${id}`,
+    const response = c.json({
+      id: created.id,
+      url: `${baseUrl}/v/${created.id}`,
+      owned: Boolean(ownerUserId),
+      authMode: ownerUserId ? "authenticated" : "anonymous_demo",
+      source: ownerUserId ? "web_signed_in" : "web_demo",
     });
+    if (!isAuthenticated) {
+      response.headers.append("Set-Cookie", clearDemoGrantCookie(c.req.url));
+    }
+    return response;
   } catch (error) {
+    if (error instanceof DocValidationError) {
+      return c.json(failureToErrorPayload(error.failure), error.failure.status);
+    }
     console.error("Error creating link:", error);
     return c.json({ error: "Failed to create link" }, 500);
   }

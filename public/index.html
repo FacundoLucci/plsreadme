@@ -139,11 +139,18 @@
                   <i class="hgi-stroke hgi-view"></i> View document
                 </a>
                 <a
-                  href="/my-links"
+                  href="/app.html"
                   class="inline-result-action"
-                  id="inline-my-links"
+                  id="inline-save-to-account"
                 >
-                  <i class="hgi-stroke hgi-link-square-02"></i> Go to My Links
+                  <i class="hgi-stroke hgi-bookmark-02"></i> Save to my account
+                </a>
+                <a
+                  href="/mcp-setup"
+                  class="inline-result-action"
+                  id="inline-connect-editor"
+                >
+                  <i class="hgi-stroke hgi-link-square-02"></i> Connect your editor
                 </a>
                 <a
                   href="#"
@@ -162,10 +169,10 @@
       <section class="section" style="padding-bottom: var(--space-3xl);">
         <div style="max-width: 640px; margin: 0 auto; text-align: center; padding: var(--space-2xl) var(--space-xl); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 16px;">
           <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.25); border-radius: 20px; font-size: 0.8125rem; font-weight: 600; color: var(--color-accent); margin-bottom: var(--space-md);">⚡ NEW</span>
-          <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: var(--space-sm);">MCP Server for AI Editors</h2>
-          <p style="color: var(--color-text-muted); font-size: 1rem; margin-bottom: var(--space-lg); max-width: 480px; margin-left: auto; margin-right: auto;">Share markdown as <code style="font-family: var(--font-mono); font-size: 0.9em; background: var(--color-bg); padding: 0.15em 0.4em; border-radius: 4px; border: 1px solid var(--color-border); color: var(--color-accent);">plsrd.me</code> links directly from Cursor, Claude Desktop, VS Code, or any MCP client — no copy-pasting needed.</p>
+          <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: var(--space-sm);">Connect your editor</h2>
+          <p style="color: var(--color-text-muted); font-size: 1rem; margin-bottom: var(--space-lg); max-width: 480px; margin-left: auto; margin-right: auto;">Try the browser demo first, then connect Claude, Cursor, VS Code, Windsurf, or another MCP client. Supported clients use one browser login; the rest can fall back to a personal API key.</p>
           <a href="/mcp-setup" class="cta-button" style="display: inline-flex; text-decoration: none;">
-            <span class="cta-text">Set up MCP →</span>
+            <span class="cta-text">Connect your editor →</span>
           </a>
         </div>
       </section>
@@ -190,22 +197,90 @@
       const inlineResult = document.getElementById("inline-result");
       const inlineResultUrl = document.getElementById("inline-result-url");
       const inlineViewLink = document.getElementById("inline-view-link");
-      const inlineMyLinks = document.getElementById("inline-my-links");
+      const inlineSaveToAccount = document.getElementById("inline-save-to-account");
+      const inlineConnectEditor = document.getElementById("inline-connect-editor");
       const inlineCopyButton = document.getElementById("inline-copy-button");
       const inlineCreateAnother = document.getElementById(
         "inline-create-another"
       );
+      const LAST_CREATED_DOC_STORAGE_KEY = "plsreadme:last-created-doc";
 
-      function showInlineError(message) {
-        inlineError.textContent = message;
+      function persistLastCreatedDoc(doc) {
+        try {
+          sessionStorage.setItem(
+            LAST_CREATED_DOC_STORAGE_KEY,
+            JSON.stringify({
+              id: doc.id,
+              url: doc.url,
+              owned: !!doc.owned,
+              authMode: doc.authMode || (doc.owned ? "authenticated" : "anonymous_demo"),
+            })
+          );
+        } catch {}
+      }
+
+      function showInlineError(message, options = {}) {
+        inlineError.innerHTML = "";
+        const messageEl = document.createElement("p");
+        messageEl.textContent = message;
+        inlineError.appendChild(messageEl);
+
+        if (options.retryVerification || options.openApp) {
+          const actions = document.createElement("div");
+          actions.style.display = "flex";
+          actions.style.flexWrap = "wrap";
+          actions.style.gap = "0.75rem";
+          actions.style.marginTop = "0.85rem";
+
+          if (options.retryVerification) {
+            const retryButton = document.createElement("button");
+            retryButton.type = "button";
+            retryButton.className = "inline-copy-button";
+            retryButton.textContent = "Verify browser again";
+            retryButton.addEventListener("click", async () => {
+              try {
+                await ensureInlineDemoGrant();
+                hideInlineError();
+              } catch (error) {
+                showInlineError(error.payload?.error || error.message || "Verification failed");
+              }
+            });
+            actions.appendChild(retryButton);
+          }
+
+          if (options.openApp) {
+            const appLink = document.createElement("a");
+            appLink.href = "/app.html";
+            appLink.className = "inline-result-action";
+            appLink.innerHTML = '<i class="hgi-stroke hgi-user-circle"></i> Open full app to sign in';
+            actions.appendChild(appLink);
+          }
+
+          inlineError.appendChild(actions);
+        }
+
         inlineError.style.display = "block";
-        setTimeout(() => {
-          inlineError.style.display = "none";
-        }, 5000);
       }
 
       function hideInlineError() {
+        inlineError.innerHTML = "";
         inlineError.style.display = "none";
+      }
+
+      async function ensureInlineDemoGrant() {
+        const response = await fetch("/api/auth/demo-grant", {
+          method: "GET",
+          headers: { Accept: "application/json" },
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const error = new Error(data.error || "Failed to verify browser session");
+          error.payload = data;
+          throw error;
+        }
+
+        return data;
       }
 
       inlineCreateButton.addEventListener("click", async () => {
@@ -223,6 +298,8 @@
         hideInlineError();
 
         try {
+          await ensureInlineDemoGrant();
+
           const response = await fetch("/api/create-link", {
             method: "POST",
             headers: {
@@ -231,19 +308,39 @@
             body: JSON.stringify({ markdown }),
           });
 
-          const data = await response.json();
+          const data = await response.json().catch(() => ({}));
 
           if (!response.ok) {
-            throw new Error(data.error || "Failed to create link");
+            showInlineError(data.error || "Failed to create link", {
+              retryVerification:
+                data.code === "demo_grant_required" ||
+                data.code === "demo_grant_invalid" ||
+                data.code === "rate_limit_exceeded",
+              openApp:
+                data.code === "demo_grant_required" ||
+                data.code === "demo_grant_invalid" ||
+                data.code === "rate_limit_exceeded",
+            });
+            return;
           }
 
           // Show result
           inlineResultUrl.value = data.url;
           inlineViewLink.href = data.url;
-          if (inlineMyLinks) {
-            inlineMyLinks.href = data.id
-              ? `/my-links?created=${encodeURIComponent(data.id)}`
-              : "/my-links";
+          persistLastCreatedDoc(data);
+          if (inlineSaveToAccount) {
+            if (data.owned && data.id) {
+              inlineSaveToAccount.href = `/my-links?created=${encodeURIComponent(data.id)}`;
+              inlineSaveToAccount.innerHTML =
+                '<i class="hgi-stroke hgi-bookmark-02"></i> Open My Links';
+            } else {
+              inlineSaveToAccount.href = "/app.html";
+              inlineSaveToAccount.innerHTML =
+                '<i class="hgi-stroke hgi-bookmark-02"></i> Save to my account';
+            }
+          }
+          if (inlineConnectEditor) {
+            inlineConnectEditor.href = "/mcp-setup";
           }
           inlineResult.style.display = "block";
 
@@ -263,7 +360,10 @@
           // Scroll to result
           inlineResult.scrollIntoView({ behavior: "smooth", block: "nearest" });
         } catch (error) {
-          showInlineError(error.message);
+          showInlineError(error.payload?.error || error.message || "Failed to create link", {
+            retryVerification: true,
+            openApp: true,
+          });
         } finally {
           inlineCreateButton.disabled = false;
           inlineButtonText.textContent = "Create Link";
@@ -287,8 +387,10 @@
         e.preventDefault();
         inlineMarkdownInput.value = "";
         inlineResult.style.display = "none";
-        if (inlineMyLinks) {
-          inlineMyLinks.href = "/my-links";
+        if (inlineSaveToAccount) {
+          inlineSaveToAccount.href = "/app.html";
+          inlineSaveToAccount.innerHTML =
+            '<i class="hgi-stroke hgi-bookmark-02"></i> Save to my account';
         }
         inlineMarkdownInput.focus();
       });

@@ -3,13 +3,15 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { readFileSync, writeFileSync, existsSync, appendFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, basename, dirname } from 'path';
 
 const PLSREADME_API = 'https://plsreadme.com/api/render';
 const PLSREADME_VIEW = 'https://plsreadme.com/v';
 const MAX_FILE_SIZE = 200 * 1024; // 200 KB
 const RECORD_FILE = '.plsreadme';
+const PLSREADME_API_KEY_ENV = 'PLSREADME_API_KEY';
+const PLSREADME_ALLOW_ANONYMOUS_ENV = 'PLSREADME_ALLOW_ANONYMOUS';
 
 // --- Types ---
 
@@ -18,6 +20,12 @@ interface CreateResponse {
   url: string;
   raw_url: string;
   admin_token: string;
+  ownership?: {
+    owned?: boolean;
+    owner_user_id?: string | null;
+    source?: string | null;
+    auth_mode?: string | null;
+  };
 }
 
 interface DocRecord {
@@ -29,6 +37,29 @@ interface DocRecord {
   source: string | null; // file path or null for text
   created_at: string;
 }
+
+type LocalAuthState =
+  | {
+      mode: 'api_key';
+      apiKey: string;
+      source: 'mcp_local_api_key';
+      authMode: 'personal_api_key';
+      summary: string;
+    }
+  | {
+      mode: 'anonymous';
+      apiKey: null;
+      source: 'mcp_local_anonymous';
+      authMode: 'anonymous';
+      summary: string;
+    }
+  | {
+      mode: 'missing';
+      apiKey: null;
+      source: null;
+      authMode: null;
+      summary: string;
+    };
 
 // --- .plsreadme record file ---
 
@@ -140,14 +171,25 @@ function coerceToMarkdown(input: string): string {
 }
 
 async function apiCreate(markdown: string): Promise<CreateResponse> {
+  const auth = getLocalAuthState();
+  if (auth.mode === 'missing') {
+    throw new Error(auth.summary);
+  }
+
   const response = await fetch(PLSREADME_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(auth.apiKey ? { Authorization: `Bearer ${auth.apiKey}` } : {}),
+    },
     body: JSON.stringify({ markdown }),
   });
 
   if (!response.ok) {
     const body = await response.text().catch(() => response.statusText);
+    if (response.status === 401 && auth.mode === 'api_key') {
+      throw new Error(`Personal API key rejected (HTTP 401). Rotate the key from your plsreadme account page and update ${PLSREADME_API_KEY_ENV}.`);
+    }
     if (response.status === 413) throw new Error(`Content too large (max ~200KB). ${body}`);
     if (response.status >= 500) throw new Error(`plsreadme.com unavailable (HTTP ${response.status}). Try again.`);
     throw new Error(`Upload failed (HTTP ${response.status}): ${body}`);
@@ -187,13 +229,20 @@ async function apiDelete(id: string, token: string): Promise<void> {
 // --- Response formatters ---
 
 function formatSuccess(title: string | null, url: string, rawUrl: string, extra?: string) {
+  const auth = getLocalAuthState();
   const lines = [
     `✅ Shared successfully!`,
     ``,
+    auth.mode === 'api_key'
+      ? `🔐 Owned via personal API key`
+      : auth.mode === 'anonymous'
+        ? `⚪ Legacy anonymous mode`
+        : `⚠️ Authentication unknown`,
+    auth.source ? `🏷️ ${auth.source}` : null,
     `📄 ${title || 'Untitled'}`,
     `🔗 ${url}`,
     `📝 Raw: ${rawUrl}`,
-  ];
+  ].filter(Boolean) as string[];
   if (extra) lines.push('', extra);
   return { content: [{ type: 'text' as const, text: lines.join('\n') }] };
 }
@@ -202,11 +251,47 @@ function formatError(message: string) {
   return { content: [{ type: 'text' as const, text: `❌ ${message}` }], isError: true };
 }
 
+function getLocalAuthState(): LocalAuthState {
+  const apiKey = process.env[PLSREADME_API_KEY_ENV]?.trim() || '';
+  if (apiKey) {
+    return {
+      mode: 'api_key',
+      apiKey,
+      source: 'mcp_local_api_key',
+      authMode: 'personal_api_key',
+      summary: `Using ${PLSREADME_API_KEY_ENV} for owned local MCP creates.`,
+    };
+  }
+
+  const allowAnonymous = /^(1|true|yes)$/i.test(process.env[PLSREADME_ALLOW_ANONYMOUS_ENV] || '');
+  if (allowAnonymous) {
+    return {
+      mode: 'anonymous',
+      apiKey: null,
+      source: 'mcp_local_anonymous',
+      authMode: 'anonymous',
+      summary: `Legacy anonymous mode enabled via ${PLSREADME_ALLOW_ANONYMOUS_ENV}. New docs will not be owned.`,
+    };
+  }
+
+  return {
+    mode: 'missing',
+    apiKey: null,
+    source: null,
+    authMode: null,
+    summary: [
+      `Local plsreadme MCP now expects a website-issued personal API key by default.`,
+      `Set ${PLSREADME_API_KEY_ENV}=<your_key> to create owned docs, or opt into legacy anonymous mode with ${PLSREADME_ALLOW_ANONYMOUS_ENV}=1.`,
+      `Get a key from https://plsreadme.com/my-links`,
+    ].join(' '),
+  };
+}
+
 // --- MCP Server ---
 
 const server = new McpServer({
   name: 'plsreadme',
-  version: '0.5.0',
+  version: '0.6.0',
 });
 
 // Tool: Share a file
@@ -268,7 +353,12 @@ Tracks links in a local .plsreadme file for future edits and deletes.`,
       });
 
       const gitWarn = checkGitignore();
-      return formatSuccess(title, result.url, result.raw_url, gitWarn || undefined);
+      return formatSuccess(
+        title,
+        result.url,
+        result.raw_url,
+        gitWarn || undefined
+      );
     } catch (err) {
       return formatError((err as Error).message);
     }
@@ -314,10 +404,45 @@ Tracks links in a local .plsreadme file for future edits and deletes.`,
       });
 
       const gitWarn = checkGitignore();
-      return formatSuccess(displayTitle, result.url, result.raw_url, gitWarn || undefined);
+      return formatSuccess(
+        displayTitle,
+        result.url,
+        result.raw_url,
+        gitWarn || undefined
+      );
     } catch (err) {
       return formatError((err as Error).message);
     }
+  }
+);
+
+server.tool(
+  'plsreadme_auth_status',
+  `Show whether the local plsreadme MCP server is running with a personal API key or explicit legacy anonymous mode.`,
+  {},
+  {
+    title: 'Auth Status',
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  },
+  async () => {
+    const auth = getLocalAuthState();
+    const lines = [
+      auth.mode === 'api_key'
+        ? '✅ Local MCP is authenticated with a personal API key.'
+        : auth.mode === 'anonymous'
+          ? '⚪ Local MCP is running in explicit legacy anonymous mode.'
+          : '❌ Local MCP is not configured for authenticated creates yet.',
+      '',
+      auth.summary,
+    ];
+
+    return {
+      content: [{ type: 'text' as const, text: lines.join('\n') }],
+      ...(auth.mode === 'missing' ? { isError: true } : {}),
+    };
   }
 );
 
@@ -509,7 +634,8 @@ server.resource(
         '- Max content size: 200KB',
         '- Upload rate: 30/hour per IP',
         '- Links are permanent and publicly accessible',
-        '- No authentication required for creation',
+        `- Local MCP auth: set ${PLSREADME_API_KEY_ENV}=<personal_key> for owned docs`,
+        `- Legacy anonymous local mode: set ${PLSREADME_ALLOW_ANONYMOUS_ENV}=1 explicitly`,
         '',
         'Website: https://plsreadme.com',
       ].join('\n'),

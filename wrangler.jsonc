@@ -1,87 +1,98 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "plsreadme",
-  "main": "worker/index.ts",
-  "compatibility_date": "2025-01-01",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
-  "preview_urls": true,
-  "account_id": "78aa716d1c2ddac7dab1162d38998f53",
-  "routes": [
-    {
-      "pattern": "plsreadme.com",
-      "zone_name": "plsreadme.com",
-      "custom_domain": true
-    },
-    {
-      "pattern": "plsrd.me",
-      "zone_name": "plsrd.me",
-      "custom_domain": true
-    }
-  ],
-  "ai": {
-    "binding": "AI",
-    "remote": true
-  },
-  "assets": {
-    "directory": "./public",
-    "binding": "ASSETS",
-    "run_worker_first": [
-      "/api/*",
-      "/t",
-      "/v/*",
-      "/sse",
-      "/sse/*",
-      "/mcp"
-    ]
-  },
-  "vars": {
-    "OPENAI_MODEL": "gpt-4.1-2025-04-14",
-    "CF_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct",
-    "CLERK_SIGN_IN_URL": "/sign-in",
-    "CLERK_SIGN_UP_URL": "/sign-up"
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "outframer-waitlist",
-      "database_id": "b977c6e1-b40e-4fd1-bbe1-f38a881593c3",
-      "migrations_dir": "db/migrations"
-    }
-  ],
-  "analytics_engine_datasets": [
-    {
-      "binding": "ANALYTICS",
-      "dataset": "outframer_events"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "DOCS_BUCKET",
-      "bucket_name": "outframer-docs"
-    }
-  ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "class_name": "OutframerMCPv2",
-        "name": "MCP_OBJECT"
-      }
-    ]
-  },
-  "migrations": [
-    {
-      "tag": "v2",
-      "new_sqlite_classes": [
-        "OutframerMCPv2"
-      ]
-    }
-  ],
-  "observability": {
-    "enabled": true,
-    "logs": {
-      "enabled": true
-    }
-  }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "plsreadme",
+	"main": "worker/index.ts",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"preview_urls": true,
+	"account_id": "78aa716d1c2ddac7dab1162d38998f53",
+	"routes": [
+		{
+			"pattern": "plsreadme.com",
+			"zone_name": "plsreadme.com",
+			"custom_domain": true
+		},
+		{
+			"pattern": "plsrd.me",
+			"zone_name": "plsrd.me",
+			"custom_domain": true
+		}
+	],
+	"ai": {
+		"binding": "AI",
+		"remote": true
+	},
+	"assets": {
+		"directory": "./public",
+		"binding": "ASSETS",
+		"run_worker_first": [
+			"/api/*",
+			"/t",
+			"/v/*",
+			"/sign-in",
+			"/sign-in/*",
+			"/sign-up",
+			"/sign-up/*",
+			"/sse",
+			"/sse/*",
+			"/mcp"
+		]
+	},
+	"vars": {
+		"OPENAI_MODEL": "gpt-4.1-2025-04-14",
+		"CF_AI_MODEL": "@cf/meta/llama-3.1-8b-instruct",
+		"CLERK_SIGN_IN_URL": "/sign-in",
+		"CLERK_SIGN_UP_URL": "/sign-up"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "outframer-waitlist",
+			"database_id": "b977c6e1-b40e-4fd1-bbe1-f38a881593c3",
+			"migrations_dir": "db/migrations"
+		}
+	],
+	"analytics_engine_datasets": [
+		{
+			"binding": "ANALYTICS",
+			"dataset": "outframer_events"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "DOCS_BUCKET",
+			"bucket_name": "outframer-docs"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "OutframerMCPv2",
+				"name": "MCP_OBJECT"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v2",
+			"new_sqlite_classes": [
+				"OutframerMCPv2"
+			]
+		}
+	],
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"enabled": true
+		}
+	},
+	"kv_namespaces": [
+		{
+			"binding": "OAUTH_KV",
+			"id": "ea8b398f57bb462a952118e1717e65ae",
+			"preview_id": "ea5d63351532417aa45e881845dfddb2"
+		}
+	]
 }

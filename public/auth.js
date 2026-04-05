@@ -4,7 +4,7 @@
   }
 
   const AUTH_ROOT_SELECTOR = "[data-auth-root]";
-  const CLERK_BROWSER_SDK_URL =
+  const DEFAULT_CLERK_BROWSER_SDK_URL =
     "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js";
 
   function escapeHtml(value) {
@@ -74,15 +74,26 @@
     }
   }
 
-  async function loadClerkScript(publishableKey) {
+  function buildClerkBrowserSdkUrl(frontendApiUrl) {
+    const trimmed = typeof frontendApiUrl === "string" ? frontendApiUrl.trim().replace(/\/+$/, "") : "";
+    if (!trimmed) {
+      return DEFAULT_CLERK_BROWSER_SDK_URL;
+    }
+
+    return `${trimmed}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
+  }
+
+  async function loadClerkScript(publishableKey, frontendApiUrl) {
     if (window.Clerk) return;
 
     if (publishableKey) {
       window.__clerk_publishable_key = publishableKey;
     }
 
+    const scriptUrl = buildClerkBrowserSdkUrl(frontendApiUrl);
+
     await new Promise((resolve, reject) => {
-      const existing = document.querySelector(`script[src=\"${CLERK_BROWSER_SDK_URL}\"]`);
+      const existing = document.querySelector(`script[src="${scriptUrl}"]`);
       if (existing) {
         existing.addEventListener("load", () => resolve(), { once: true });
         existing.addEventListener("error", () => reject(new Error("Failed to load Clerk SDK")), {
@@ -92,7 +103,7 @@
       }
 
       const script = document.createElement("script");
-      script.src = CLERK_BROWSER_SDK_URL;
+      script.src = scriptUrl;
       script.async = true;
       script.crossOrigin = "anonymous";
       if (publishableKey) {
@@ -120,32 +131,28 @@
   }
 
   async function redirectToHostedSignIn(clerk, config) {
-    try {
-      await clerk.redirectToSignIn({
-        returnBackUrl: window.location.href,
-        signInUrl: config?.signInUrl || undefined,
-      });
-    } catch (error) {
-      console.warn("Hosted sign-in redirect failed, falling back to modal", error);
-      clerk.openSignIn({
-        afterSignInUrl: window.location.href,
-        afterSignUpUrl: window.location.href,
-      });
-    }
+    window.location.href = buildReturnUrl(config?.signInUrl || "/sign-in");
   }
 
   async function redirectToHostedSignUp(clerk, config) {
+    window.location.href = buildReturnUrl(config?.signUpUrl || "/sign-up");
+  }
+
+  function buildReturnUrl(pathOrUrl) {
     try {
-      await clerk.redirectToSignUp({
-        returnBackUrl: window.location.href,
-        signUpUrl: config?.signUpUrl || undefined,
-      });
-    } catch (error) {
-      console.warn("Hosted sign-up redirect failed, falling back to modal", error);
-      clerk.openSignUp({
-        afterSignInUrl: window.location.href,
-        afterSignUpUrl: window.location.href,
-      });
+      const target = new URL(pathOrUrl, window.location.origin);
+      const returnTo = window.location.href;
+
+      if (!target.searchParams.has("returnBackUrl")) {
+        target.searchParams.set("returnBackUrl", returnTo);
+      }
+      if (!target.searchParams.has("redirect_url")) {
+        target.searchParams.set("redirect_url", returnTo);
+      }
+
+      return target.toString();
+    } catch {
+      return pathOrUrl;
     }
   }
 
@@ -241,7 +248,7 @@
     }
 
     try {
-      await loadClerkScript(config.publishableKey);
+      await loadClerkScript(config.publishableKey, config.frontendApiUrl);
 
       let clerk;
       // Support both Clerk v5 (constructor) and Clerk v6 (global singleton load)

@@ -205,8 +205,218 @@ pasteActions = convertButton?.closest?.(".paste-actions") || null;
 const resultSection = document.getElementById("result-section");
 const resultUrl = document.getElementById("result-url");
 const viewLink = document.getElementById("view-link");
-const myLinksAction = document.getElementById("my-links-action");
+const copyLinkAction = document.getElementById("copy-link-action");
+const saveToAccountAction = document.getElementById("save-to-account-action");
+const resultMeta = document.getElementById("result-meta");
 const errorSection = document.getElementById("error-section");
+const LAST_CREATED_DOC_STORAGE_KEY = "plsreadme:last-created-doc";
+const saveActionIcon = '<i class="hgi-stroke hgi-bookmark-02"></i>';
+let lastCreatedDoc = null;
+
+function getAuthState() {
+  return window.plsreadmeAuthState || { authenticated: false };
+}
+
+function setLastCreatedDoc(doc, { persist = true } = {}) {
+  lastCreatedDoc = doc ? { ...doc } : null;
+
+  if (!persist) return;
+
+  try {
+    if (!lastCreatedDoc) {
+      sessionStorage.removeItem(LAST_CREATED_DOC_STORAGE_KEY);
+      return;
+    }
+
+    sessionStorage.setItem(LAST_CREATED_DOC_STORAGE_KEY, JSON.stringify(lastCreatedDoc));
+  } catch {}
+}
+
+function loadLastCreatedDoc() {
+  try {
+    const raw = sessionStorage.getItem(LAST_CREATED_DOC_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.id !== "string" || typeof parsed.url !== "string") {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function updatePostCreateActions(messageOverride) {
+  if (!lastCreatedDoc || !saveToAccountAction) {
+    if (resultMeta) resultMeta.textContent = "";
+    return;
+  }
+
+  const authState = getAuthState();
+
+  if (lastCreatedDoc.owned) {
+    saveToAccountAction.innerHTML = `${saveActionIcon} Open My Links`;
+    if (resultMeta) {
+      resultMeta.textContent =
+        messageOverride || "Signed-in website create. This link is already in your account.";
+    }
+    return;
+  }
+
+  if (lastCreatedDoc.saved) {
+    saveToAccountAction.innerHTML = `${saveActionIcon} Open My Links`;
+    if (resultMeta) {
+      resultMeta.textContent = messageOverride || "Link saved to My Links.";
+    }
+    return;
+  }
+
+  saveToAccountAction.innerHTML = `${saveActionIcon} Save to my account`;
+  if (resultMeta) {
+    resultMeta.textContent = authState.authenticated
+      ? messageOverride || "Anonymous demo link created. Save it to My Links or connect your editor."
+      : messageOverride || "Anonymous demo link created. Sign in to save it to My Links.";
+  }
+}
+
+function renderCreatedResult(doc, options = {}) {
+  setLastCreatedDoc(
+    {
+      id: doc.id,
+      url: doc.url,
+      owned: !!doc.owned,
+      saved: !!doc.saved,
+      authMode: doc.authMode || (doc.owned ? "authenticated" : "anonymous_demo"),
+    },
+    { persist: options.persist !== false }
+  );
+
+  resultUrl.value = doc.url;
+  viewLink.href = doc.url;
+  resultSection.classList.add("show");
+  updatePostCreateActions(options.message);
+}
+
+function buildReturnBackUrl(pathname = window.location.pathname) {
+  const target = new URL(pathname, window.location.origin);
+  target.searchParams.set("returnBackUrl", window.location.href);
+  target.searchParams.set("redirect_url", window.location.href);
+  return target.toString();
+}
+
+function startSignIn() {
+  setLastCreatedDoc(lastCreatedDoc);
+
+  if (window.plsreadmeAuthActions && typeof window.plsreadmeAuthActions.signIn === "function") {
+    window.plsreadmeAuthActions.signIn();
+    return;
+  }
+
+  window.location.href = buildReturnBackUrl("/sign-in");
+}
+
+async function ensureAnonymousDemoGrant() {
+  if (getAuthState().authenticated) {
+    return { authenticated: true, requiresGrant: false };
+  }
+
+  const response = await fetch("/api/auth/demo-grant", {
+    method: "GET",
+    headers: { Accept: "application/json" },
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error(data.error || "Failed to verify browser session");
+    error.payload = data;
+    throw error;
+  }
+
+  return data;
+}
+
+function showCreateError(payload) {
+  const code = payload?.code || payload?.reason || "";
+  const authState = getAuthState();
+
+  showError(payload?.error || "Failed to create link", {
+    retryVerification:
+      code === "demo_grant_required" ||
+      code === "demo_grant_invalid" ||
+      code === "rate_limit_exceeded",
+    signIn:
+      !authState.authenticated &&
+      (code === "demo_grant_required" ||
+        code === "demo_grant_invalid" ||
+        code === "rate_limit_exceeded"),
+  });
+}
+
+async function copyLinkWithFeedback(trigger) {
+  if (!resultUrl.value) return;
+
+  try {
+    await navigator.clipboard.writeText(resultUrl.value);
+  } catch (clipboardError) {
+    console.error("Failed to copy:", clipboardError);
+    return;
+  }
+
+  if (!trigger) return;
+
+  const originalContent = trigger.innerHTML;
+  trigger.textContent = "Copied!";
+  setTimeout(() => {
+    trigger.innerHTML = originalContent;
+  }, 2000);
+}
+
+async function saveLastCreatedDocToAccount() {
+  if (!lastCreatedDoc) return;
+
+  if (lastCreatedDoc.owned || lastCreatedDoc.saved) {
+    window.location.href = `/my-links?created=${encodeURIComponent(lastCreatedDoc.id)}`;
+    return;
+  }
+
+  if (!getAuthState().authenticated) {
+    startSignIn();
+    return;
+  }
+
+  const token = await window.plsreadmeGetAuthToken();
+  if (!token) {
+    startSignIn();
+    return;
+  }
+
+  saveToAccountAction.disabled = true;
+
+  try {
+    const response = await fetch("/api/auth/save-link", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ id: lastCreatedDoc.id }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to save link");
+    }
+
+    lastCreatedDoc.saved = data.code === "saved" || data.code === "already_saved";
+    lastCreatedDoc.owned = lastCreatedDoc.owned || data.code === "already_created";
+    setLastCreatedDoc(lastCreatedDoc);
+    updatePostCreateActions(data.message || "Link saved to My Links.");
+  } catch (error) {
+    showError(error.message || "Failed to save link");
+  } finally {
+    saveToAccountAction.disabled = false;
+  }
+}
 
 markdownInput.addEventListener("paste", (e) => {
   // Detect if the clipboard *source* looks like rich text, even if the textarea only receives plain text.
@@ -310,6 +520,8 @@ createButton.addEventListener("click", async () => {
   hideError();
 
   try {
+    await ensureAnonymousDemoGrant();
+
     const response = await fetch("/api/create-link", {
       method: "POST",
       headers: {
@@ -318,21 +530,14 @@ createButton.addEventListener("click", async () => {
       body: JSON.stringify({ markdown }),
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      throw new Error(data.error || "Failed to create link");
+      showCreateError(data);
+      return;
     }
 
-    // Show result
-    resultUrl.value = data.url;
-    viewLink.href = data.url;
-    if (myLinksAction) {
-      myLinksAction.href = data.id
-        ? `/my-links?created=${encodeURIComponent(data.id)}`
-        : "/my-links";
-    }
-    resultSection.classList.add("show");
+    renderCreatedResult(data);
 
     // Automatically copy the URL to clipboard
     try {
@@ -345,7 +550,7 @@ createButton.addEventListener("click", async () => {
     // Scroll to result
     resultSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
-    showError(error.message);
+    showCreateError(error.payload || { error: error.message || "Failed to create link" });
   } finally {
     createButton.disabled = false;
     buttonText.textContent = "Create Link";
@@ -356,14 +561,20 @@ createButton.addEventListener("click", async () => {
 const copyResultBtn = document.getElementById("copy-result");
 copyResultBtn.addEventListener("click", () => {
   resultUrl.select();
-  navigator.clipboard.writeText(resultUrl.value);
-
-  const originalText = copyResultBtn.textContent;
-  copyResultBtn.textContent = "Copied!";
-  setTimeout(() => {
-    copyResultBtn.textContent = originalText;
-  }, 2000);
+  void copyLinkWithFeedback(copyResultBtn);
 });
+
+if (copyLinkAction) {
+  copyLinkAction.addEventListener("click", () => {
+    void copyLinkWithFeedback(copyLinkAction);
+  });
+}
+
+if (saveToAccountAction) {
+  saveToAccountAction.addEventListener("click", () => {
+    void saveLastCreatedDocToAccount();
+  });
+}
 
 // Create another
 const createAnotherBtn = document.getElementById("create-another");
@@ -377,12 +588,10 @@ createAnotherBtn.addEventListener("click", (e) => {
   fileSelected.style.display = "none";
   fileUploadZone.style.display = "block";
   resultSection.classList.remove("show");
-  if (myLinksAction) {
-    myLinksAction.href = "/my-links";
-  }
+  setLastCreatedDoc(null);
   pasteLooksRichText = false;
   isConverting = false;
-  setConvertButtonState({ disabled: false, text: "Convert to Markdown" });
+  setConvertButtonState({ disabled: false, text: "Generate new Markdown" });
   updateCreateButtonState();
 
   // Scroll to top
@@ -390,13 +599,54 @@ createAnotherBtn.addEventListener("click", (e) => {
 });
 
 // Error handling
-function showError(message) {
-  errorSection.textContent = message;
+function showError(message, options = {}) {
+  errorSection.innerHTML = "";
+
+  const messageEl = document.createElement("p");
+  messageEl.className = "error-message";
+  messageEl.textContent = message;
+  errorSection.appendChild(messageEl);
+
+  if (options.retryVerification || options.signIn) {
+    const actions = document.createElement("div");
+    actions.className = "error-actions";
+
+    if (options.retryVerification) {
+      const retryButton = document.createElement("button");
+      retryButton.type = "button";
+      retryButton.className = "error-action";
+      retryButton.innerHTML = '<i class="hgi-stroke hgi-refresh"></i> Verify browser again';
+      retryButton.addEventListener("click", async () => {
+        try {
+          await ensureAnonymousDemoGrant();
+          hideError();
+        } catch (error) {
+          showCreateError(error.payload || { error: error.message || "Verification failed" });
+        }
+      });
+      actions.appendChild(retryButton);
+    }
+
+    if (options.signIn) {
+      const signInButton = document.createElement("button");
+      signInButton.type = "button";
+      signInButton.className = "error-action error-action-secondary";
+      signInButton.innerHTML = '<i class="hgi-stroke hgi-user-circle"></i> Sign in to continue';
+      signInButton.addEventListener("click", () => {
+        startSignIn();
+      });
+      actions.appendChild(signInButton);
+    }
+
+    errorSection.appendChild(actions);
+  }
+
   errorSection.classList.add("show");
   errorSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
 function hideError() {
+  errorSection.innerHTML = "";
   errorSection.classList.remove("show");
 }
 
@@ -406,4 +656,13 @@ if (typeof track !== "undefined") {
 }
 
 // Initialize on load
+const restoredDoc = loadLastCreatedDoc();
+if (restoredDoc) {
+  renderCreatedResult(restoredDoc, { persist: false });
+}
+
+window.addEventListener("plsreadme:auth-state", () => {
+  updatePostCreateActions();
+});
+
 updateCreateButtonState();

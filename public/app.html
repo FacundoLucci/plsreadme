@@ -430,6 +430,16 @@
         display: inline-flex;
         align-items: center;
       }
+      .result-action-button {
+        font-family: inherit;
+        font-size: 0.95rem;
+        cursor: pointer;
+      }
+      .result-meta {
+        margin-top: 1rem;
+        font-size: 0.95rem;
+        color: var(--app-success-text);
+      }
       .error-section {
         background: var(--app-error-bg);
         border: 1px solid var(--app-error-border);
@@ -441,6 +451,32 @@
       .error-section.show {
         display: block;
         margin-bottom: 2rem;
+      }
+      .error-message {
+        margin: 0;
+      }
+      .error-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+      .error-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        padding: 0.72rem 1rem;
+        border-radius: 999px;
+        border: 1px solid rgba(153, 27, 27, 0.2);
+        background: var(--app-surface);
+        color: var(--app-error-text);
+        font-weight: 600;
+        text-decoration: none;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .error-action-secondary {
+        color: var(--app-text);
       }
       .spinner {
         display: inline-block;
@@ -498,6 +534,10 @@
         <p class="app-subtitle">
           Paste your markdown or upload a .md file to get a beautiful, shareable
           link
+        </p>
+        <p class="app-subtitle" style="font-size: 0.98rem; margin-top: -1rem;">
+          Anonymous demos stay fast. If traffic looks suspicious, we may ask for
+          a quick browser verification or sign-in before sharing.
         </p>
 
         <div class="error-section" id="error-section"></div>
@@ -578,13 +618,20 @@
             <a href="#" target="_blank" class="result-action" id="view-link">
               <i class="hgi-stroke hgi-view"></i> View document
             </a>
-            <a href="/my-links" class="result-action" id="my-links-action">
-              <i class="hgi-stroke hgi-link-square-02"></i> Go to My Links
+            <button class="result-action result-action-button" id="copy-link-action" type="button">
+              <i class="hgi-stroke hgi-copy-01"></i> Copy link
+            </button>
+            <button class="result-action result-action-button" id="save-to-account-action" type="button">
+              <i class="hgi-stroke hgi-bookmark-02"></i> Save to my account
+            </button>
+            <a href="/mcp-setup" class="result-action" id="connect-editor-action">
+              <i class="hgi-stroke hgi-link-square-02"></i> Connect your editor
             </a>
             <a href="#" class="result-action" id="create-another">
               <i class="hgi-stroke hgi-add-01"></i> Create another
             </a>
           </div>
+          <div class="result-meta" id="result-meta"></div>
         </div>
       </main>
     </div>
