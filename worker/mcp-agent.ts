@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
 import { z } from 'zod';
 import { createHostedMcpDoc, getHostedMcpGrantProps, HostedMcpRateLimitError } from './mcp-create.ts';
-import { DocValidationError } from './doc-pipeline.ts';
+import { DocValidationError, UploadsDisabledError } from './doc-pipeline.ts';
 import type { HostedMcpGrantProps } from './mcp-oauth.ts';
 import type { Env } from './types.ts';
 
@@ -124,6 +124,13 @@ Pass the markdown content directly. If sharing a file, read it first and pass th
             grant
           );
         } catch (error) {
+          if (error instanceof UploadsDisabledError) {
+            return {
+              content: [{ type: 'text', text: `❌ ${error.message}` }],
+              isError: true,
+            };
+          }
+
           if (error instanceof DocValidationError) {
             return {
               content: [

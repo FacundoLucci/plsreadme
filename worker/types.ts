@@ -23,6 +23,7 @@ export interface Env {
   CLERK_JWT_AUDIENCE?: string;    // Optional expected Clerk JWT audience claim
   CLERK_SIGN_IN_URL?: string;     // Optional Clerk sign-in route/path
   CLERK_SIGN_UP_URL?: string;     // Optional Clerk sign-up route/path
+  UPLOADS_DISABLED?: string;      // Emergency kill switch for all new document creation
 }
 
 export interface CloudflareAI {

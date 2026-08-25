@@ -20,7 +20,7 @@ import {
   resolvePersonalMcpApiKeyFromRequest,
 } from "../mcp-api-keys.ts";
 import { ensureOwnershipSchema } from "../ownership.ts";
-import { createStoredDoc, DocValidationError } from "../doc-pipeline.ts";
+import { createStoredDoc, DocValidationError, UploadsDisabledError } from "../doc-pipeline.ts";
 import { isLikelyHumanDocumentView, recordDocumentView } from "../doc-telemetry.ts";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -1939,6 +1939,9 @@ app.post("/", async (c) => {
       },
     });
   } catch (error) {
+    if (error instanceof UploadsDisabledError) {
+      return c.json({ error: error.message, code: "uploads_disabled" }, 503);
+    }
     if (error instanceof DocValidationError) {
       return c.json(failureToErrorPayload(error.failure), error.failure.status);
     }

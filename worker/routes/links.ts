@@ -18,7 +18,7 @@ import {
   DEMO_GRANT_COOKIE_NAME,
 } from "../security.ts";
 import { getRequestAuth } from "../auth.ts";
-import { createStoredDoc, DocValidationError } from "../doc-pipeline.ts";
+import { createStoredDoc, DocValidationError, UploadsDisabledError } from "../doc-pipeline.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -248,6 +248,9 @@ app.post("/", async (c) => {
     }
     return response;
   } catch (error) {
+    if (error instanceof UploadsDisabledError) {
+      return c.json({ error: error.message, code: "uploads_disabled" }, 503);
+    }
     if (error instanceof DocValidationError) {
       return c.json(failureToErrorPayload(error.failure), error.failure.status);
     }

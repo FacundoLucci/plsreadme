@@ -29,6 +29,13 @@ export class DocValidationError extends Error {
   }
 }
 
+export class UploadsDisabledError extends Error {
+  constructor() {
+    super("Uploads are temporarily disabled.");
+    this.name = "UploadsDisabledError";
+  }
+}
+
 export function extractMarkdownTitle(markdown: string): string | null {
   for (const line of markdown.split("\n")) {
     const trimmed = line.trim();
@@ -56,6 +63,10 @@ export async function createStoredDoc(
   createdAt: string;
   sha256: string;
 }> {
+  if (env.UPLOADS_DISABLED === "true") {
+    throw new UploadsDisabledError();
+  }
+
   const { metrics, failure } = validateMarkdown(payload.markdown);
   if (failure) {
     throw new DocValidationError(failure, metrics);
