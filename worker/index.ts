@@ -42,7 +42,7 @@ function serveHtmlAsset(c: Context<{ Bindings: Env }>, pathname: string) {
 app.use('/api/*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Admin-Token', 'X-Turnstile-Token'],
 }));
 
 // Mount routes

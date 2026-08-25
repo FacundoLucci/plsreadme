@@ -30,6 +30,7 @@ import {
   validateContentLength,
 } from "../security.ts";
 import type { DocRecord, Env } from "../types";
+import { TURNSTILE_ACTION, verifyAnonymousTurnstile } from "../turnstile.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -349,6 +350,8 @@ app.get("/config", (c) => {
     signInUrl: c.env.CLERK_SIGN_IN_URL?.trim() || "/sign-in",
     signUpUrl: c.env.CLERK_SIGN_UP_URL?.trim() || "/sign-up",
     providers: ["github", "google", "email"],
+    turnstileSiteKey: c.env.TURNSTILE_SITE_KEY?.trim() || null,
+    turnstileAction: TURNSTILE_ACTION,
   });
 });
 
@@ -383,6 +386,29 @@ app.get("/demo-grant", async (c) => {
       authenticated: true,
       requiresGrant: false,
     });
+  }
+
+  if (c.env.UPLOAD_PROTECTION_ENABLED === "true") {
+    const verification = await verifyAnonymousTurnstile(c.env, {
+      token: c.req.header("x-turnstile-token")?.trim() || null,
+      ip: clientIp,
+    });
+    if (!verification.valid) {
+      await logAbuseAttempt(c.env, {
+        endpoint,
+        ipHash,
+        reason: `turnstile_${verification.reason}`,
+        contentLength: null,
+      });
+      return c.json(
+        {
+          error: "Please verify that you are human and try again.",
+          code: "turnstile_required",
+          reason: verification.reason,
+        },
+        403
+      );
+    }
   }
 
   const rateLimit = await checkAndConsumeRateLimit(c.env, ipHash, WRITE_RATE_LIMITS.demoGrant);

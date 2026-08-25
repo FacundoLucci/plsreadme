@@ -184,6 +184,7 @@
     </div>
 
     <script src="/track.js"></script>
+    <script src="/turnstile.js"></script>
     <script>
       // Inline generator functionality
       const inlineMarkdownInput = document.getElementById(
@@ -268,19 +269,7 @@
       }
 
       async function ensureInlineDemoGrant() {
-        const response = await fetch("/api/auth/demo-grant", {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          const error = new Error(data.error || "Failed to verify browser session");
-          error.payload = data;
-          throw error;
-        }
-
-        return data;
+        return window.plsreadmeTurnstile.issueDemoGrant();
       }
 
       inlineCreateButton.addEventListener("click", async () => {

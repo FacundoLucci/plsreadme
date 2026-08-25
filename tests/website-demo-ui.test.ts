@@ -12,16 +12,19 @@ async function readPublicFile(name: string) {
 }
 
 test("app and homepage post-create UIs expose save/account and editor follow-up actions", async () => {
-  const [appHtml, appJs, indexHtml] = await Promise.all([
+  const [appHtml, appJs, indexHtml, turnstileJs] = await Promise.all([
     readPublicFile("app.html"),
     readPublicFile("app.js"),
     readPublicFile("index.html"),
+    readPublicFile("turnstile.js"),
   ]);
 
   assert.match(appHtml, /id="save-to-account-action"/);
   assert.match(appHtml, /id="connect-editor-action"/);
   assert.match(appHtml, /id="result-meta"/);
-  assert.match(appJs, /\/api\/auth\/demo-grant/);
+  assert.match(appJs, /plsreadmeTurnstile\.issueDemoGrant/);
+  assert.match(turnstileJs, /\/api\/auth\/demo-grant/);
+  assert.match(turnstileJs, /X-Turnstile-Token/);
   assert.match(appJs, /\/api\/auth\/save-link/);
   assert.match(indexHtml, /id="inline-save-to-account"/);
   assert.match(indexHtml, /id="inline-connect-editor"/);

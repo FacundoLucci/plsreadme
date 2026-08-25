@@ -3,6 +3,7 @@ import { ensureDocTelemetrySchema, buildDocCustomMetadata, recordDocCreateEvent 
 import { ensureOwnershipSchema } from "./ownership.ts";
 import { sha256, validateMarkdown, type MarkdownMetrics, type ValidationFailure } from "./security.ts";
 import type { Env } from "./types.ts";
+import { enforceUploadProtection } from "./upload-protection.ts";
 
 export interface StoredDocAttribution {
   source: string;
@@ -15,6 +16,7 @@ export interface StoredDocAttribution {
   actorSessionId?: string | null;
   apiKeyId?: string | null;
   apiKeyName?: string | null;
+  anonymousActorKey?: string | null;
 }
 
 export class DocValidationError extends Error {
@@ -26,13 +28,6 @@ export class DocValidationError extends Error {
     this.name = "DocValidationError";
     this.failure = failure;
     this.metrics = metrics;
-  }
-}
-
-export class UploadsDisabledError extends Error {
-  constructor() {
-    super("Uploads are temporarily disabled.");
-    this.name = "UploadsDisabledError";
   }
 }
 
@@ -63,14 +58,16 @@ export async function createStoredDoc(
   createdAt: string;
   sha256: string;
 }> {
-  if (env.UPLOADS_DISABLED === "true") {
-    throw new UploadsDisabledError();
-  }
-
   const { metrics, failure } = validateMarkdown(payload.markdown);
   if (failure) {
     throw new DocValidationError(failure, metrics);
   }
+
+  await enforceUploadProtection(env, {
+    userId: attribution.ownerUserId,
+    apiKeyId: attribution.apiKeyId,
+    anonymousActorKey: attribution.anonymousActorKey,
+  });
 
   const id = nanoid(10);
   const r2Key = `md/${id}.md`;

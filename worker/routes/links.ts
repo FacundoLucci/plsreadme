@@ -18,7 +18,8 @@ import {
   DEMO_GRANT_COOKIE_NAME,
 } from "../security.ts";
 import { getRequestAuth } from "../auth.ts";
-import { createStoredDoc, DocValidationError, UploadsDisabledError } from "../doc-pipeline.ts";
+import { createStoredDoc, DocValidationError } from "../doc-pipeline.ts";
+import { UploadProtectionError, uploadProtectionErrorPayload } from "../upload-protection.ts";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -200,6 +201,7 @@ app.post("/", async (c) => {
       clientName: "website",
       actorEmail: requestAuth.email,
       actorSessionId: requestAuth.sessionId,
+      anonymousActorKey: ownerUserId ? null : ipHash,
     });
 
     // Send Discord notification (optional, best-effort)
@@ -248,8 +250,8 @@ app.post("/", async (c) => {
     }
     return response;
   } catch (error) {
-    if (error instanceof UploadsDisabledError) {
-      return c.json({ error: error.message, code: "uploads_disabled" }, 503);
+    if (error instanceof UploadProtectionError) {
+      return c.json(uploadProtectionErrorPayload(error), error.status);
     }
     if (error instanceof DocValidationError) {
       return c.json(failureToErrorPayload(error.failure), error.failure.status);

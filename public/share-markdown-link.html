@@ -171,6 +171,7 @@
       </div>
     </div>
 
+    <script src="/turnstile.js"></script>
     <script>
       const markdownInput = document.getElementById("markdown-input");
       const createButton = document.getElementById("create-button");
@@ -199,11 +200,7 @@
         errorDiv.classList.remove("show");
 
         try {
-          const response = await fetch("/api/create-link", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ markdown }),
-          });
+          const response = await window.plsreadmeTurnstile.createLink(markdown);
 
           const data = await response.json();
 

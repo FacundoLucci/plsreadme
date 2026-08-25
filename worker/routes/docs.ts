@@ -20,7 +20,9 @@ import {
   resolvePersonalMcpApiKeyFromRequest,
 } from "../mcp-api-keys.ts";
 import { ensureOwnershipSchema } from "../ownership.ts";
-import { createStoredDoc, DocValidationError, UploadsDisabledError } from "../doc-pipeline.ts";
+import { createStoredDoc, DocValidationError } from "../doc-pipeline.ts";
+import { UploadProtectionError, uploadProtectionErrorPayload } from "../upload-protection.ts";
+import { verifyAnonymousTurnstile } from "../turnstile.ts";
 import { isLikelyHumanDocumentView, recordDocumentView } from "../doc-telemetry.ts";
 
 const app = new Hono<{ Bindings: Env }>();
@@ -1778,6 +1780,28 @@ app.post("/", async (c) => {
     const ownerUserId = requestAuth.isAuthenticated
       ? requestAuth.userId
       : apiKeyAuth?.userId ?? null;
+
+    if (!ownerUserId && c.env.UPLOAD_PROTECTION_ENABLED === "true") {
+      const verification = await verifyAnonymousTurnstile(c.env, {
+        token: c.req.header("x-turnstile-token")?.trim() || null,
+        ip: clientIp,
+      });
+      if (!verification.valid) {
+        await logAbuseAttempt(c.env, {
+          endpoint,
+          ipHash,
+          reason: `turnstile_${verification.reason}`,
+          contentLength,
+        });
+        return c.json(
+          {
+            error: "Anonymous API uploads require browser verification or a personal API key.",
+            code: "turnstile_required",
+          },
+          403
+        );
+      }
+    }
     const createSource = requestAuth.isAuthenticated
       ? "web_signed_in"
       : apiKeyAuth?.usageSource ?? "mcp_local_anonymous";
@@ -1889,6 +1913,7 @@ app.post("/", async (c) => {
       actorSessionId: requestAuth.sessionId,
       apiKeyId: apiKeyAuth?.keyId ?? null,
       apiKeyName: apiKeyAuth?.keyName ?? null,
+      anonymousActorKey: ownerUserId ? null : ipHash,
     });
 
     // Send Discord notification (optional, best-effort)
@@ -1939,8 +1964,8 @@ app.post("/", async (c) => {
       },
     });
   } catch (error) {
-    if (error instanceof UploadsDisabledError) {
-      return c.json({ error: error.message, code: "uploads_disabled" }, 503);
+    if (error instanceof UploadProtectionError) {
+      return c.json(uploadProtectionErrorPayload(error), error.status);
     }
     if (error instanceof DocValidationError) {
       return c.json(failureToErrorPayload(error.failure), error.failure.status);

@@ -320,19 +320,7 @@ async function ensureAnonymousDemoGrant() {
     return { authenticated: true, requiresGrant: false };
   }
 
-  const response = await fetch("/api/auth/demo-grant", {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    const error = new Error(data.error || "Failed to verify browser session");
-    error.payload = data;
-    throw error;
-  }
-
-  return data;
+  return window.plsreadmeTurnstile.issueDemoGrant();
 }
 
 function showCreateError(payload) {

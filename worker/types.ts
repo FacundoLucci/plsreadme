@@ -24,6 +24,10 @@ export interface Env {
   CLERK_SIGN_IN_URL?: string;     // Optional Clerk sign-in route/path
   CLERK_SIGN_UP_URL?: string;     // Optional Clerk sign-up route/path
   UPLOADS_DISABLED?: string;      // Emergency kill switch for all new document creation
+  UPLOAD_MODE?: string;           // normal | accounts-only | off
+  UPLOAD_PROTECTION_ENABLED?: string;
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
 
 export interface CloudflareAI {
